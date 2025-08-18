@@ -202,25 +202,21 @@ Comprehensive SPI pin reservation system with updated device models:
 
 ## 📚 Examples
 
-The `examples/` directory contains comprehensive examples demonstrating all library features:
+The `examples/` directory contains focused examples demonstrating core library features:
 
 ```bash
-# Basic device operations
-cargo run --example basic_device_control
-
-# MAX7219 display examples
-cargo run --example test_two_displays
-cargo run --example comprehensive_multi_display_test
-cargo run --example max7219_console_demo
+# Basic device operations and configuration
+cargo run --example physical_device_config_example
+cargo run --example config_loader_example
+cargo run --example step_by_step_config
 
 # Communication protocols
 cargo run --example spi_example
 cargo run --example i2c_simple_test
 cargo run --example i2c_comprehensive_test
+cargo run --example i2c_common_devices
 
-# Advanced features
-cargo run --example encoder_monitoring
-cargo run --example physical_device_config_example
+# Network device support
 cargo run --example network_device_test
 ```
 
