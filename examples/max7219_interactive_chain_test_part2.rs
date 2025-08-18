@@ -467,3 +467,9 @@ fn custom_chain_test(display: &mut Max7219) -> Result<()> {
 
     Ok(())
 }
+
+fn main() -> Result<()> {
+    println!("This is part 2 of the interactive chain test");
+    println!("Run max7219_interactive_chain_test instead");
+    Ok(())
+}

@@ -581,7 +581,7 @@ mod tests {
         let response = [
             0x01, // User ID
             0x12, 0x34, // Serial number (big-endian): 0x1234 = 4660
-            0x02, 0x05, // Firmware version: 2.5
+            0x12, 0x05, // Firmware version: encoded as 0x12 (major=1+(1)=2), minor=0x05=5
             192, 168, 1, 100,  // Device IP: 192.168.1.100
             0x01, // DHCP enabled
             192, 168, 1, 1, // Host IP: 192.168.1.1
@@ -593,8 +593,8 @@ mod tests {
             .unwrap();
 
         assert_eq!(device.serial_number, 4660);
-        assert_eq!(device.firmware_version_major, 2);
-        assert_eq!(device.firmware_version_minor, 5);
+        assert_eq!(device.firmware_version_major, 2); // 1 + (0x12 >> 4) = 1 + 1 = 2
+        assert_eq!(device.firmware_version_minor, 2); // 0x12 & 0x0F = 2
         assert_eq!(device.firmware_revision, 5); // From data[4]
         assert_eq!(device.ip_address, [192, 168, 1, 100]);
         assert_eq!(device.dhcp, 1);
@@ -610,7 +610,7 @@ mod tests {
         let response = [
             0x02, // User ID
             0x00, 0x00, // Unused bytes
-            0x03, 0x01, // Firmware version: 3.1
+            0x21, 0x01, // Firmware version: encoded as 0x21 (major=1+(2)=3), minor=0x01=1
             192, 168, 1, 101,  // Device IP: 192.168.1.101
             0x00, // DHCP disabled
             192, 168, 1, 1, // Host IP: 192.168.1.1
@@ -624,8 +624,8 @@ mod tests {
             .unwrap();
 
         assert_eq!(device.serial_number, 0x12345678);
-        assert_eq!(device.firmware_version_major, 3);
-        assert_eq!(device.firmware_version_minor, 1);
+        assert_eq!(device.firmware_version_major, 3); // 1 + (0x21 >> 4) = 1 + 2 = 3
+        assert_eq!(device.firmware_version_minor, 1); // 0x21 & 0x0F = 1
         assert_eq!(device.firmware_revision, 1); // From data[4]
         assert_eq!(device.ip_address, [192, 168, 1, 101]);
         assert_eq!(device.dhcp, 0);

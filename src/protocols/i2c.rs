@@ -207,7 +207,7 @@ impl PoKeysDevice {
                             if (byte_val & (1 << bit_idx)) != 0 {
                                 let address = (byte_idx * 8 + bit_idx) as u8;
                                 // Only include valid 7-bit I2C addresses (0x08-0x77)
-                                if address >= 0x08 && address <= 0x77 {
+                                if (0x08..=0x77).contains(&address) {
                                     found_devices.push(address);
                                 }
                             }

@@ -6,6 +6,10 @@
 //! - Parameter validation
 //! - Status parsing
 
+#![allow(clippy::uninlined_format_args)]
+#![allow(clippy::assertions_on_constants)]
+#![allow(clippy::useless_vec)]
+
 use pokeys_lib::*;
 
 #[cfg(test)]
@@ -108,13 +112,13 @@ mod i2c_tests {
     }
 
     fn validate_i2c_address(address: u8) -> Result<()> {
-        if address < 0x08 || address > 0x77 {
+        if !(0x08..=0x77).contains(&address) {
             return Err(PoKeysError::Parameter("Invalid I2C address".to_string()));
         }
         Ok(())
     }
 
-    fn validate_register_write_params(address: u8, register: u8, data: &[u8]) -> Result<()> {
+    fn validate_register_write_params(address: u8, _register: u8, data: &[u8]) -> Result<()> {
         validate_i2c_address(address)?;
         if data.len() > 54 { // 55 - 1 for register byte
             return Err(PoKeysError::Parameter("Register data too long".to_string()));
@@ -123,7 +127,7 @@ mod i2c_tests {
     }
 
     fn validate_i2c_speed(speed_khz: u16) -> Result<()> {
-        if speed_khz < 100 || speed_khz > 1000 {
+        if !(100..=1000).contains(&speed_khz) {
             return Err(PoKeysError::Parameter("Invalid I2C speed".to_string()));
         }
         Ok(())

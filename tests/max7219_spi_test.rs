@@ -3,8 +3,6 @@
 //! This test validates the SPI protocol implementation by testing
 //! communication with a MAX7219 display controller.
 
-use pokeys_lib::{connect_to_device_with_serial, enumerate_network_devices, Result};
-
 // MAX7219 Register Addresses
 const MAX7219_REG_SHUTDOWN: u8 = 0x0C;
 const MAX7219_REG_DISPLAY_TEST: u8 = 0x0F;
@@ -17,6 +15,8 @@ const MAX7219_REG_DIGIT0: u8 = 0x01;
 const MAX7219_NORMAL_MODE: u8 = 0x01;
 const MAX7219_TEST_OFF: u8 = 0x00;
 const MAX7219_DECODE_B_ALL: u8 = 0xFF;
+
+#[allow(dead_code)]
 const MAX7219_SCAN_LIMIT_8: u8 = 0x07;
 
 const CS_PIN: u8 = 24;

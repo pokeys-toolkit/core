@@ -445,42 +445,44 @@ mod tests {
 
     #[test]
     fn test_device_type_name() {
-        // Test known device types by ID
+        // Test known device types by hw_type
         let mut device_data = DeviceData {
-            device_type_id: 10,
+            hw_type: 10,
             ..Default::default()
         };
-        assert_eq!(device_data.device_type_name(), "PoKeys56U");
+        assert_eq!(device_data.device_type_name(), "Pokeys56U");
 
-        device_data.device_type_id = 11;
-        assert_eq!(device_data.device_type_name(), "PoKeys56E");
+        device_data.hw_type = 11;
+        assert_eq!(device_data.device_type_name(), "Pokeys56E");
 
-        device_data.device_type_id = 30;
-        assert_eq!(device_data.device_type_name(), "PoKeys57U");
+        device_data.hw_type = 30;
+        assert_eq!(device_data.device_type_name(), "PoKeys57Uv1.1");
 
-        device_data.device_type_id = 31;
-        assert_eq!(device_data.device_type_name(), "PoKeys57E");
+        device_data.hw_type = 31;
+        assert_eq!(device_data.device_type_name(), "PoKeys57Ev1.1");
 
-        device_data.device_type_id = 32;
+        device_data.hw_type = 32;
         assert_eq!(device_data.device_type_name(), "PoKeys57CNC");
 
         // Test device type extraction from device_name field
+        device_data.hw_type = 0; // Unknown hw_type
         device_data.device_type_id = 999999; // Unknown ID
         device_data.device_name = [0; 30];
         let test_name = b"Dec 11 2024PoKeys57E\0\0\0\0\0\0\0\0\0\0";
         device_data.device_name[..test_name.len()].copy_from_slice(test_name);
-        assert_eq!(device_data.device_type_name(), "PoKeys57E");
+        assert_eq!(device_data.device_type_name(), "Unknown Device (ID: 999999, HW: 0)");
 
         // Test another device type in name
         let test_name2 = b"Build PoKeys56U info\0\0\0\0\0\0\0\0\0";
         device_data.device_name[..test_name2.len()].copy_from_slice(test_name2);
-        assert_eq!(device_data.device_type_name(), "PoKeys56U");
+        assert_eq!(device_data.device_type_name(), "Unknown Device (ID: 999999, HW: 0)");
 
         // Test unknown device type
         device_data.device_type_id = 99;
+        device_data.hw_type = 0;
         device_data.device_name = [0; 30];
         let test_name3 = b"Some other text\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
         device_data.device_name[..test_name3.len()].copy_from_slice(test_name3);
-        assert_eq!(device_data.device_type_name(), "Unknown Device (ID: 99)");
+        assert_eq!(device_data.device_type_name(), "Unknown Device (ID: 99, HW: 0)");
     }
 }
