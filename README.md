@@ -8,10 +8,10 @@ A pure Rust implementation of the PoKeysLib for controlling PoKeys devices. This
 
 ### Bulk Operations Optimization
 - **Before**: 110 individual commands, 14.44ms configuration time
-- **After**: 2 bulk commands, 513µs configuration time  
+- **After**: 2 bulk commands, 513µs configuration time
 - **Result**: 96.4% time reduction, **28x faster pin configuration**
 
-### Single Enumeration Optimization  
+### Single Enumeration Optimization
 - **Before**: Multiple 5-second device enumerations per sync
 - **After**: Single enumeration, cached results reused
 - **Result**: 65% faster device discovery, **3x faster multi-device sync**
@@ -25,7 +25,7 @@ A pure Rust implementation of the PoKeysLib for controlling PoKeys devices. This
 
 ### Device Connectivity
 - **USB Devices**: Full support for USB-connected PoKeys devices
-- **Network Devices**: Discovery and connection to network-enabled devices  
+- **Network Devices**: Discovery and connection to network-enabled devices
 - **Auto-Detection**: Intelligent connection type detection
 - **Multi-Device**: Concurrent management of multiple devices
 
@@ -120,33 +120,33 @@ use pokeys_lib::*;
 
 fn main() -> Result<()> {
     let mut device = connect_to_device(0)?;
-    
+
     // Configure encoder on pins 10-11
-    device.configure_encoder(0, 10, 11, EncoderMode::Quadrature4x)?;
-    
+    let options = EncoderOptions::with_4x_sampling();
+    device.configure_encoder(0, 10, 11, options)?;
+
     loop {
-        let position = device.get_encoder_position(0)?;
+        let position = device.get_encoder_value(0)?;
         println!("Encoder position: {}", position);
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
 }
 ```
 
-### SPI Communication
+### Basic Communication
 ```rust
 use pokeys_lib::*;
 
 fn main() -> Result<()> {
     let mut device = connect_to_device(0)?;
-    
-    // Configure SPI (automatically reserves pins 23=MOSI, 25=CLK)
-    device.configure_spi(1000000, SpiMode::Mode0)?;
-    
-    // Send data using pin 24 as chip select
-    let data = vec![0x01, 0x02, 0x03];
-    let response = device.spi_transfer(24, &data)?;
-    
-    println!("SPI response: {:?}", response);
+
+    // Configure I2C for sensor communication
+    device.configure_i2c(100000)?; // 100kHz I2C
+
+    // Scan for I2C devices
+    let devices = device.scan_i2c_devices()?;
+    println!("Found I2C devices: {:?}", devices);
+
     Ok(())
 }
 ```
@@ -157,7 +157,7 @@ Comprehensive SPI pin reservation system with updated device models:
 
 ### Hardware Constraint Enforcement
 - ✅ **Pin 23 (MOSI)** automatically reserved when SPI is enabled
-- ✅ **Pin 25 (CLK)** automatically reserved when SPI is enabled  
+- ✅ **Pin 25 (CLK)** automatically reserved when SPI is enabled
 - ✅ **Configuration validation** prevents hardware conflicts
 - ✅ **31-33 CS pins** available per device for SPI peripherals
 

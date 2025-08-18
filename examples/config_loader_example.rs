@@ -52,9 +52,7 @@ fn apply_basic_configuration(
     // Configure PWM
     device.configure_pwm_channel(0, 5, 0.0, true)?; // Channel 0, pin 5, 0% duty, enabled
 
-    // Configure SPI for external devices
-    device.configure_spi(1000000, SpiMode::Mode0)?;
-    println!("   SPI configured for external devices");
+    // Additional configuration can be added here as needed
 
     println!("✅ Configuration applied");
     Ok(())

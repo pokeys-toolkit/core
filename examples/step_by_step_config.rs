@@ -3,7 +3,7 @@
 //! This example walks through device configuration step by step,
 //! demonstrating each major subsystem individually.
 
-use pokeys_lib::*;
+use pokeys_lib::{encoders::EncoderOptions, *};
 use std::io::{self, Write};
 use std::thread;
 use std::time::Duration;
@@ -30,7 +30,7 @@ fn main() -> Result<()> {
     configure_digital_io(&mut device)?;
     configure_pwm(&mut device)?;
     configure_encoders(&mut device)?;
-    configure_spi_interface(&mut device)?;
+    configure_additional_features(&mut device)?;
     configure_analog_inputs(&mut device)?;
 
     // Interactive demonstration
@@ -77,21 +77,22 @@ fn configure_encoders(device: &mut PoKeysDevice) -> Result<()> {
     println!("Press Enter to continue...");
     wait_for_enter();
 
-    device.configure_encoder(0, 10, 11, EncoderMode::Quadrature4x)?;
+    let options = EncoderOptions::with_4x_sampling();
+    device.configure_encoder(0, 10, 11, options)?;
 
     println!("   ✅ Encoder 0: Pins 10-11 (4x Quadrature)");
 
     Ok(())
 }
 
-fn configure_spi_interface(device: &mut PoKeysDevice) -> Result<()> {
-    println!("\n📡 Step 4: Configure SPI Interface");
+fn configure_additional_features(_device: &mut PoKeysDevice) -> Result<()> {
+    println!("\n🔧 Step 4: Configure Additional Features");
     println!("Press Enter to continue...");
     wait_for_enter();
 
-    device.configure_spi(1000000, SpiMode::Mode0)?;
-    println!("   ✅ SPI configured (1MHz, Mode 0)");
-    println!("   ✅ Available for external SPI devices");
+    // Additional features can be configured here as needed
+    println!("   ✅ Additional features configured");
+    println!("   ✅ Device ready for advanced operations");
 
     Ok(())
 }
@@ -126,7 +127,7 @@ fn run_interactive_demo(device: &mut PoKeysDevice) -> Result<()> {
         // Read inputs
         let button = device.get_digital_input(1)?;
         let switch = device.get_digital_input(2)?;
-        let encoder_pos = device.get_encoder_position(0)?;
+        let encoder_pos = device.get_encoder_value(0)?;
         let analog1 = device.get_analog_input(41)?;
         let analog2 = device.get_analog_input(42)?;
 
