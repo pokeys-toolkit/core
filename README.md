@@ -1,3 +1,5 @@
+[![CI](https://github.com/pokeys-toolkit/core/actions/workflows/ci.yml/badge.svg)](https://github.com/pokeys-toolkit/core/actions/workflows/ci.yml)
+
 # PoKeys Core Library
 
 A pure Rust implementation of the PoKeysLib for controlling PoKeys devices. This is the **core library** that provides all fundamental device communication and control functionality for the PoKeys ecosystem.
