@@ -1,4 +1,5 @@
 [![CI](https://github.com/pokeys-toolkit/core/actions/workflows/ci.yml/badge.svg)](https://github.com/pokeys-toolkit/core/actions/workflows/ci.yml)
+[![Release](https://github.com/pokeys-toolkit/core/actions/workflows/release.yml/badge.svg)](https://github.com/pokeys-toolkit/core/actions/workflows/release.yml)
 
 # PoKeys Core Library
 
