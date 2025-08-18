@@ -1,10 +1,10 @@
 [package]
 name = "pokeys-lib"
 version = "0.3.0"
-edition = "2021"
+edition = "2024"
 authors = ["marc@teichtahl.com"]
-description = "Pure Rust core library for PoKeys device control - USB/Network connectivity, I/O, PWM, encoders, SPI/I2C protocols, MAX7219 displays"
-license = "LGPL-2.1"
+description = "Pure Rust core library for PoKeys device control - USB/Network connectivity, I/O, PWM, encoders, SPI/I2C protocols"
+license = "Apache-2.0"
 repository = "https://github.com/pokeys-toolkit/core"
 keywords = ["pokeys", "hardware", "usb", "automation", "control"]
 categories = ["hardware-support", "api-bindings"]
@@ -20,11 +20,11 @@ hardware-tests = []
 
 [dependencies]
 serde = { version = "1.0.219", features = ["derive"] }
-serde_yaml = "0.9"
-thiserror = "2.0.12"
+serde_yaml = "0.9.34-deprecated"
+thiserror = "2.0.15"
 log = "0.4.27"
-notify = "6.1.1"
-dirs = "5.0.1"
+notify = "8.2.0"
+dirs = "6.0.0"
 
 [dev-dependencies]
 tempfile = "3.10.1"
