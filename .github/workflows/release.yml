@@ -50,6 +50,44 @@ jobs:
           echo "bump=$BUMP" >> $GITHUB_OUTPUT
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "current=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "last_tag=$LAST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        if: steps.version.outputs.version != steps.version.outputs.current
+        id: changelog
+        run: |
+          LAST_TAG="${{ steps.version.outputs.last_tag }}"
+          NEW_VERSION="${{ steps.version.outputs.version }}"
+
+          # Generate changelog from commits
+          CHANGELOG=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s" --grep="^feat\|^fix\|^perf\|^refactor" | sed 's/^- \([a-f0-9]*\) /- /')
+
+          # Create release notes
+          cat > release_notes.md << EOF
+          ## What's Changed
+
+          $CHANGELOG
+
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...v${NEW_VERSION}
+          EOF
+
+          # Update CHANGELOG.md
+          if [ ! -f CHANGELOG.md ]; then
+            echo "# Changelog" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "All notable changes to this project will be documented in this file." >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
+
+          # Prepend new version to changelog
+          {
+            head -n 4 CHANGELOG.md
+            echo "## [${NEW_VERSION}] - $(date +%Y-%m-%d)"
+            echo ""
+            echo "$CHANGELOG"
+            echo ""
+            tail -n +5 CHANGELOG.md
+          } > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
 
       - name: Update version
         if: steps.version.outputs.version != steps.version.outputs.current
@@ -66,7 +104,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add Cargo.toml Cargo.lock
+          git add Cargo.toml Cargo.lock CHANGELOG.md
           git commit -m "chore(release): bump version to ${{ steps.version.outputs.version }}"
           git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
           git push origin main
@@ -81,6 +119,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          generate_release_notes: true
+          body_path: release_notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
