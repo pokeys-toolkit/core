@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.1] - 2025-08-18
+
+- fix: allow dirty working directory for cargo publish
+
 ## [0.5.0] - 2025-08-18
 
 - feat: complete semantic versioning implementation
