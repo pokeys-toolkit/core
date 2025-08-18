@@ -30,10 +30,6 @@
 //!
 //! ### Display & Interface Support
 //! - LCD display control and management
-//! - **MAX7219**: Comprehensive LED display driver support
-//!   - Individual and daisy-chained displays
-//!   - 7-segment, dot matrix, and raw segment modes
-//!   - Text display with justification and scrolling
 //! - Seven-segment character mapping utilities
 //!
 //! ### Sensor Integration
@@ -89,7 +85,6 @@
 
 pub mod communication;
 pub mod device;
-pub mod devices;
 pub mod encoders;
 pub mod error;
 pub mod io;
@@ -113,9 +108,6 @@ pub use device::{connect_to_device, connect_to_device_with_serial, enumerate_usb
 pub use io::{PinCapability, PinFunction};
 pub use model_manager::ModelManager;
 pub use models::{DeviceModel, PinModel};
-
-// Re-export devices functionality for external device support
-pub use devices::spi::{DisplayMode, Max7219, TextJustification};
 
 // Re-export LED matrix functionality
 pub use matrix::{

@@ -1,7 +1,7 @@
 //! Network Device Connection Test
 //!
 //! This test verifies connection to network device with serial 32218
-//! and basic functionality before running MAX7219 tests.
+//! and basic functionality before running SPI tests.
 
 use pokeys_lib::*;
 
@@ -120,7 +120,7 @@ fn main() -> Result<()> {
 
     // Step 7: Test SPI communication (no-op command)
     println!("\n📡 Step 7: Testing SPI communication...");
-    let noop_command = vec![0x00, 0x00]; // MAX7219 no-op command
+    let noop_command = vec![0x00, 0x00]; // Generic no-op command
     device.spi_write(&noop_command, 24)?;
     println!("   ✅ SPI write successful (no-op command sent)");
 
@@ -133,11 +133,8 @@ fn main() -> Result<()> {
     println!("✅ SPI configuration: PASSED");
     println!("✅ SPI communication: PASSED");
 
-    println!("\n🚀 Device 32218 is ready for MAX7219 testing!");
-    println!("💡 You can now run:");
-    println!("   cargo run --example max7219_cs_test");
-    println!("   cargo run --example max7219_console_test");
-    println!("   cargo run --example max7219_spi_test");
+    println!("\n🚀 Device 32218 is ready for SPI device testing!");
+    println!("💡 You can now run SPI-based examples with this device");
 
     Ok(())
 }

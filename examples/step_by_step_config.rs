@@ -1,126 +1,171 @@
 //! Step-by-Step Configuration Example
 //!
-//! This example walks through configuring a PoKeys device step by step,
-//! demonstrating each major feature with clear explanations.
+//! This example walks through device configuration step by step,
+//! demonstrating each major subsystem individually.
 
-use pokeys_lib::devices::spi::Max7219;
 use pokeys_lib::*;
+use std::io::{self, Write};
 use std::thread;
 use std::time::Duration;
 
-fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
-    println!("🎯 Step-by-Step PoKeys Configuration");
+fn main() -> Result<()> {
+    println!("🚀 Step-by-Step PoKeys Configuration");
     println!("====================================");
-    println!("This example will guide you through configuring a PoKeys device step by step.\n");
 
-    // Step 1: Device Discovery
-    println!("⚡ Step 1: Device Discovery");
-    println!("==========================");
+    // Connect to device
     let device_count = enumerate_usb_devices()?;
-    println!("Found {} PoKeys device(s)", device_count);
-
     if device_count == 0 {
-        return Err("No PoKeys devices found! Please connect a device and try again.".into());
+        return Err(PoKeysError::DeviceNotFound);
     }
 
-    // Step 2: Device Connection
-    println!("\n🔌 Step 2: Device Connection");
-    println!("============================");
     let mut device = connect_to_device(0)?;
-    let _device_info = device.get_device_data()?;
-    println!("   Device: Connected");
-    println!("   Firmware: Available");
-    println!("   Pins: Available");
+    device.get_device_data()?;
 
-    // Step 3: Configure the device pins
-    println!("\n⚙️  Step 3: Configure Device Pins");
-    println!("=================================");
+    println!("📱 Connected to device: {}", device.device_data.serial_number);
 
-    // Configure digital inputs (buttons)
-    device.set_pin_function(1, PinFunction::DigitalInput)?;
-    device.set_pin_function(2, PinFunction::DigitalInput)?;
-    println!("   Pin 1: Digital Input (Start Button)");
-    println!("   Pin 2: Digital Input (Stop Button)");
+    // Step-by-step configuration
+    configure_digital_io(&mut device)?;
+    configure_pwm(&mut device)?;
+    configure_encoders(&mut device)?;
+    configure_spi_interface(&mut device)?;
+    configure_analog_inputs(&mut device)?;
 
-    // Configure digital outputs (LEDs)
-    device.set_pin_function(3, PinFunction::DigitalOutput)?;
-    device.set_pin_function(4, PinFunction::DigitalOutput)?;
-    device.set_digital_output(3, false)?;
-    device.set_digital_output(4, false)?;
-    println!("   Pin 3: Digital Output (Green LED)");
-    println!("   Pin 4: Digital Output (Red LED)");
+    // Interactive demonstration
+    run_interactive_demo(&mut device)?;
 
-    // Step 4: Configure PWM
-    println!("\n🌊 Step 4: Configure PWM");
-    println!("========================");
-    device.configure_pwm_channel(0, 5, 0.0, true)?;
-    println!("   PWM Channel 0: Pin 5 (Fan Control)");
+    println!("✅ Step-by-step configuration completed!");
+    Ok(())
+}
 
-    // Step 5: Configure MAX7219 Display
-    println!("\n📺 Step 5: Configure MAX7219 Display");
-    println!("====================================");
-    {
-        let mut display = Max7219::new(&mut device, 24)?;
-        display.configure_numeric(8)?;
-        display.set_intensity(8)?;
-        display.display_text("READY")?;
-        println!("   Display: 8-digit numeric on CS pin 24");
-    }
+fn configure_digital_io(device: &mut PoKeysDevice) -> Result<()> {
+    println!("\n📌 Step 1: Configure Digital I/O");
+    println!("Press Enter to continue...");
+    wait_for_enter();
 
-    // Step 6: Interactive demonstration
-    println!("\n🎮 Step 6: Interactive Demonstration");
-    println!("====================================");
-    println!("Testing device functionality for 10 seconds...");
+    device.set_pin_function(1, PinFunction::DigitalInput)?; // Button
+    device.set_pin_function(2, PinFunction::DigitalInput)?; // Switch
+    device.set_pin_function(3, PinFunction::DigitalOutput)?; // LED 1
+    device.set_pin_function(4, PinFunction::DigitalOutput)?; // LED 2
 
-    for i in 0..20 {
-        // Read button states
-        let start_button = device.get_digital_input(1)?;
-        let stop_button = device.get_digital_input(2)?;
-
-        // Control LEDs and display based on button states
-        if start_button {
-            device.set_digital_output(3, true)?;
-            device.set_digital_output(4, false)?;
-            {
-                let mut display = Max7219::new(&mut device, 24)?;
-                display.display_text("START")?;
-            }
-        } else if stop_button {
-            device.set_digital_output(3, false)?;
-            device.set_digital_output(4, true)?;
-            {
-                let mut display = Max7219::new(&mut device, 24)?;
-                display.display_text("STOP")?;
-            }
-        } else {
-            device.set_digital_output(3, false)?;
-            device.set_digital_output(4, false)?;
-            {
-                let mut display = Max7219::new(&mut device, 24)?;
-                display.display_text("READY")?;
-            }
-        }
-
-        // Vary fan speed
-        let fan_speed = (i * 5) % 100;
-        device.set_pwm_duty_cycle_percent(0, fan_speed as f32)?;
-
-        thread::sleep(Duration::from_millis(500));
-    }
-
-    // Step 7: Cleanup
-    println!("\n🧹 Step 7: Cleanup");
-    println!("==================");
-    device.set_digital_output(3, false)?;
-    device.set_digital_output(4, false)?;
-    device.set_pwm_duty_cycle_percent(0, 0.0)?;
-    {
-        let mut display = Max7219::new(&mut device, 24)?;
-        display.display_text("DONE")?;
-    }
-
-    println!("\n✅ Step-by-Step Configuration Complete!");
-    println!("You have successfully configured and tested your PoKeys device.");
+    println!("   ✅ Pin 1: Digital Input (Button)");
+    println!("   ✅ Pin 2: Digital Input (Switch)");
+    println!("   ✅ Pin 3: Digital Output (LED 1)");
+    println!("   ✅ Pin 4: Digital Output (LED 2)");
 
     Ok(())
+}
+
+fn configure_pwm(device: &mut PoKeysDevice) -> Result<()> {
+    println!("\n🌊 Step 2: Configure PWM Outputs");
+    println!("Press Enter to continue...");
+    wait_for_enter();
+
+    device.configure_pwm_channel(0, 5, 0.0, true)?; // Channel 0, pin 5
+    device.configure_pwm_channel(1, 6, 0.0, true)?; // Channel 1, pin 6
+
+    println!("   ✅ PWM Channel 0: Pin 5 (Motor Control)");
+    println!("   ✅ PWM Channel 1: Pin 6 (Fan Control)");
+
+    Ok(())
+}
+
+fn configure_encoders(device: &mut PoKeysDevice) -> Result<()> {
+    println!("\n🔄 Step 3: Configure Encoders");
+    println!("Press Enter to continue...");
+    wait_for_enter();
+
+    device.configure_encoder(0, 10, 11, EncoderMode::Quadrature4x)?;
+
+    println!("   ✅ Encoder 0: Pins 10-11 (4x Quadrature)");
+
+    Ok(())
+}
+
+fn configure_spi_interface(device: &mut PoKeysDevice) -> Result<()> {
+    println!("\n📡 Step 4: Configure SPI Interface");
+    println!("Press Enter to continue...");
+    wait_for_enter();
+
+    device.configure_spi(1000000, SpiMode::Mode0)?;
+    println!("   ✅ SPI configured (1MHz, Mode 0)");
+    println!("   ✅ Available for external SPI devices");
+
+    Ok(())
+}
+
+fn configure_analog_inputs(device: &mut PoKeysDevice) -> Result<()> {
+    println!("\n📊 Step 5: Configure Analog Inputs");
+    println!("Press Enter to continue...");
+    wait_for_enter();
+
+    device.set_pin_function(41, PinFunction::AnalogInput)?; // Analog pin
+    device.set_pin_function(42, PinFunction::AnalogInput)?; // Analog pin
+
+    println!("   ✅ Pin 41: Analog Input (Sensor 1)");
+    println!("   ✅ Pin 42: Analog Input (Sensor 2)");
+
+    Ok(())
+}
+
+fn run_interactive_demo(device: &mut PoKeysDevice) -> Result<()> {
+    println!("\n🎮 Step 6: Interactive Demonstration");
+    println!("Press Enter to start the demo, or 'q' to quit...");
+
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
+    if input.trim() == "q" {
+        return Ok(());
+    }
+
+    println!("Running 10-second demonstration...");
+
+    for i in 0..40 {
+        // Read inputs
+        let button = device.get_digital_input(1)?;
+        let switch = device.get_digital_input(2)?;
+        let encoder_pos = device.get_encoder_position(0)?;
+        let analog1 = device.get_analog_input(41)?;
+        let analog2 = device.get_analog_input(42)?;
+
+        // Control outputs
+        device.set_digital_output(3, button || i % 4 == 0)?;
+        device.set_digital_output(4, switch || i % 6 == 0)?;
+
+        // Dynamic PWM
+        let pwm1_duty = ((i * 2) % 100) as u32;
+        let pwm2_duty = if button { 80 } else { 20 };
+
+        device.set_pwm_duty_cycle(0, pwm1_duty)?;
+        device.set_pwm_duty_cycle(1, pwm2_duty)?;
+
+        // Status every 2 seconds
+        if i % 8 == 0 {
+            println!(
+                "   Status: Button={}, Switch={}, Encoder={}, Analog1={}, Analog2={}",
+                if button { "ON" } else { "OFF" },
+                if switch { "ON" } else { "OFF" },
+                encoder_pos,
+                analog1,
+                analog2
+            );
+        }
+
+        thread::sleep(Duration::from_millis(250));
+    }
+
+    // Cleanup
+    device.set_digital_output(3, false)?;
+    device.set_digital_output(4, false)?;
+    device.set_pwm_duty_cycle(0, 0)?;
+    device.set_pwm_duty_cycle(1, 0)?;
+
+    println!("✅ Demonstration complete!");
+    Ok(())
+}
+
+fn wait_for_enter() {
+    print!("   ");
+    io::stdout().flush().unwrap();
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
 }

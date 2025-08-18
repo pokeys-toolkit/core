@@ -3,7 +3,6 @@
 //! This example demonstrates basic device configuration and control
 //! without external dependencies.
 
-use pokeys_lib::devices::spi::Max7219;
 use pokeys_lib::*;
 use std::thread;
 use std::time::Duration;
@@ -41,13 +40,10 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     device.configure_pwm_channel(0, 5, 0.0, true)?; // Channel 0, pin 5, 0% duty, enabled
     println!("   Pin 5: PWM Output (Fan Control)");
 
-    // Configure MAX7219 display if SPI is available
-    println!("\n📺 Configuring MAX7219 display...");
-    let mut display = Max7219::new(&mut device, 24)?;
-    display.configure_numeric(8)?;
-    display.set_intensity(8)?;
-    display.display_text("HELLO")?;
-    println!("   Display configured on CS pin 24");
+    // Configure SPI for external devices
+    println!("\n📡 Configuring SPI interface...");
+    device.configure_spi(1000000, SpiMode::Mode0)?;
+    println!("   SPI configured for external devices on CS pin 24");
 
     println!("\n🎮 Running demonstration...");
 

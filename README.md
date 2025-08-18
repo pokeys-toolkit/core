@@ -50,10 +50,6 @@ A pure Rust implementation of the PoKeysLib for controlling PoKeys devices. This
 
 ### Display & Interface Support
 - **LCD Display**: Text LCD display control and management
-- **MAX7219**: Comprehensive support for MAX7219 LED display drivers
-  - Individual and daisy-chained displays
-  - 7-segment, dot matrix, and raw segment modes
-  - Text display with justification and scrolling
 - **Seven-Segment**: Built-in character mapping and display utilities
 
 ### Sensor Integration
@@ -118,34 +114,6 @@ fn main() -> Result<()> {
 }
 ```
 
-### MAX7219 Multi-Display Control
-```rust
-use pokeys_lib::*;
-use pokeys_lib::devices::spi::Max7219;
-
-fn main() -> Result<()> {
-    let mut device = connect_to_device_with_serial(32218, true, 3000)?;
-
-    // Create individual displays (no daisy chaining)
-    let mut display0 = Max7219::new(&mut device, 24)?; // CS pin 24
-    let mut display1 = Max7219::new(&mut device, 26)?; // CS pin 26
-
-    // Configure for text display
-    display0.configure_raw_segments(8)?;
-    display1.configure_raw_segments(8)?;
-
-    // Display different content on each
-    display0.display_text("HELLO")?;
-    display1.display_text("WORLD")?;
-
-    // Control intensity independently
-    display0.set_intensity(15)?; // Bright
-    display1.set_intensity(5)?;  // Dim
-
-    Ok(())
-}
-```
-
 ### Encoder Monitoring
 ```rust
 use pokeys_lib::*;
@@ -191,7 +159,7 @@ Comprehensive SPI pin reservation system with updated device models:
 - ✅ **Pin 23 (MOSI)** automatically reserved when SPI is enabled
 - ✅ **Pin 25 (CLK)** automatically reserved when SPI is enabled  
 - ✅ **Configuration validation** prevents hardware conflicts
-- ✅ **31-33 CS pins** available per device for MAX7219 displays
+- ✅ **31-33 CS pins** available per device for SPI peripherals
 
 ### Updated Device Models
 - ✅ **All device models** updated with SPI capabilities

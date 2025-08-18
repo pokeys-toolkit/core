@@ -3,7 +3,6 @@
 //! This example shows basic device configuration and control
 //! without external configuration dependencies.
 
-use pokeys_lib::devices::spi::Max7219;
 use pokeys_lib::*;
 use std::thread;
 use std::time::Duration;
@@ -53,11 +52,9 @@ fn apply_basic_configuration(
     // Configure PWM
     device.configure_pwm_channel(0, 5, 0.0, true)?; // Channel 0, pin 5, 0% duty, enabled
 
-    // Configure MAX7219 display if possible
-    let mut display = Max7219::new(device, 24)?;
-    display.configure_numeric(8)?;
-    display.set_intensity(8)?;
-    display.display_text("READY")?;
+    // Configure SPI for external devices
+    device.configure_spi(1000000, SpiMode::Mode0)?;
+    println!("   SPI configured for external devices");
 
     println!("✅ Configuration applied");
     Ok(())
@@ -99,10 +96,6 @@ fn cleanup_device(
     device.set_digital_output(3, false)?;
     device.set_digital_output(4, false)?;
     device.set_pwm_duty_cycle(0, 0)?;
-
-    // Clear display if configured
-    let mut display = Max7219::new(device, 24)?;
-    display.clear()?;
 
     println!("✅ Cleanup complete");
     Ok(())
