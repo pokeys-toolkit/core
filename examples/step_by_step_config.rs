@@ -3,8 +3,8 @@
 //! This example walks through configuring a PoKeys device step by step,
 //! demonstrating each major feature with clear explanations.
 
-use pokeys_lib::*;
 use pokeys_lib::devices::spi::Max7219;
+use pokeys_lib::*;
 use std::thread;
 use std::time::Duration;
 
@@ -35,7 +35,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     // Step 3: Configure the device pins
     println!("\n⚙️  Step 3: Configure Device Pins");
     println!("=================================");
-    
+
     // Configure digital inputs (buttons)
     device.set_pin_function(1, PinFunction::DigitalInput)?;
     device.set_pin_function(2, PinFunction::DigitalInput)?;
@@ -121,6 +121,6 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     println!("\n✅ Step-by-Step Configuration Complete!");
     println!("You have successfully configured and tested your PoKeys device.");
-    
+
     Ok(())
 }

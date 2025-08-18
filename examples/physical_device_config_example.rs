@@ -3,8 +3,8 @@
 //! This example demonstrates basic device configuration and control
 //! without external dependencies.
 
-use pokeys_lib::*;
 use pokeys_lib::devices::spi::Max7219;
+use pokeys_lib::*;
 use std::thread;
 use std::time::Duration;
 
@@ -27,7 +27,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     // Basic pin configuration
     println!("\n🔧 Configuring pins...");
-    
+
     // Configure pin 1 as digital output (LED)
     device.set_pin_function(1, PinFunction::DigitalOutput)?;
     device.set_digital_output(1, false)?;
@@ -50,22 +50,22 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     println!("   Display configured on CS pin 24");
 
     println!("\n🎮 Running demonstration...");
-    
+
     // Run demonstration for 10 seconds
     for i in 0..20 {
         // Blink LED
         device.set_digital_output(1, i % 2 == 0)?;
-        
+
         // Read button
         let button_state = device.get_digital_input(2)?;
         if button_state {
             println!("   Button pressed!");
         }
-        
+
         // Vary PWM duty cycle
         let duty = (i * 5) % 100;
         device.set_pwm_duty_cycle(0, duty as u32)?;
-        
+
         thread::sleep(Duration::from_millis(500));
     }
 
