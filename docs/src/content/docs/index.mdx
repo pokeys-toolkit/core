@@ -1,0 +1,44 @@
+---
+title: PoKeys Core Library
+description: Pure Rust implementation of the PoKeysLib for controlling PoKeys devices
+template: splash
+hero:
+  tagline: Pure Rust implementation of the PoKeysLib for controlling PoKeys devices
+  image:
+    file: ../../assets/houston.webp
+  actions:
+    - text: Get Started
+      link: /guides/introduction/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/pokeys-toolkit/core
+      icon: external
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Features
+
+<CardGrid stagger>
+	<Card title="🚀 Performance Breakthrough" icon="rocket">
+		Revolutionary dual optimization system provides massive performance improvements with 96.4% time reduction and 28x faster pin configuration.
+	</Card>
+	<Card title="🔌 Device Connectivity" icon="puzzle">
+		Full support for USB and network-connected PoKeys devices with auto-detection and multi-device management.
+	</Card>
+	<Card title="⚡ Advanced Control" icon="setting">
+		PWM control, encoder support, pulse engine v2, and matrix operations for comprehensive device control.
+	</Card>
+	<Card title="🛡️ Safety & Reliability" icon="approve-check">
+		Comprehensive pin capability validation, detailed error handling, thread safety, and failsafe settings.
+	</Card>
+</CardGrid>
+
+## Supported Devices
+
+- **PoKeys55 v3** - 55-pin development board
+- **PoKeys56U/56E** - USB/Ethernet-enabled 56-pin devices
+- **PoKeys57U/57E** - Advanced USB/Ethernet devices
+- **PoKeys58EU** - Ethernet-enabled device with extended features
+- **Custom Devices** - Extensible model system for custom hardware
