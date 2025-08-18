@@ -41,7 +41,9 @@ fn test_device_model_integration() -> Result<()> {
     fs::write(&model_path, yaml).unwrap();
 
     // Set the environment variable to use the test directory
-    std::env::set_var("POKEYS_MODEL_DIR", dir.path().to_string_lossy().to_string());
+    unsafe {
+        std::env::set_var("POKEYS_MODEL_DIR", dir.path().to_string_lossy().to_string());
+    }
 
     // This test will only run if a device is connected
     // Otherwise, it will be skipped
