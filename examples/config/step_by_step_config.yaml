@@ -1,0 +1,190 @@
+# Step-by-Step Configuration Example
+# ==================================
+# This configuration matches the step_by_step_config.rs example
+# and demonstrates how to configure a physical device.
+
+system:
+  polling_interval_ms: 100
+  log_level: info
+
+devices:
+  demo_device:
+    name: "Demo Device Configuration"
+    description: "Step-by-step configuration example for physical device"
+    serial_number: 32218  # Change this to match your device
+    
+    # Connection settings
+    connection:
+      type: usb
+      usb:
+        serial_number: 32218  # Change this to match your device
+        timeout_ms: 3000
+    
+    # SPI Configuration (required for MAX7219 display)
+    spi:
+      name: "Display Communication"
+      description: "SPI bus for MAX7219 display"
+      enabled: true
+      prescaler: 0x04  # SPI clock prescaler
+      mode: 0x00      # SPI mode (CPOL=0, CPHA=0)
+    
+    # Pin Configurations
+    pins:
+      # Digital Input Pins (Buttons)
+      1:
+        name: "Start Button"
+        description: "Production start button"
+        function: DigitalInput
+        enabled: true
+        pull_up: true
+        initial_state: false
+        notes: "Connect button between pin 1 and GND"
+      
+      2:
+        name: "Emergency Stop"
+        description: "Emergency stop button"
+        function: DigitalInput
+        enabled: true
+        pull_up: true
+        initial_state: false
+        notes: "Connect button between pin 2 and GND"
+      
+      # Digital Output Pins (LEDs)
+      3:
+        name: "Green Status LED"
+        description: "System ready indicator"
+        function: DigitalOutput
+        enabled: true
+        initial_state: false
+        notes: "Connect LED with resistor between pin 3 and GND"
+      
+      4:
+        name: "Red Alarm LED"
+        description: "Error/alarm indicator"
+        function: DigitalOutput
+        enabled: true
+        initial_state: false
+        notes: "Connect LED with resistor between pin 4 and GND"
+      
+      # PWM Output Pin
+      5:
+        name: "Fan Speed Control"
+        description: "Variable speed fan control"
+        function: PWM_1
+        enabled: true
+        initial_state: false
+        notes: "Connect PWM-controlled fan or motor driver"
+      
+      # SPI Pins (Hardware Reserved - Automatically Configured)
+      23:
+        name: "SPI MOSI"
+        description: "SPI Master Out Slave In"
+        function: SpiMosi
+        enabled: true
+        notes: "Reserved for SPI - connects to DIN on MAX7219"
+      
+      25:
+        name: "SPI CLK"
+        description: "SPI Clock Signal"
+        function: SpiClock
+        enabled: true
+        notes: "Reserved for SPI - connects to CLK on MAX7219"
+    
+    # PWM Configuration
+    pwm:
+      fan_control:
+        name: "Cooling Fan PWM"
+        description: "Variable speed cooling fan"
+        pin: 5
+        frequency_hz: 1000      # 1kHz PWM frequency
+        initial_duty_cycle: 0.0 # Start at 0% (off)
+        enabled: true
+        inverted: false
+        notes: "Controls fan speed from 0-100%"
+    
+    # MAX7219 Display Configuration
+    max7219_displays:
+      status_display:
+        name: "Status Display"
+        description: "8-digit 7-segment status display"
+        cs_pin: 24              # Chip Select pin (not 23 or 25!)
+        intensity: 8            # Brightness level (0-15)
+        digits: 8               # Number of digits
+        raw_segments: true      # Use raw segment control for text
+        enabled: true
+        initial_text: "Ready"   # Case-sensitive: mixed case for normal status
+        notes: |
+          Hardware connections:
+          - VCC: +5V
+          - GND: Ground
+          - DIN: Pin 23 (SPI MOSI)
+          - CS:  Pin 24 (Chip Select)
+          - CLK: Pin 25 (SPI CLK)
+          
+          Text Display Notes:
+          - Text is CASE-SENSITIVE!
+          - "READY" = uppercase (bold, prominent)
+          - "ready" = lowercase (subtle, different style)
+          - "Ready" = mixed case (normal status style)
+          - Choose case based on message importance
+    
+    # Device Notes
+    notes: |
+      Step-by-Step Configuration Example
+      =================================
+      
+      This configuration demonstrates:
+      
+      🔘 Digital Inputs:
+         • Pin 1: Start button (active low with pull-up)
+         • Pin 2: Emergency stop (active low with pull-up)
+      
+      💡 Digital Outputs:
+         • Pin 3: Green LED (system ready indicator)
+         • Pin 4: Red LED (alarm/error indicator)
+      
+      🌀 PWM Output:
+         • Pin 5: Fan speed control (0-100% duty cycle)
+      
+      📺 SPI Display:
+         • Pin 23: SPI MOSI (automatically reserved)
+         • Pin 24: MAX7219 CS (chip select)
+         • Pin 25: SPI CLK (automatically reserved)
+      
+      Hardware Setup:
+      ==============
+      
+      Buttons:
+      - Connect momentary push buttons between pins 1/2 and GND
+      - Internal pull-ups are enabled, so buttons are active low
+      
+      LEDs:
+      - Connect LEDs with appropriate resistors (220Ω-1kΩ)
+      - Anode to pin 3/4, cathode to GND through resistor
+      
+      Fan/Motor:
+      - Connect PWM-controlled fan or motor driver to pin 5
+      - Ensure proper voltage levels and current capacity
+      
+      MAX7219 Display:
+      - Connect 8-digit 7-segment display module
+      - VCC to +5V, GND to ground
+      - DIN to pin 23, CS to pin 24, CLK to pin 25
+      
+      Testing:
+      =======
+      
+      Run the example:
+      cargo run --example step_by_step_config
+      
+      Expected behavior:
+      1. Device connects and configures all pins
+      2. Display shows "READY"
+      3. Press start button → Green LED on, display shows "START"
+      4. Press stop button → Red LED on, display shows "STOP"
+      5. Release buttons → LEDs off, display shows "READY"
+      6. Fan speed varies automatically in a sine wave pattern
+      7. After 10 seconds, all outputs turn off, display shows "DONE"
+      
+      This demonstrates a complete configuration cycle from
+      YAML config → physical device → real-world testing.

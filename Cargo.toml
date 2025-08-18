@@ -1,0 +1,30 @@
+[package]
+name = "pokeys-lib"
+version = "0.3.0"
+edition = "2021"
+authors = ["marc@teichtahl.com"]
+description = "Pure Rust implementation of PoKeysLib - Core Library for controlling PoKeys devices"
+license = "LGPL-2.1"
+repository = "https://github.com/pokeys-toolkit/Pokeys-lib"
+keywords = ["pokeys", "hardware", "usb", "automation", "control"]
+categories = ["hardware-support", "api-bindings"]
+readme = "README.md"
+
+[lib]
+name = "pokeys_lib"
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+hardware-tests = []
+
+[dependencies]
+serde = { version = "1.0.219", features = ["derive"] }
+serde_yaml = "0.9"
+thiserror = "2.0.12"
+log = "0.4.27"
+notify = "6.1.1"
+dirs = "5.0.1"
+
+[dev-dependencies]
+tempfile = "3.10.1"

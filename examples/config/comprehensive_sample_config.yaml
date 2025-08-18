@@ -1,0 +1,477 @@
+# PoKeys Comprehensive Sample Configuration
+# =========================================
+# This configuration demonstrates ALL capabilities currently supported
+# by the PoKeys library system including SPI, MAX7219, pins, and validation.
+
+system:
+  # System-wide settings
+  polling_interval_ms: 50  # Fast polling for responsive applications
+  log_level: info          # Available: trace, debug, info, warn, error
+
+devices:
+  # Primary Production Controller
+  production_controller:
+    name: "Production Line Controller"
+    description: "Main production line control system"
+    serial_number: 32218
+    
+    # Connection Configuration
+    connection:
+      type: usb
+      usb:
+        serial_number: 32218
+        timeout_ms: 3000
+    
+    # SPI Configuration for Display Communication
+    spi:
+      name: "Display Communication Bus"
+      description: "SPI bus for MAX7219 displays and other SPI devices"
+      enabled: true
+      prescaler: 0x04      # SPI clock prescaler (affects speed)
+      mode: 0x00          # SPI mode (CPOL=0, CPHA=0)
+    
+    # Pin Configurations - Comprehensive Examples
+    pins:
+      # Digital Input Pins
+      1:
+        name: "Emergency Stop"
+        description: "Emergency stop button - active low"
+        function: DigitalInput
+        enabled: true
+        pull_up: true
+        initial_state: false
+      
+      2:
+        name: "Start Button"
+        description: "Production start button"
+        function: DigitalInput
+        enabled: true
+        pull_up: true
+        initial_state: false
+      
+      3:
+        name: "Mode Select"
+        description: "Production mode selector"
+        function: DigitalInput
+        enabled: true
+        pull_up: true
+        initial_state: false
+      
+      # Digital Output Pins
+      4:
+        name: "Status LED Green"
+        description: "System ready indicator"
+        function: DigitalOutput
+        enabled: true
+        initial_state: false
+      
+      5:
+        name: "Status LED Red"
+        description: "Error/alarm indicator"
+        function: DigitalOutput
+        enabled: true
+        initial_state: false
+      
+      6:
+        name: "Conveyor Motor"
+        description: "Main conveyor motor control"
+        function: DigitalOutput
+        enabled: true
+        initial_state: false
+      
+      # PWM Output Pins
+      7:
+        name: "Fan Speed Control"
+        description: "Cooling fan PWM control"
+        function: PWM_1
+        enabled: true
+        initial_state: false
+      
+      8:
+        name: "Heater Control"
+        description: "Process heater PWM control"
+        function: PWM_2
+        enabled: true
+        initial_state: false
+      
+      9:
+        name: "Pump Speed"
+        description: "Fluid pump speed control"
+        function: PWM_3
+        enabled: true
+        initial_state: false
+      
+      # Encoder Pins (Quadrature Pairs)
+      10:
+        name: "Position Encoder A"
+        description: "Main position encoder channel A"
+        function: Encoder_1A
+        enabled: true
+      
+      11:
+        name: "Position Encoder B"
+        description: "Main position encoder channel B"
+        function: Encoder_1B
+        enabled: true
+      
+      12:
+        name: "Speed Encoder A"
+        description: "Speed measurement encoder channel A"
+        function: Encoder_2A
+        enabled: true
+      
+      13:
+        name: "Speed Encoder B"
+        description: "Speed measurement encoder channel B"
+        function: Encoder_2B
+        enabled: true
+      
+      # Matrix Keyboard Pins
+      14:
+        name: "Keypad Row 1"
+        description: "Matrix keyboard row 1"
+        function: MatrixKeyboardRow1
+        enabled: true
+      
+      15:
+        name: "Keypad Row 2"
+        description: "Matrix keyboard row 2"
+        function: MatrixKeyboardRow2
+        enabled: true
+      
+      16:
+        name: "Keypad Row 3"
+        description: "Matrix keyboard row 3"
+        function: MatrixKeyboardRow3
+        enabled: true
+      
+      17:
+        name: "Keypad Row 4"
+        description: "Matrix keyboard row 4"
+        function: MatrixKeyboardRow4
+        enabled: true
+      
+      18:
+        name: "Keypad Col 1"
+        description: "Matrix keyboard column 1"
+        function: MatrixKeyboardCol1
+        enabled: true
+      
+      19:
+        name: "Keypad Col 2"
+        description: "Matrix keyboard column 2"
+        function: MatrixKeyboardCol2
+        enabled: true
+      
+      20:
+        name: "Keypad Col 3"
+        description: "Matrix keyboard column 3"
+        function: MatrixKeyboardCol3
+        enabled: true
+      
+      21:
+        name: "Keypad Col 4"
+        description: "Matrix keyboard column 4"
+        function: MatrixKeyboardCol4
+        enabled: true
+      
+      # SPI Pins (Hardware Reserved)
+      23:
+        name: "SPI MOSI"
+        description: "SPI Master Out Slave In"
+        function: SpiMosi
+        enabled: true
+      
+      25:
+        name: "SPI CLK"
+        description: "SPI Clock Signal"
+        function: SpiClock
+        enabled: true
+      
+      # Analog Input Pins
+      26:
+        name: "Temperature Sensor"
+        description: "Process temperature measurement"
+        function: AnalogInput
+        enabled: true
+      
+      27:
+        name: "Pressure Sensor"
+        description: "System pressure measurement"
+        function: AnalogInput
+        enabled: true
+      
+      28:
+        name: "Flow Rate Sensor"
+        description: "Fluid flow rate measurement"
+        function: AnalogInput
+        enabled: true
+      
+      29:
+        name: "Level Sensor"
+        description: "Tank level measurement"
+        function: AnalogInput
+        enabled: true
+      
+      30:
+        name: "Vibration Sensor"
+        description: "Equipment vibration monitoring"
+        function: AnalogInput
+        enabled: true
+    
+    # PWM Configuration
+    pwm:
+      # PWM Channel 1 - Fan Speed Control
+      cooling_fan:
+        name: "Cooling Fan PWM"
+        description: "Variable speed cooling fan"
+        pin: 7
+        frequency_hz: 1000      # 1kHz PWM frequency
+        initial_duty_cycle: 0.0 # Start at 0% (off)
+        enabled: true
+        inverted: false
+      
+      # PWM Channel 2 - Heater Control
+      process_heater:
+        name: "Process Heater PWM"
+        description: "Temperature control heater"
+        pin: 8
+        frequency_hz: 100       # 100Hz for heating element
+        initial_duty_cycle: 0.0 # Start at 0% (off)
+        enabled: true
+        inverted: false
+      
+      # PWM Channel 3 - Pump Speed
+      fluid_pump:
+        name: "Fluid Pump PWM"
+        description: "Variable speed fluid pump"
+        pin: 9
+        frequency_hz: 2000      # 2kHz for smooth motor control
+        initial_duty_cycle: 0.0 # Start at 0% (off)
+        enabled: true
+        inverted: false
+    
+    # Encoder Configuration
+    encoders:
+      # Encoder 1 - Position Feedback
+      position_encoder:
+        name: "Main Position Encoder"
+        description: "Primary position feedback system"
+        pin_a: 10
+        pin_b: 11
+        sampling_4x: true     # 4x sampling for maximum resolution
+        enabled: true
+        resolution: 1000      # 1000 PPR encoder
+        initial_position: 0
+      
+      # Encoder 2 - Speed Measurement
+      speed_encoder:
+        name: "Speed Measurement Encoder"
+        description: "High-resolution speed feedback"
+        pin_a: 12
+        pin_b: 13
+        sampling_4x: true     # 4x sampling for speed accuracy
+        enabled: true
+        resolution: 500       # 500 PPR encoder
+        initial_position: 0
+    
+    # Analog Input Configuration
+    analog_inputs:
+      # Temperature Sensor
+      26:
+        name: "Process Temperature"
+        description: "Main process temperature sensor"
+        reference_voltage: 10.0    # 0-10V sensor
+        enabled: true
+      
+      # Pressure Sensor
+      27:
+        name: "System Pressure"
+        description: "Hydraulic system pressure"
+        reference_voltage: 5.0     # 4-20mA converted to 1-5V
+        enabled: true
+      
+      # Flow Rate Sensor
+      28:
+        name: "Fluid Flow Rate"
+        description: "Process fluid flow measurement"
+        reference_voltage: 5.0     # 0-5V sensor
+        enabled: true
+      
+      # Level Sensor
+      29:
+        name: "Tank Level"
+        description: "Raw material tank level"
+        reference_voltage: 10.0    # 0-10V sensor
+        enabled: true
+      
+      # Vibration Sensor
+      30:
+        name: "Equipment Vibration"
+        description: "Predictive maintenance sensor"
+        reference_voltage: 5.0     # ±2.5V accelerometer
+        enabled: true
+    
+    # Matrix Keyboard Configuration
+    matrix_keyboard:
+      name: "Operator Control Keypad"
+      description: "4x4 matrix keypad for operator input"
+      rows: 4
+      columns: 4
+      row_pins: [14, 15, 16, 17]      # MatrixKeyboard_Row1-4
+      column_pins: [18, 19, 20, 21]   # MatrixKeyboard_Col1-4
+      debounce_ms: 50                 # 50ms debounce time
+      enabled: true
+    
+    # LCD Display Configuration
+    lcd:
+      name: "Operator LCD Display"
+      description: "20x4 character LCD for operator interface"
+      lcd_type: hd44780             # HD44780 compatible LCD
+      rows: 4                       # 4 rows
+      columns: 20                   # 20 characters per row
+      data_pins: [41, 42, 43, 44]   # LCD data pins D4-D7
+      enable_pin: 45                # LCD enable pin
+      register_select_pin: 46       # LCD RS pin
+      read_write_pin: 47            # LCD R/W pin (optional)
+      enabled: true
+    
+    # MAX7219 Single Display Configuration
+    max7219_displays:
+      # Primary Status Display
+      main_status:
+        name: "Main Status Display"
+        description: "Primary production status display"
+        cs_pin: 24                    # Chip Select pin (not 23 or 25)
+        intensity: 8                  # Brightness level (0-15)
+        digits: 8                     # Number of digits
+        raw_segments: true            # Use raw segment control
+        enabled: true
+        initial_text: "Ready"         # Case-sensitive: mixed case for status
+      
+      # Production Counter Display
+      production_counter:
+        name: "Production Counter"
+        description: "Parts produced counter"
+        cs_pin: 31                    # Different CS pin
+        intensity: 10                 # Brighter display
+        digits: 8                     # 8-digit counter
+        raw_segments: false           # Use numeric mode
+        enabled: true
+        initial_number: 0             # Start at zero
+      
+      # Temperature Display
+      temperature_display:
+        name: "Temperature Display"
+        description: "Process temperature readout"
+        cs_pin: 32                    # Another CS pin
+        intensity: 6                  # Medium brightness
+        digits: 6                     # 6-digit display
+        raw_segments: false           # Numeric mode
+        enabled: true
+        initial_number: 0             # Start at 0
+      
+      # Pressure Display
+      pressure_display:
+        name: "Pressure Display"
+        description: "System pressure readout"
+        cs_pin: 33                    # Yet another CS pin
+        intensity: 6                  # Medium brightness
+        digits: 6                     # 6-digit display
+        raw_segments: false           # Numeric mode
+        enabled: true
+        initial_number: 0             # Start at 0
+    
+    # MAX7219 Multi-Display Configuration
+    max7219_multi:
+      # Production Line Displays
+      production_line:
+        name: "Production Line Displays"
+        description: "Multiple displays for production line monitoring"
+        displays:
+          - name: "Line 1 Counter"
+            cs_pin: 34                # CS pin for line 1
+          - name: "Line 2 Counter"
+            cs_pin: 35                # CS pin for line 2
+          - name: "Line 3 Counter"
+            cs_pin: 36                # CS pin for line 3
+          - name: "Line 4 Counter"
+            cs_pin: 37                # CS pin for line 4
+        intensity: 8                  # Common intensity for all displays
+        digits: 8                     # 8 digits per display
+        raw_segments: false           # Numeric mode
+        enabled: true
+      
+      # Quality Control Displays
+      quality_control:
+        name: "Quality Control Displays"
+        description: "Quality metrics display group"
+        displays:
+          - name: "Pass Count"
+            cs_pin: 38                # CS pin for pass count
+          - name: "Fail Count"
+            cs_pin: 39                # CS pin for fail count
+          - name: "Reject Rate"
+            cs_pin: 40                # CS pin for reject rate
+        intensity: 10                 # Bright for visibility
+        digits: 6                     # 6 digits per display
+        raw_segments: false           # Numeric mode
+        enabled: true
+      
+      # Process Parameters
+      process_parameters:
+        name: "Process Parameter Displays"
+        description: "Real-time process parameter monitoring"
+        displays:
+          - name: "Speed RPM"
+            cs_pin: 41                # CS pin for speed
+          - name: "Flow Rate"
+            cs_pin: 42                # CS pin for flow
+          - name: "Efficiency"
+            cs_pin: 43                # CS pin for efficiency
+        intensity: 7                  # Medium-high brightness
+        digits: 6                     # 6 digits per display
+        raw_segments: false           # Numeric mode
+        enabled: true
+
+  # Secondary Device (Optional)
+  backup_controller:
+    name: "Backup Controller"
+    description: "Redundant backup system"
+    serial_number: 32219
+    
+    connection:
+      type: usb
+      usb:
+        serial_number: 32219
+        timeout_ms: 3000
+    
+    # Minimal configuration for backup system
+    spi:
+      name: "Backup SPI Bus"
+      enabled: true
+      prescaler: 0x04
+      mode: 0x00
+    
+    pins:
+      23:
+        name: "SPI MOSI"
+        function: SpiMosi
+        enabled: true
+      25:
+        name: "SPI CLK"
+        function: SpiClock
+        enabled: true
+      1:
+        name: "Backup Status"
+        function: DigitalOutput
+        enabled: true
+        initial_state: false
+    
+    max7219_displays:
+      backup_display:
+        name: "Backup Status Display"
+        cs_pin: 24
+        intensity: 8
+        enabled: true
+        initial_text: "BACKUP"

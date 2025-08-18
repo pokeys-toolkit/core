@@ -1,0 +1,1033 @@
+//! Hardware integration tests for PoKeys library
+//!
+//! These tests require actual PoKeys hardware to be connected.
+//! Run with: cargo test --features hardware-tests
+//!
+//! Test Categories:
+//! - Basic device operations (connection, enumeration, device info)
+//! - Digital I/O operations (input/output, pin configuration)
+//! - Analog I/O operations (ADC readings, voltage measurements)
+//! - PWM operations (frequency, duty cycle, enable/disable)
+//! - Encoder operations (configuration, reading, movement detection)
+//! - Advanced features (matrix keyboard, LCD, pulse engine)
+//! - Error handling and edge cases
+//! - Performance and stress testing
+//! - Multi-device scenarios
+
+#[cfg(feature = "hardware-tests")]
+mod hardware_tests {
+    use pokeys_lib::*;
+    use std::collections::HashMap;
+    use std::thread;
+    use std::time::{Duration, Instant};
+
+    /// Test comprehensive device functionality with real hardware
+    #[test]
+    fn test_full_device_workflow() {
+        println!("=== Full Device Workflow Test ===");
+
+        // Step 1: Enumerate devices
+        let device_count = enumerate_usb_devices().expect("Failed to enumerate USB devices");
+
+        if device_count == 0 {
+            println!("SKIP: No PoKeys devices found");
+            return;
+        }
+
+        println!("Found {} PoKeys device(s)", device_count);
+
+        // Step 2: Connect to first device
+        let mut device = connect_to_device(0).expect("Failed to connect to device");
+
+        println!("Connected to device successfully");
+
+        // Step 3: Get device information
+        device.get_device_data().expect("Failed to get device data");
+
+        println!("Device Info:");
+        println!("  Serial Number: {}", device.device_data.serial_number);
+        println!(
+            "  Firmware: {}.{}",
+            device.device_data.firmware_version_major, device.device_data.firmware_version_minor
+        );
+        println!("  Pin Count: {}", device.info.pin_count);
+        println!("  PWM Channels: {}", device.info.pwm_count);
+
+        // Step 4: Test digital I/O
+        if device.info.pin_count > 0 {
+            test_digital_io_workflow(&mut device);
+        }
+
+        // Step 5: Test analog I/O
+        if device.info.analog_inputs > 0 {
+            test_analog_io_workflow(&mut device);
+        }
+
+        // Step 6: Test PWM
+        if device.info.pwm_count > 0 {
+            test_pwm_workflow(&mut device);
+        }
+
+        // Step 7: Test encoders
+        if device.info.encoders_count > 0 {
+            test_encoder_workflow(&mut device);
+        }
+
+        println!("=== Full Device Workflow Test Complete ===");
+    }
+
+    fn test_digital_io_workflow(device: &mut PoKeysDevice) {
+        println!("\n--- Testing Digital I/O ---");
+
+        // Configure pin 1 as digital output
+        device
+            .set_pin_function(1, PinFunction::DigitalOutput)
+            .expect("Failed to set pin function");
+
+        println!("Configured pin 1 as digital output");
+
+        // Test output states
+        for (i, state) in [true, false, true, false].iter().enumerate() {
+            device
+                .set_digital_output(1, *state)
+                .expect("Failed to set digital output");
+
+            println!(
+                "Step {}: Set pin 1 to {}",
+                i + 1,
+                if *state { "HIGH" } else { "LOW" }
+            );
+            thread::sleep(Duration::from_millis(200));
+        }
+
+        // Configure pin 2 as digital input and read it
+        if device.info.pin_count > 1 {
+            device
+                .set_pin_function(2, PinFunction::DigitalInput)
+                .expect("Failed to set pin 2 as input");
+
+            match device.get_digital_input(2) {
+                Ok(state) => println!("Pin 2 input state: {}", if state { "HIGH" } else { "LOW" }),
+                Err(e) => println!("Could not read pin 2: {}", e),
+            }
+        }
+    }
+
+    fn test_analog_io_workflow(device: &mut PoKeysDevice) {
+        println!("\n--- Testing Analog I/O ---");
+
+        // Read analog inputs
+        for pin in 1..=std::cmp::min(4, device.info.analog_inputs) {
+            match device.get_analog_input(pin) {
+                Ok(value) => {
+                    let voltage = (value as f32 / 4095.0) * 5.0; // Assuming 5V reference
+                    println!("Analog input {}: {} (raw) = {:.3}V", pin, value, voltage);
+                }
+                Err(e) => println!("Could not read analog input {}: {}", pin, e),
+            }
+        }
+    }
+
+    fn test_pwm_workflow(device: &mut PoKeysDevice) {
+        println!("\n--- Testing PWM ---");
+
+        // Set PWM frequency
+        device
+            .set_pwm_frequency(1000)
+            .expect("Failed to set PWM frequency");
+
+        println!("Set PWM frequency to 1000 Hz");
+
+        // Test different duty cycles
+        let duty_cycles = [0.0, 25.0, 50.0, 75.0, 100.0, 0.0];
+
+        for (i, &duty) in duty_cycles.iter().enumerate() {
+            device
+                .set_pwm_duty_cycle_percent(0, duty)
+                .expect("Failed to set PWM duty cycle");
+
+            device
+                .enable_pwm_channel(0, duty > 0.0)
+                .expect("Failed to enable/disable PWM channel");
+
+            println!("Step {}: PWM duty cycle = {}%", i + 1, duty);
+            thread::sleep(Duration::from_millis(300));
+        }
+    }
+
+    fn test_encoder_workflow(device: &mut PoKeysDevice) {
+        println!("\n--- Testing Encoders ---");
+
+        // Configure encoder 0
+        let mut options = EncoderOptions::new();
+        options.enabled = true;
+        options.sampling_4x = true;
+
+        device
+            .configure_encoder(0, 1, 2, options)
+            .expect("Failed to configure encoder");
+
+        println!("Configured encoder 0 on pins 1 and 2 with 4x sampling");
+
+        // Read encoder values over time
+        let mut last_value = 0i32;
+
+        for i in 0..10 {
+            match device.get_encoder_value(0) {
+                Ok(value) => {
+                    let delta = value - last_value;
+                    println!("Reading {}: Encoder = {} (Δ{})", i + 1, value, delta);
+                    last_value = value;
+                }
+                Err(e) => println!("Could not read encoder: {}", e),
+            }
+            thread::sleep(Duration::from_millis(100));
+        }
+    }
+
+    /// Test error handling with invalid operations
+    #[test]
+    fn test_error_handling() {
+        println!("=== Error Handling Test ===");
+
+        let device_count = enumerate_usb_devices().expect("Failed to enumerate USB devices");
+
+        if device_count == 0 {
+            println!("SKIP: No PoKeys devices found");
+            return;
+        }
+
+        let mut device = connect_to_device(0).expect("Failed to connect to device");
+
+        device.get_device_data().expect("Failed to get device data");
+
+        // Test invalid pin numbers
+        assert!(device
+            .set_pin_function(0, PinFunction::DigitalOutput)
+            .is_err());
+        assert!(device
+            .set_pin_function(999, PinFunction::DigitalOutput)
+            .is_err());
+
+        // Test invalid PWM parameters
+        assert!(device.set_pwm_duty_cycle_percent(0, 150.0).is_err()); // > 100%
+        assert!(device.set_pwm_duty_cycle_percent(999, 50.0).is_err()); // Invalid channel
+
+        println!("Error handling tests passed");
+    }
+
+    /// Test device reconnection
+    #[test]
+    fn test_device_reconnection() {
+        println!("=== Device Reconnection Test ===");
+
+        let device_count = enumerate_usb_devices().expect("Failed to enumerate USB devices");
+
+        if device_count == 0 {
+            println!("SKIP: No PoKeys devices found");
+            return;
+        }
+
+        // Connect and disconnect multiple times
+        for i in 0..3 {
+            println!("Connection attempt {}", i + 1);
+
+            let mut device = connect_to_device(0).expect("Failed to connect to device");
+
+            device.get_device_data().expect("Failed to get device data");
+
+            println!(
+                "  Connected successfully, serial: {}",
+                device.device_data.serial_number
+            );
+
+            // Do a simple operation
+            device
+                .set_pin_function(1, PinFunction::DigitalOutput)
+                .expect("Failed to set pin function");
+
+            // Device will be dropped here, simulating disconnection
+        }
+
+        println!("Reconnection test completed");
+    }
+
+    /// Performance test for rapid I/O operations
+    #[test]
+    fn test_io_performance() {
+        println!("=== I/O Performance Test ===");
+
+        let device_count = enumerate_usb_devices().expect("Failed to enumerate USB devices");
+
+        if device_count == 0 {
+            println!("SKIP: No PoKeys devices found");
+            return;
+        }
+
+        let mut device = connect_to_device(0).expect("Failed to connect to device");
+
+        device.get_device_data().expect("Failed to get device data");
+
+        // Configure pin for output
+        device
+            .set_pin_function(1, PinFunction::DigitalOutput)
+            .expect("Failed to set pin function");
+
+        // Measure digital output performance
+        let start_time = std::time::Instant::now();
+        let iterations = 100;
+
+        for i in 0..iterations {
+            let state = (i % 2) == 0;
+            device
+                .set_digital_output(1, state)
+                .expect("Failed to set digital output");
+        }
+
+        let elapsed = start_time.elapsed();
+        let ops_per_sec = iterations as f64 / elapsed.as_secs_f64();
+
+        println!(
+            "Digital output performance: {:.1} operations/second",
+            ops_per_sec
+        );
+        println!(
+            "Average time per operation: {:.2}ms",
+            elapsed.as_millis() as f64 / iterations as f64
+        );
+
+        // Basic performance check - should be able to do at least 10 ops/sec
+        assert!(
+            ops_per_sec > 10.0,
+            "Performance too low: {} ops/sec",
+            ops_per_sec
+        );
+    }
+
+    /// Test advanced PWM features
+    #[test]
+    fn test_advanced_pwm_features() {
+        println!("=== Advanced PWM Features Test ===");
+
+        let device_count = enumerate_usb_devices().expect("Failed to enumerate USB devices");
+
+        if device_count == 0 {
+            println!("SKIP: No PoKeys devices found");
+            return;
+        }
+
+        let mut device = connect_to_device(0).expect("Failed to connect to device");
+
+        device.get_device_data().expect("Failed to get device data");
+
+        if device.info.pwm_count == 0 {
+            println!("SKIP: Device has no PWM channels");
+            return;
+        }
+
+        println!("Testing PWM with {} channels", device.info.pwm_count);
+
+        // Test different frequencies
+        let frequencies = [100, 500, 1000, 2000, 5000];
+        for &freq in &frequencies {
+            device
+                .set_pwm_frequency(freq)
+                .expect("Failed to set PWM frequency");
+            println!("Set PWM frequency to {} Hz", freq);
+
+            // Test duty cycle sweep at this frequency
+            for duty in (0..=100).step_by(25) {
+                device
+                    .set_pwm_duty_cycle_percent(0, duty as f32)
+                    .expect("Failed to set PWM duty cycle");
+                device
+                    .enable_pwm_channel(0, duty > 0)
+                    .expect("Failed to enable PWM channel");
+                thread::sleep(Duration::from_millis(100));
+            }
+        }
+
+        // Test all available channels
+        for channel in 0..device.info.pwm_count {
+            device
+                .set_pwm_duty_cycle_percent(channel, 50.0)
+                .expect("Failed to set PWM duty cycle");
+            device
+                .enable_pwm_channel(channel, true)
+                .expect("Failed to enable PWM channel");
+            println!("Enabled PWM channel {} at 50%", channel);
+        }
+
+        thread::sleep(Duration::from_millis(500));
+
+        // Disable all channels
+        for channel in 0..device.info.pwm_count {
+            device
+                .enable_pwm_channel(channel, false)
+                .expect("Failed to disable PWM channel");
+        }
+
+        println!("Advanced PWM test completed");
+    }
+
+    /// Test encoder functionality with movement detection
+    #[test]
+    fn test_encoder_movement_detection() {
+        println!("=== Encoder Movement Detection Test ===");
+
+        let device_count = enumerate_usb_devices().expect("Failed to enumerate USB devices");
+
+        if device_count == 0 {
+            println!("SKIP: No PoKeys devices found");
+            return;
+        }
+
+        let mut device = connect_to_device(0).expect("Failed to connect to device");
+
+        device.get_device_data().expect("Failed to get device data");
+
+        if device.info.encoders_count == 0 {
+            println!("SKIP: Device has no encoders");
+            return;
+        }
+
+        println!("Testing {} encoders", device.info.encoders_count);
+
+        // Configure multiple encoders
+        let encoders_to_test = std::cmp::min(3, device.info.encoders_count);
+        for encoder in 0..encoders_to_test {
+            let mut options = EncoderOptions::new();
+            options.enabled = true;
+            options.sampling_4x = true;
+
+            let pin_a = (encoder * 2 + 1) as u8;
+            let pin_b = (encoder * 2 + 2) as u8;
+
+            device
+                .configure_encoder(encoder, pin_a, pin_b, options)
+                .expect("Failed to configure encoder");
+
+            println!(
+                "Configured encoder {} on pins {} and {}",
+                encoder, pin_a, pin_b
+            );
+        }
+
+        // Monitor encoders for movement
+        println!("Monitoring encoders for 10 seconds (manually turn encoders to test)...");
+        let mut last_values = vec![0i32; encoders_to_test as usize];
+        let mut movement_detected = vec![false; encoders_to_test as usize];
+
+        let start_time = Instant::now();
+        while start_time.elapsed() < Duration::from_secs(10) {
+            for encoder in 0..encoders_to_test {
+                match device.get_encoder_value(encoder) {
+                    Ok(value) => {
+                        let delta = value - last_values[encoder as usize];
+                        if delta != 0 {
+                            println!("Encoder {}: {} (Δ{})", encoder, value, delta);
+                            movement_detected[encoder as usize] = true;
+                            last_values[encoder as usize] = value;
+                        }
+                    }
+                    Err(e) => println!("Error reading encoder {}: {}", encoder, e),
+                }
+            }
+            thread::sleep(Duration::from_millis(50));
+        }
+
+        // Report results
+        for encoder in 0..encoders_to_test {
+            if movement_detected[encoder as usize] {
+                println!("✓ Encoder {} detected movement", encoder);
+            } else {
+                println!("- Encoder {} no movement detected", encoder);
+            }
+        }
+    }
+
+    /// Test matrix keyboard functionality
+    #[test]
+    fn test_matrix_keyboard() {
+        println!("=== Matrix Keyboard Test ===");
+
+        let device_count = enumerate_usb_devices().expect("Failed to enumerate USB devices");
+
+        if device_count == 0 {
+            println!("SKIP: No PoKeys devices found");
+            return;
+        }
+
+        let mut device = connect_to_device(0).expect("Failed to connect to device");
+
+        device.get_device_data().expect("Failed to get device data");
+
+        // Configure matrix keyboard (4x4 matrix as example)
+        match device.configure_matrix_keyboard(4, 4) {
+            Ok(_) => {
+                println!("Configured 4x4 matrix keyboard");
+
+                // Monitor for key presses
+                println!("Monitoring for key presses for 5 seconds...");
+                let start_time = Instant::now();
+                let mut last_key_states = HashMap::new();
+
+                while start_time.elapsed() < Duration::from_secs(5) {
+                    match device.get_matrix_keyboard_state() {
+                        Ok(key_states) => {
+                            for (key, &pressed) in &key_states {
+                                let was_pressed =
+                                    last_key_states.get(key).copied().unwrap_or(false);
+                                if pressed && !was_pressed {
+                                    println!("Key {} pressed", key);
+                                } else if !pressed && was_pressed {
+                                    println!("Key {} released", key);
+                                }
+                            }
+                            last_key_states = key_states;
+                        }
+                        Err(e) => println!("Error reading keyboard state: {}", e),
+                    }
+                    thread::sleep(Duration::from_millis(50));
+                }
+            }
+            Err(e) => println!(
+                "Matrix keyboard not supported or failed to configure: {}",
+                e
+            ),
+        }
+    }
+
+    /// Test LCD display functionality
+    #[test]
+    fn test_lcd_display() {
+        println!("=== LCD Display Test ===");
+
+        let device_count = enumerate_usb_devices().expect("Failed to enumerate USB devices");
+
+        if device_count == 0 {
+            println!("SKIP: No PoKeys devices found");
+            return;
+        }
+
+        let mut device = connect_to_device(0).expect("Failed to connect to device");
+
+        device.get_device_data().expect("Failed to get device data");
+
+        // Try to initialize LCD (common sizes: 16x2, 20x4)
+        let lcd_configs = [(16, 2), (20, 4), (16, 4)];
+
+        for &(cols, rows) in &lcd_configs {
+            match device.initialize_lcd(cols, rows) {
+                Ok(_) => {
+                    println!("Initialized {}x{} LCD display", cols, rows);
+
+                    // Test basic LCD operations
+                    device.lcd_clear().expect("Failed to clear LCD");
+                    thread::sleep(Duration::from_millis(100));
+
+                    device
+                        .lcd_write_text("PoKeys Test", 0, 0)
+                        .expect("Failed to write text");
+                    thread::sleep(Duration::from_millis(500));
+
+                    if rows > 1 {
+                        device
+                            .lcd_write_text("Line 2", 0, 1)
+                            .expect("Failed to write to line 2");
+                        thread::sleep(Duration::from_millis(500));
+                    }
+
+                    // Test cursor and backlight
+                    device
+                        .lcd_set_cursor(true, true)
+                        .expect("Failed to set cursor");
+                    thread::sleep(Duration::from_millis(500));
+
+                    device
+                        .lcd_set_backlight(false)
+                        .expect("Failed to turn off backlight");
+                    thread::sleep(Duration::from_millis(500));
+
+                    device
+                        .lcd_set_backlight(true)
+                        .expect("Failed to turn on backlight");
+                    thread::sleep(Duration::from_millis(500));
+
+                    device.lcd_clear().expect("Failed to clear LCD");
+                    println!("LCD test completed successfully");
+                    return;
+                }
+                Err(_) => continue,
+            }
+        }
+
+        println!("No LCD display detected or supported");
+    }
+
+    /// Test pulse engine functionality
+    #[test]
+    fn test_pulse_engine() {
+        println!("=== Pulse Engine Test ===");
+
+        let device_count = enumerate_usb_devices().expect("Failed to enumerate USB devices");
+
+        if device_count == 0 {
+            println!("SKIP: No PoKeys devices found");
+            return;
+        }
+
+        let mut device = connect_to_device(0).expect("Failed to connect to device");
+
+        device.get_device_data().expect("Failed to get device data");
+
+        match device.initialize_pulse_engine() {
+            Ok(_) => {
+                println!("Pulse engine initialized");
+
+                // Configure a simple axis
+                let mut axis_config = AxisConfiguration::default();
+                axis_config.enabled = true;
+                axis_config.max_speed = 1000.0;
+                axis_config.max_acceleration = 500.0;
+                axis_config.steps_per_unit = 200.0;
+
+                match device.configure_pulse_engine_axis(0, axis_config) {
+                    Ok(_) => {
+                        println!("Configured pulse engine axis 0");
+
+                        // Test basic movement commands
+                        device
+                            .pulse_engine_move_relative(0, 100.0, 500.0)
+                            .expect("Failed to start relative move");
+
+                        println!("Started relative move of 100 units at 500 units/sec");
+
+                        // Monitor movement
+                        for _ in 0..20 {
+                            match device.get_pulse_engine_position(0) {
+                                Ok(position) => println!("Position: {:.2}", position),
+                                Err(e) => println!("Error reading position: {}", e),
+                            }
+                            thread::sleep(Duration::from_millis(100));
+                        }
+
+                        // Stop movement
+                        device.pulse_engine_stop(0).expect("Failed to stop axis");
+                        println!("Pulse engine test completed");
+                    }
+                    Err(e) => println!("Failed to configure pulse engine axis: {}", e),
+                }
+            }
+            Err(e) => println!("Pulse engine not supported: {}", e),
+        }
+    }
+
+    /// Test I2C communication
+    #[test]
+    fn test_i2c_communication() {
+        println!("=== I2C Communication Test ===");
+
+        let device_count = enumerate_usb_devices().expect("Failed to enumerate USB devices");
+
+        if device_count == 0 {
+            println!("SKIP: No PoKeys devices found");
+            return;
+        }
+
+        let mut device = connect_to_device(0).expect("Failed to connect to device");
+
+        device.get_device_data().expect("Failed to get device data");
+
+        if !device.info.i2c_bus_available {
+            println!("SKIP: I2C not available on this device");
+            return;
+        }
+
+        // Initialize I2C
+        match device.i2c_initialize(100000) {
+            // 100kHz
+            Ok(_) => {
+                println!("I2C initialized at 100kHz");
+
+                // Scan for I2C devices
+                println!("Scanning I2C bus...");
+                let mut devices_found = 0;
+
+                for addr in 0x08..0x78 {
+                    match device.i2c_probe_device(addr) {
+                        Ok(true) => {
+                            println!("I2C device found at address 0x{:02X}", addr);
+                            devices_found += 1;
+                        }
+                        Ok(false) => {} // No device at this address
+                        Err(e) => println!("Error probing address 0x{:02X}: {}", addr, e),
+                    }
+                }
+
+                println!("I2C scan completed, found {} devices", devices_found);
+
+                // Test communication with common I2C devices if found
+                if devices_found > 0 {
+                    println!("Testing I2C read/write operations...");
+                    // Add specific device tests here based on your hardware
+                }
+            }
+            Err(e) => println!("Failed to initialize I2C: {}", e),
+        }
+    }
+
+    /// Test SPI communication
+    #[test]
+    fn test_spi_communication() {
+        println!("=== SPI Communication Test ===");
+
+        let device_count = enumerate_usb_devices().expect("Failed to enumerate USB devices");
+
+        if device_count == 0 {
+            println!("SKIP: No PoKeys devices found");
+            return;
+        }
+
+        let mut device = connect_to_device(0).expect("Failed to connect to device");
+
+        device.get_device_data().expect("Failed to get device data");
+
+        if !device.info.spi_available {
+            println!("SKIP: SPI not available on this device");
+            return;
+        }
+
+        // Initialize SPI
+        match device.spi_initialize(1000000, 0) {
+            // 1MHz, Mode 0
+            Ok(_) => {
+                println!("SPI initialized at 1MHz, Mode 0");
+
+                // Test SPI transfer
+                let test_data = vec![0x01, 0x02, 0x03, 0x04];
+                match device.spi_transfer(&test_data) {
+                    Ok(response) => {
+                        println!("SPI transfer successful");
+                        println!("Sent: {:02X?}", test_data);
+                        println!("Received: {:02X?}", response);
+                    }
+                    Err(e) => println!("SPI transfer failed: {}", e),
+                }
+            }
+            Err(e) => println!("Failed to initialize SPI: {}", e),
+        }
+    }
+
+    /// Test 1-Wire communication
+    #[test]
+    fn test_one_wire_communication() {
+        println!("=== 1-Wire Communication Test ===");
+
+        let device_count = enumerate_usb_devices().expect("Failed to enumerate USB devices");
+
+        if device_count == 0 {
+            println!("SKIP: No PoKeys devices found");
+            return;
+        }
+
+        let mut device = connect_to_device(0).expect("Failed to connect to device");
+
+        device.get_device_data().expect("Failed to get device data");
+
+        if !device.info.one_wire_available {
+            println!("SKIP: 1-Wire not available on this device");
+            return;
+        }
+
+        // Initialize 1-Wire
+        match device.one_wire_initialize(10) {
+            // Pin 10
+            Ok(_) => {
+                println!("1-Wire initialized on pin 10");
+
+                // Search for 1-Wire devices
+                match device.one_wire_search() {
+                    Ok(devices) => {
+                        println!("Found {} 1-Wire devices", devices.len());
+                        for (i, device_id) in devices.iter().enumerate() {
+                            println!("Device {}: {:02X?}", i, device_id);
+                        }
+
+                        // Test temperature reading if DS18B20 found
+                        for device_id in &devices {
+                            if device_id[0] == 0x28 {
+                                // DS18B20 family code
+                                match device.one_wire_read_temperature(device_id) {
+                                    Ok(temp) => println!("Temperature: {:.2}°C", temp),
+                                    Err(e) => println!("Failed to read temperature: {}", e),
+                                }
+                            }
+                        }
+                    }
+                    Err(e) => println!("1-Wire search failed: {}", e),
+                }
+            }
+            Err(e) => println!("Failed to initialize 1-Wire: {}", e),
+        }
+    }
+
+    /// Test EasySensors functionality
+    #[test]
+    fn test_easy_sensors() {
+        println!("=== EasySensors Test ===");
+
+        let device_count = enumerate_usb_devices().expect("Failed to enumerate USB devices");
+
+        if device_count == 0 {
+            println!("SKIP: No PoKeys devices found");
+            return;
+        }
+
+        let mut device = connect_to_device(0).expect("Failed to connect to device");
+
+        device.get_device_data().expect("Failed to get device data");
+
+        // Scan for EasySensors
+        match device.scan_easy_sensors() {
+            Ok(sensors) => {
+                println!("Found {} EasySensors", sensors.len());
+
+                for sensor in &sensors {
+                    println!(
+                        "Sensor ID: {}, Type: {}, Unit: {}",
+                        sensor.sensor_id, sensor.sensor_type, sensor.unit
+                    );
+
+                    // Read sensor value
+                    match device.read_easy_sensor(sensor.sensor_id) {
+                        Ok(value) => println!("  Value: {:.2} {}", value, sensor.unit),
+                        Err(e) => println!("  Error reading sensor: {}", e),
+                    }
+                }
+
+                if !sensors.is_empty() {
+                    println!("Monitoring sensors for 5 seconds...");
+                    let start_time = Instant::now();
+
+                    while start_time.elapsed() < Duration::from_secs(5) {
+                        for sensor in &sensors {
+                            match device.read_easy_sensor(sensor.sensor_id) {
+                                Ok(value) => print!("S{}: {:.2} ", sensor.sensor_id, value),
+                                Err(_) => print!("S{}: ERR ", sensor.sensor_id),
+                            }
+                        }
+                        println!();
+                        thread::sleep(Duration::from_millis(500));
+                    }
+                }
+            }
+            Err(e) => println!("Failed to scan EasySensors: {}", e),
+        }
+    }
+
+    /// Test device failsafe functionality
+    #[test]
+    fn test_failsafe_functionality() {
+        println!("=== Failsafe Functionality Test ===");
+
+        let device_count = enumerate_usb_devices().expect("Failed to enumerate USB devices");
+
+        if device_count == 0 {
+            println!("SKIP: No PoKeys devices found");
+            return;
+        }
+
+        let mut device = connect_to_device(0).expect("Failed to connect to device");
+
+        device.get_device_data().expect("Failed to get device data");
+
+        // Configure failsafe settings
+        match device.configure_failsafe(true, 5000) {
+            // Enable with 5 second timeout
+            Ok(_) => {
+                println!("Failsafe configured: enabled with 5 second timeout");
+
+                // Set some outputs that should be controlled by failsafe
+                device
+                    .set_pin_function(1, PinFunction::DigitalOutput)
+                    .expect("Failed to set pin function");
+                device
+                    .set_digital_output(1, true)
+                    .expect("Failed to set digital output");
+
+                // Configure failsafe state for this pin
+                device
+                    .set_failsafe_pin_state(1, false)
+                    .expect("Failed to set failsafe pin state");
+
+                println!("Pin 1 set HIGH, failsafe will set it LOW on timeout");
+                println!("Failsafe test configured - disconnect device to test");
+
+                // Test failsafe status
+                match device.get_failsafe_status() {
+                    Ok(active) => println!("Failsafe currently active: {}", active),
+                    Err(e) => println!("Failed to get failsafe status: {}", e),
+                }
+            }
+            Err(e) => println!("Failed to configure failsafe: {}", e),
+        }
+    }
+
+    /// Stress test with rapid operations
+    #[test]
+    fn test_stress_operations() {
+        println!("=== Stress Test ===");
+
+        let device_count = enumerate_usb_devices().expect("Failed to enumerate USB devices");
+
+        if device_count == 0 {
+            println!("SKIP: No PoKeys devices found");
+            return;
+        }
+
+        let mut device = connect_to_device(0).expect("Failed to connect to device");
+
+        device.get_device_data().expect("Failed to get device data");
+
+        // Configure multiple pins for testing
+        let test_pins = std::cmp::min(8, device.info.pin_count);
+        for pin in 1..=test_pins {
+            device
+                .set_pin_function(pin, PinFunction::DigitalOutput)
+                .expect("Failed to set pin function");
+        }
+
+        println!(
+            "Starting stress test with {} pins for 30 seconds...",
+            test_pins
+        );
+
+        let start_time = Instant::now();
+        let mut operations = 0u32;
+        let mut errors = 0u32;
+
+        while start_time.elapsed() < Duration::from_secs(30) {
+            for pin in 1..=test_pins {
+                let state = (operations % 2) == 0;
+                match device.set_digital_output(pin, state) {
+                    Ok(_) => operations += 1,
+                    Err(_) => errors += 1,
+                }
+            }
+
+            // Read some analog inputs if available
+            if device.info.analog_inputs > 0 {
+                for pin in 1..=std::cmp::min(4, device.info.analog_inputs) {
+                    match device.get_analog_input(pin) {
+                        Ok(_) => operations += 1,
+                        Err(_) => errors += 1,
+                    }
+                }
+            }
+
+            // Small delay to prevent overwhelming the device
+            thread::sleep(Duration::from_millis(1));
+        }
+
+        let elapsed = start_time.elapsed();
+        let ops_per_sec = operations as f64 / elapsed.as_secs_f64();
+        let error_rate = (errors as f64 / (operations + errors) as f64) * 100.0;
+
+        println!("Stress test completed:");
+        println!("  Total operations: {}", operations);
+        println!("  Total errors: {}", errors);
+        println!("  Operations per second: {:.1}", ops_per_sec);
+        println!("  Error rate: {:.2}%", error_rate);
+
+        // Stress test should maintain reasonable performance and low error rate
+        assert!(ops_per_sec > 50.0, "Performance too low during stress test");
+        assert!(error_rate < 5.0, "Error rate too high during stress test");
+    }
+
+    /// Test multiple device handling
+    #[test]
+    fn test_multiple_devices() {
+        println!("=== Multiple Devices Test ===");
+
+        let device_count = enumerate_usb_devices().expect("Failed to enumerate USB devices");
+
+        println!("Found {} PoKeys devices", device_count);
+
+        if device_count < 2 {
+            println!("SKIP: Need at least 2 devices for multi-device test");
+            return;
+        }
+
+        let mut devices = Vec::new();
+
+        // Connect to all available devices
+        for i in 0..device_count {
+            match connect_to_device(i) {
+                Ok(mut device) => {
+                    device.get_device_data().expect("Failed to get device data");
+
+                    println!(
+                        "Device {}: Serial {}, {} pins",
+                        i, device.device_data.serial_number, device.info.pin_count
+                    );
+
+                    devices.push(device);
+                }
+                Err(e) => println!("Failed to connect to device {}: {}", i, e),
+            }
+        }
+
+        if devices.len() < 2 {
+            println!("Could not connect to multiple devices");
+            return;
+        }
+
+        // Test operations on all devices simultaneously
+        for (i, device) in devices.iter_mut().enumerate() {
+            let pin = 1;
+            device
+                .set_pin_function(pin, PinFunction::DigitalOutput)
+                .expect("Failed to set pin function");
+
+            // Set different states on each device
+            let state = (i % 2) == 0;
+            device
+                .set_digital_output(pin, state)
+                .expect("Failed to set digital output");
+
+            println!(
+                "Device {} pin {} set to {}",
+                i,
+                pin,
+                if state { "HIGH" } else { "LOW" }
+            );
+        }
+
+        // Verify states
+        thread::sleep(Duration::from_millis(100));
+
+        for (i, device) in devices.iter_mut().enumerate() {
+            // Read analog inputs if available
+            if device.info.analog_inputs > 0 {
+                match device.get_analog_input(1) {
+                    Ok(value) => println!("Device {} analog input 1: {}", i, value),
+                    Err(e) => println!("Device {} analog read error: {}", i, e),
+                }
+            }
+        }
+
+        println!(
+            "Multiple device test completed with {} devices",
+            devices.len()
+        );
+    }
+}
+
+#[cfg(not(feature = "hardware-tests"))]
+mod no_hardware_tests {
+    #[test]
+    fn hardware_tests_disabled() {
+        println!("Hardware tests are disabled. Run with --features hardware-tests to enable them.");
+    }
+}

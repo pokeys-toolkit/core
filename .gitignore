@@ -1,0 +1,72 @@
+# Rust
+target/
+**/target/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+#Docs
+docs/*.pdf
+original/
+context.md
+
+# Temporary files
+*.tmp
+*.temp
+
+# Build artifacts
+*.so
+*.dll
+*.dylib
+*.exe
+
+# Documentation build
+/doc/
+
+# Test artifacts
+/test_results/
+
+# DevOps and CI/CD
+.secrets.baseline
+.pre-commit-cache/
+.coverage/
+cobertura.xml
+tarpaulin-report.html
+
+# Backup files
+*.backup
+*.bak
+
+# Supply chain security
+supply-chain/
+
+# Local environment files
+.env
+.env.local
+.env.*.local
+
+# Coverage reports
+lcov.info
+coverage/
+
+# Benchmark results
+criterion/
+
+# Security scan results
+audit.json
+deny.json
+
+# website
+website/node_modules
+.git_old/
