@@ -21,7 +21,10 @@ fn main() -> Result<()> {
     let mut device = connect_to_device(0)?;
     device.get_device_data()?;
 
-    println!("📱 Connected to device: {}", device.device_data.serial_number);
+    println!(
+        "📱 Connected to device: {}",
+        device.device_data.serial_number
+    );
 
     // Step-by-step configuration
     configure_digital_io(&mut device)?;
