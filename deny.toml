@@ -1,0 +1,49 @@
+[graph]
+targets = [
+    { triple = "x86_64-unknown-linux-gnu" },
+    { triple = "x86_64-pc-windows-msvc" },
+    { triple = "x86_64-apple-darwin" },
+]
+
+[output]
+feature-depth = 1
+
+[advisories]
+version = 2
+ignore = [
+    # Ignore proc-macro-error unmaintained warning - it's used by clap
+    "RUSTSEC-2024-0370",
+]
+
+[licenses]
+version = 2
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-DFS-2016",
+    "CC0-1.0",
+    "LGPL-2.1",
+    "LGPL-3.0",
+    "Unlicense",
+    "Unicode-3.0",
+    "MPL-2.0"
+]
+
+exceptions = [
+    {
+        { allow = ["MPL-2.0"], name = "option-ext" }, # file level copyleft OK
+         { allow = ["CC0-1.0"], name = "notify" }, # file level copyleft OK
+    }
+]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "allow"
+
+[sources]
+unknown-registry = "warn"
+unknown-git = "warn"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
