@@ -1,6 +1,6 @@
-# PoKeys-lib - Core Library
+# PoKeys Core Library
 
-A pure Rust implementation of the PoKeysLib library for controlling PoKeys devices. This is the core library that provides all fundamental device communication and control functionality.
+A pure Rust implementation of the PoKeysLib for controlling PoKeys devices. This is the **core library** that provides all fundamental device communication and control functionality for the PoKeys ecosystem.
 
 ## 🚀 Performance Breakthrough: Dual Optimization System
 
@@ -21,41 +21,61 @@ A pure Rust implementation of the PoKeysLib library for controlling PoKeys devic
 - **Result**: Correct encoder pin assignments in vendor tools
 - **Impact**: Reliable encoder configuration and monitoring
 
-## ✨ Key Features
+## ✨ Core Features
 
 ### Device Connectivity
 - **USB Devices**: Full support for USB-connected PoKeys devices
-- **Network Devices**: Discovery and connection to network-enabled devices
+- **Network Devices**: Discovery and connection to network-enabled devices  
 - **Auto-Detection**: Intelligent connection type detection
 - **Multi-Device**: Concurrent management of multiple devices
 
-### I/O Operations
+### Digital & Analog I/O
 - **Digital I/O**: Pin configuration and digital input/output operations
 - **Analog I/O**: Multi-channel analog input with configurable reference voltage
+- **Pin Functions**: Digital input/output, analog input, PWM, encoder, counter, keyboard matrix
+- **Bulk Operations**: Optimized bulk pin configuration and state reading
+
+### Advanced Control Systems
 - **PWM Control**: Multiple PWM channels with configurable frequency and duty cycle
 - **Encoder Support**: Quadrature encoder reading with 4x/2x sampling modes, position and velocity tracking
+- **Pulse Engine v2**: Stepper motor control with advanced pulse generation
+- **Matrix Operations**: Matrix keyboard scanning and LED matrix control
 
-### Advanced Features
-- **Matrix Operations**: Matrix keyboard and LED control
+### Communication Protocols
+- **SPI**: Full SPI master support with multiple chip select pins
+- **I2C**: I2C master operations with device scanning
+- **1-Wire**: 1-Wire protocol support for temperature sensors
+- **CAN Bus**: CAN message transmission and reception
+- **UART**: Serial communication support
+
+### Display & Interface Support
 - **LCD Display**: Text LCD display control and management
-- **Pulse Engine**: Stepper motor control with pulse engine v2
-- **Communication Protocols**: I2C, SPI, 1-Wire, and CAN bus support
+- **MAX7219**: Comprehensive support for MAX7219 LED display drivers
+  - Individual and daisy-chained displays
+  - 7-segment, dot matrix, and raw segment modes
+  - Text display with justification and scrolling
+- **Seven-Segment**: Built-in character mapping and display utilities
+
+### Sensor Integration
+- **EasySensors**: Integrated sensor support and data acquisition
 - **Real-Time Clock**: RTC operations and time synchronization
-- **EasySensors**: Integrated sensor support
+- **Temperature Sensors**: 1-Wire temperature sensor support
 
 ### Safety & Reliability
-- **Device Models**: Pin capability validation and safety checks
-- **Error Handling**: Comprehensive error types with context
+- **Device Models**: Comprehensive pin capability validation and safety checks
+- **Error Handling**: Detailed error types with context and recovery suggestions
 - **Thread Safety**: Safe concurrent access to device resources
-- **Failsafe Settings**: Configurable failsafe behavior
+- **Failsafe Settings**: Configurable failsafe behavior for critical applications
+- **SPI Pin Reservation**: Hardware constraint enforcement prevents conflicts
 
 ## 🔧 Supported Devices
 
 - **PoKeys55 v3** - 55-pin development board
-- **PoKeys56U** - USB-enabled 56-pin device
-- **PoKeys57U** - Advanced USB device with extended features
-- **PoKeys58EU** - Ethernet-enabled device
-- **PoKeys57E** - Ethernet-enabled industrial device
+- **PoKeys56U** - USB-enabled 56-pin device (55 usable pins, 31 CS-capable)
+- **PoKeys56E** - Ethernet-enabled 56-pin device (55 usable pins, 31 CS-capable)
+- **PoKeys57U** - Advanced USB device (57 usable pins, 33 CS-capable)
+- **PoKeys57E** - Ethernet-enabled industrial device (57 usable pins, 33 CS-capable)
+- **PoKeys58EU** - Ethernet-enabled device with extended features
 - **Custom Devices** - Extensible model system for custom hardware
 
 ## 🛠️ Installation
@@ -126,6 +146,43 @@ fn main() -> Result<()> {
 }
 ```
 
+### Encoder Monitoring
+```rust
+use pokeys_lib::*;
+
+fn main() -> Result<()> {
+    let mut device = connect_to_device(0)?;
+    
+    // Configure encoder on pins 10-11
+    device.configure_encoder(0, 10, 11, EncoderMode::Quadrature4x)?;
+    
+    loop {
+        let position = device.get_encoder_position(0)?;
+        println!("Encoder position: {}", position);
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+}
+```
+
+### SPI Communication
+```rust
+use pokeys_lib::*;
+
+fn main() -> Result<()> {
+    let mut device = connect_to_device(0)?;
+    
+    // Configure SPI (automatically reserves pins 23=MOSI, 25=CLK)
+    device.configure_spi(1000000, SpiMode::Mode0)?;
+    
+    // Send data using pin 24 as chip select
+    let data = vec![0x01, 0x02, 0x03];
+    let response = device.spi_transfer(24, &data)?;
+    
+    println!("SPI response: {:?}", response);
+    Ok(())
+}
+```
+
 ## 🛡️ SPI Pin Reservation & Device Model Updates
 
 Comprehensive SPI pin reservation system with updated device models:
@@ -154,13 +211,28 @@ cargo run --example basic_device_control
 # MAX7219 display examples
 cargo run --example test_two_displays
 cargo run --example comprehensive_multi_display_test
+cargo run --example max7219_console_demo
 
-# Encoder monitoring
+# Communication protocols
+cargo run --example spi_example
+cargo run --example i2c_simple_test
+cargo run --example i2c_comprehensive_test
+
+# Advanced features
 cargo run --example encoder_monitoring
-
-# SPI operations
-cargo run --example spi_operations
+cargo run --example physical_device_config_example
+cargo run --example network_device_test
 ```
+
+## 🏗️ Architecture
+
+This core library provides the foundation for the PoKeys ecosystem:
+
+- **Pure Rust**: No external C dependencies, full memory safety
+- **Cross-Platform**: Works on Windows, macOS, and Linux
+- **Thread-Safe**: Concurrent device access with proper synchronization
+- **Extensible**: Plugin architecture for custom devices and protocols
+- **Performance-Optimized**: Bulk operations and caching for maximum throughput
 
 ## 🤝 Contributing
 
