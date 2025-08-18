@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2025-08-18
+
+- feat: add Astro documentation site with Starlight theme
+
 ## [0.5.2] - 2025-08-18
 
 
