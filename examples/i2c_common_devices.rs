@@ -32,7 +32,7 @@ fn main() -> Result<()> {
     // Scan for devices
     println!("\n🔍 Scanning I2C bus...");
     let found_devices = device.i2c_scan()?;
-    
+
     if found_devices.is_empty() {
         println!("📭 No I2C devices found. Connect some I2C devices and try again.");
         return Ok(());
@@ -65,15 +65,18 @@ fn test_eeprom(device: &mut PoKeysDevice, address: u8) -> Result<()> {
     // EEPROM write: address (2 bytes) + data
     let memory_addr = 0x0000u16;
     let test_data = b"Hello I2C!";
-    
+
     // Prepare write data: high byte, low byte, then data
     let mut write_data = Vec::new();
-    write_data.push((memory_addr >> 8) as u8);  // High byte
+    write_data.push((memory_addr >> 8) as u8); // High byte
     write_data.push((memory_addr & 0xFF) as u8); // Low byte
     write_data.extend_from_slice(test_data);
 
-    println!("📝 Writing '{}' to EEPROM address 0x{:04X}", 
-             String::from_utf8_lossy(test_data), memory_addr);
+    println!(
+        "📝 Writing '{}' to EEPROM address 0x{:04X}",
+        String::from_utf8_lossy(test_data),
+        memory_addr
+    );
 
     match device.i2c_write(address, &write_data) {
         Ok(I2cStatus::Ok) => println!("✅ EEPROM write successful"),
@@ -127,8 +130,10 @@ fn test_ds1307_rtc(device: &mut PoKeysDevice, address: u8) -> Result<()> {
                 let month = bcd_to_decimal(data[5]);
                 let year = bcd_to_decimal(data[6]);
 
-                println!("📅 RTC Time: 20{:02}:{:02}:{:02} {:02}:{:02}:{:02} (Day {})",
-                        year, month, date, hours, minutes, seconds, day);
+                println!(
+                    "📅 RTC Time: 20{:02}:{:02}:{:02} {:02}:{:02}:{:02} (Day {})",
+                    year, month, date, hours, minutes, seconds, day
+                );
 
                 // Check if clock is running (bit 7 of seconds register)
                 if data[0] & 0x80 != 0 {

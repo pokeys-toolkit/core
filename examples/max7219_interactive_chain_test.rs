@@ -467,44 +467,44 @@ fn test_intensity_control(display: &mut Max7219) -> Result<()> {
 fn test_chain_validation(display: &mut Max7219) -> Result<()> {
     println!("\n🔍 Testing Chain Validation");
     println!("===========================");
-    
+
     display.display_text("VALID")?;
     println!("✅ Chain validation test completed");
-    
+
     Ok(())
 }
 
 fn test_performance(display: &mut Max7219) -> Result<()> {
     println!("\n⚡ Testing Performance");
     println!("=====================");
-    
+
     let start = std::time::Instant::now();
     for i in 0..100 {
         display.display_text(&format!("{:04}", i))?;
     }
     let elapsed = start.elapsed();
-    
+
     println!("✅ Performance test completed in {:?}", elapsed);
-    
+
     Ok(())
 }
 
 fn test_error_conditions(display: &mut Max7219) -> Result<()> {
     println!("\n❌ Testing Error Conditions");
     println!("===========================");
-    
+
     display.display_text("ERROR")?;
     println!("✅ Error conditions test completed");
-    
+
     Ok(())
 }
 
 fn custom_test_mode(display: &mut Max7219) -> Result<()> {
     println!("\n🛠️  Custom Test Mode");
     println!("===================");
-    
+
     display.display_text("CUSTOM")?;
     println!("✅ Custom test mode completed");
-    
+
     Ok(())
 }

@@ -470,12 +470,18 @@ mod tests {
         device_data.device_name = [0; 30];
         let test_name = b"Dec 11 2024PoKeys57E\0\0\0\0\0\0\0\0\0\0";
         device_data.device_name[..test_name.len()].copy_from_slice(test_name);
-        assert_eq!(device_data.device_type_name(), "Unknown Device (ID: 999999, HW: 0)");
+        assert_eq!(
+            device_data.device_type_name(),
+            "Unknown Device (ID: 999999, HW: 0)"
+        );
 
         // Test another device type in name
         let test_name2 = b"Build PoKeys56U info\0\0\0\0\0\0\0\0\0";
         device_data.device_name[..test_name2.len()].copy_from_slice(test_name2);
-        assert_eq!(device_data.device_type_name(), "Unknown Device (ID: 999999, HW: 0)");
+        assert_eq!(
+            device_data.device_type_name(),
+            "Unknown Device (ID: 999999, HW: 0)"
+        );
 
         // Test unknown device type
         device_data.device_type_id = 99;
@@ -483,6 +489,9 @@ mod tests {
         device_data.device_name = [0; 30];
         let test_name3 = b"Some other text\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
         device_data.device_name[..test_name3.len()].copy_from_slice(test_name3);
-        assert_eq!(device_data.device_type_name(), "Unknown Device (ID: 99, HW: 0)");
+        assert_eq!(
+            device_data.device_type_name(),
+            "Unknown Device (ID: 99, HW: 0)"
+        );
     }
 }

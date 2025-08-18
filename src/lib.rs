@@ -1,6 +1,6 @@
 //! # PoKeys Core Library - Pure Rust Implementation
 //!
-//! This is the **core library** of the PoKeys ecosystem, providing a pure Rust implementation 
+//! This is the **core library** of the PoKeys ecosystem, providing a pure Rust implementation
 //! of the PoKeysLib functionality for controlling PoKeys devices without external dependencies.
 //!
 //! ## Core Features

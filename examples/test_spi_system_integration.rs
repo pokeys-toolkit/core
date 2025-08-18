@@ -1,13 +1,13 @@
 //! SPI System Integration Test
-//! 
+//!
 //! This example demonstrates the complete SPI system integration including:
 //! - Device model validation
 //! - Configuration validation  
 //! - SPI pin reservation enforcement
 //! - MAX7219 multi-display support
 
-use pokeys_lib::models::DeviceModel;
 use pokeys_config::*;
+use pokeys_lib::models::DeviceModel;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🧪 SPI System Integration Test");
@@ -16,31 +16,36 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Test 1: Device Model Validation
     println!("\n📱 Test 1: Device Model Validation");
     println!("==================================");
-    
+
     let model = DeviceModel::from_file("pokeys-lib/models/PoKeys57U.yaml")?;
     println!("✅ Device model loaded: {}", model.name);
-    
+
     // Verify SPI capabilities
     let pin_23 = model.pins.get(&23).unwrap();
     let pin_25 = model.pins.get(&25).unwrap();
-    
+
     assert!(pin_23.capabilities.contains(&"SpiMosi".to_string()));
     assert!(pin_25.capabilities.contains(&"SpiClock".to_string()));
     println!("✅ SPI pin capabilities verified");
-    
+
     // Count CS-capable pins
-    let cs_pins: Vec<u8> = model.pins.iter()
+    let cs_pins: Vec<u8> = model
+        .pins
+        .iter()
         .filter(|(_, pin)| pin.capabilities.contains(&"SpiChipSelect".to_string()))
         .map(|(pin_num, _)| *pin_num)
         .collect();
-    
+
     println!("✅ CS-capable pins: {} pins available", cs_pins.len());
-    assert!(cs_pins.len() >= 30, "Should have at least 30 CS-capable pins");
+    assert!(
+        cs_pins.len() >= 30,
+        "Should have at least 30 CS-capable pins"
+    );
 
     // Test 2: Valid Configuration
     println!("\n📋 Test 2: Valid Configuration");
     println!("==============================");
-    
+
     let valid_config = r#"
 system:
   polling_interval_ms: 100
@@ -101,11 +106,11 @@ devices:
 
     let config: SystemConfig = serde_yaml::from_str(valid_config)?;
     let device_config = config.devices.get("production_controller").unwrap();
-    
+
     // Validate the configuration
     device_config.validate_device_config()?;
     println!("✅ Valid configuration passed validation");
-    
+
     // Verify SPI reserved pins
     let reserved_pins = device_config.get_spi_reserved_pins();
     assert_eq!(reserved_pins, vec![23, 25]);
@@ -114,7 +119,7 @@ devices:
     // Test 3: Invalid Configuration - Pin Conflict
     println!("\n❌ Test 3: Invalid Configuration - Pin Conflict");
     println!("===============================================");
-    
+
     let invalid_config = r#"
 system:
   polling_interval_ms: 100
@@ -149,7 +154,7 @@ devices:
 
     let config: SystemConfig = serde_yaml::from_str(invalid_config)?;
     let device_config = config.devices.get("test_device").unwrap();
-    
+
     match device_config.validate_device_config() {
         Ok(()) => {
             println!("❌ Invalid configuration incorrectly passed validation");
@@ -166,7 +171,7 @@ devices:
     // Test 4: Invalid Configuration - CS Pin Conflict
     println!("\n❌ Test 4: Invalid Configuration - CS Pin Conflict");
     println!("==================================================");
-    
+
     let invalid_cs_config = r#"
 system:
   polling_interval_ms: 100
@@ -195,7 +200,7 @@ devices:
 
     let config: SystemConfig = serde_yaml::from_str(invalid_cs_config)?;
     let device_config = config.devices.get("test_device").unwrap();
-    
+
     match device_config.validate_device_config() {
         Ok(()) => {
             println!("❌ Invalid CS configuration incorrectly passed validation");
@@ -211,7 +216,7 @@ devices:
     // Test 5: SPI Disabled - Pins Available
     println!("\n✅ Test 5: SPI Disabled - Pins Available");
     println!("========================================");
-    
+
     let spi_disabled_config = r#"
 system:
   polling_interval_ms: 100
@@ -243,10 +248,10 @@ devices:
 
     let config: SystemConfig = serde_yaml::from_str(spi_disabled_config)?;
     let device_config = config.devices.get("test_device").unwrap();
-    
+
     device_config.validate_device_config()?;
     println!("✅ SPI disabled configuration passed validation");
-    
+
     let reserved_pins = device_config.get_spi_reserved_pins();
     assert!(reserved_pins.is_empty());
     println!("✅ No pins reserved when SPI disabled: {:?}", reserved_pins);
@@ -254,7 +259,7 @@ devices:
     // Test 6: Multi-Display Configuration
     println!("\n📺 Test 6: Multi-Display Configuration");
     println!("======================================");
-    
+
     let multi_display_config = r#"
 system:
   polling_interval_ms: 100
@@ -308,18 +313,23 @@ devices:
 
     let config: SystemConfig = serde_yaml::from_str(multi_display_config)?;
     let device_config = config.devices.get("multi_display_controller").unwrap();
-    
+
     device_config.validate_device_config()?;
     println!("✅ Multi-display configuration passed validation");
-    
+
     // Count total displays
     let single_displays = device_config.max7219_displays.len();
-    let multi_displays: usize = device_config.max7219_multi.values()
+    let multi_displays: usize = device_config
+        .max7219_multi
+        .values()
         .map(|multi| multi.displays.len())
         .sum();
     let total_displays = single_displays + multi_displays;
-    
-    println!("✅ Total displays configured: {} (3 single + 3 multi)", total_displays);
+
+    println!(
+        "✅ Total displays configured: {} (3 single + 3 multi)",
+        total_displays
+    );
     assert_eq!(total_displays, 6);
 
     // Test Summary
@@ -338,6 +348,6 @@ devices:
     println!("   📋 Clear error messages for invalid configurations");
     println!("   🎯 Multi-display support with individual CS pins");
     println!("   ✅ Backward compatibility when SPI is disabled");
-    
+
     Ok(())
 }

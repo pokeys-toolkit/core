@@ -26,18 +26,20 @@ fn main() -> Result<()> {
 
     println!("📱 Found {} PoKeys device(s)", device_count);
     let mut device = connect_to_device(0)?;
-    
+
     // Get device info
     device.get_device_data()?;
     let device_name = String::from_utf8_lossy(&device.device_data.device_name);
-    println!("🔗 Connected to: {} (Serial: {})", 
-             device_name.trim_end_matches('\0'), 
-             device.device_data.serial_number);
+    println!(
+        "🔗 Connected to: {} (Serial: {})",
+        device_name.trim_end_matches('\0'),
+        device.device_data.serial_number
+    );
 
     // Test 1: Initialize I2C bus
     println!("\n🚀 Test 1: I2C Initialization");
     println!("-----------------------------");
-    
+
     match device.i2c_init() {
         Ok(()) => println!("✅ I2C bus initialized successfully"),
         Err(e) => {
@@ -49,7 +51,7 @@ fn main() -> Result<()> {
     // Test 2: Configure I2C with different speeds
     println!("\n⚙️  Test 2: I2C Configuration");
     println!("-----------------------------");
-    
+
     // Test standard speed (100kHz)
     match device.i2c_configure(100, 0) {
         Ok(()) => println!("✅ I2C configured for 100kHz (standard speed)"),
@@ -65,7 +67,7 @@ fn main() -> Result<()> {
     // Test 3: I2C Bus Scan
     println!("\n🔍 Test 3: I2C Bus Scan");
     println!("-----------------------");
-    
+
     match device.i2c_scan() {
         Ok(devices) => {
             if devices.is_empty() {
@@ -83,11 +85,11 @@ fn main() -> Result<()> {
     // Test 4: Basic Write Operations
     println!("\n✍️  Test 4: Basic Write Operations");
     println!("----------------------------------");
-    
+
     // Test writing to a common I2C address (0x50 - typical EEPROM address)
     let test_address = 0x50;
     let test_data = vec![0x00, 0x01, 0x02, 0x03]; // Test data
-    
+
     match device.i2c_write(test_address, &test_data) {
         Ok(status) => {
             println!("📤 Write to 0x{:02X}: {:?}", test_address, status);
@@ -104,7 +106,7 @@ fn main() -> Result<()> {
     // Test 5: Basic Read Operations
     println!("\n📖 Test 5: Basic Read Operations");
     println!("---------------------------------");
-    
+
     match device.i2c_read(test_address, 4) {
         Ok((status, data)) => {
             println!("📥 Read from 0x{:02X}: {:?}", test_address, status);
@@ -127,15 +129,17 @@ fn main() -> Result<()> {
     // Test 6: Register-based Operations
     println!("\n📋 Test 6: Register-based Operations");
     println!("------------------------------------");
-    
+
     let register_addr = 0x00;
     let register_data = vec![0xAA, 0xBB];
-    
+
     // Write to register
     match device.i2c_write_register(test_address, register_addr, &register_data) {
         Ok(status) => {
-            println!("📝 Register write to 0x{:02X}[0x{:02X}]: {:?}", 
-                    test_address, register_addr, status);
+            println!(
+                "📝 Register write to 0x{:02X}[0x{:02X}]: {:?}",
+                test_address, register_addr, status
+            );
         }
         Err(e) => println!("❌ Register write error: {}", e),
     }
@@ -146,8 +150,10 @@ fn main() -> Result<()> {
     // Read from register
     match device.i2c_read_register(test_address, register_addr, 2) {
         Ok((status, data)) => {
-            println!("📖 Register read from 0x{:02X}[0x{:02X}]: {:?}", 
-                    test_address, register_addr, status);
+            println!(
+                "📖 Register read from 0x{:02X}[0x{:02X}]: {:?}",
+                test_address, register_addr, status
+            );
             if status == I2cStatus::Ok {
                 println!("📊 Register data: {:02X?}", data);
             }
@@ -158,7 +164,7 @@ fn main() -> Result<()> {
     // Test 7: Error Handling
     println!("\n🚨 Test 7: Error Handling");
     println!("-------------------------");
-    
+
     // Test with invalid parameters
     match device.i2c_write(0x50, &vec![0; 100]) {
         Ok(_) => println!("❌ Should have failed with data too long"),
@@ -173,7 +179,7 @@ fn main() -> Result<()> {
     // Test 8: Status Check
     println!("\n📊 Test 8: I2C Status Check");
     println!("---------------------------");
-    
+
     match device.i2c_get_status() {
         Ok(status) => println!("📈 Current I2C status: {:?}", status),
         Err(e) => println!("❌ Status check failed: {}", e),
@@ -182,7 +188,7 @@ fn main() -> Result<()> {
     // Test 9: Performance Test
     println!("\n⚡ Test 9: Performance Test");
     println!("---------------------------");
-    
+
     let start_time = std::time::Instant::now();
     let mut successful_operations = 0;
     let total_operations = 10;
@@ -196,9 +202,18 @@ fn main() -> Result<()> {
     }
 
     let elapsed = start_time.elapsed();
-    println!("⏱️  Completed {} operations in {:?}", total_operations, elapsed);
-    println!("✅ Successful operations: {}/{}", successful_operations, total_operations);
-    println!("📊 Average time per operation: {:?}", elapsed / total_operations);
+    println!(
+        "⏱️  Completed {} operations in {:?}",
+        total_operations, elapsed
+    );
+    println!(
+        "✅ Successful operations: {}/{}",
+        successful_operations, total_operations
+    );
+    println!(
+        "📊 Average time per operation: {:?}",
+        elapsed / total_operations
+    );
 
     println!("\n🎉 I2C Comprehensive Test Complete!");
     println!("===================================");

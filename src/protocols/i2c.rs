@@ -16,7 +16,7 @@ impl PoKeysDevice {
         // I2C bus is always activated on PoKeys devices, so just return success
         // We can optionally check the activation status
         let response = self.send_request(0xDB, 0x02, 0, 0, 0)?;
-        
+
         // Check if I2C is activated (should always be successful)
         if response.len() > 3 && response[3] == 1 {
             Ok(())
@@ -46,32 +46,36 @@ impl PoKeysDevice {
     /// I2C operation status
     pub fn i2c_write(&mut self, address: u8, data: &[u8]) -> Result<I2cStatus> {
         if data.is_empty() {
-            return Err(PoKeysError::Parameter("I2C data cannot be empty".to_string()));
+            return Err(PoKeysError::Parameter(
+                "I2C data cannot be empty".to_string(),
+            ));
         }
 
         if data.len() > 32 {
-            return Err(PoKeysError::Parameter("I2C data too long (maximum 32 bytes)".to_string()));
+            return Err(PoKeysError::Parameter(
+                "I2C data too long (maximum 32 bytes)".to_string(),
+            ));
         }
 
         // Start I2C write operation
         // Command 0xDB, operation 0x10 - Write to I2C - start
         let response = self.send_request_with_data(
-            0xDB,               // Command
-            0x10,               // Operation: Write to I2C - start
-            address,            // I2C device address
-            data.len() as u8,   // Length of data packet
-            0,                  // Number of bytes to read after write (0 for write-only)
-            data,               // Data payload (bytes 9-40)
+            0xDB,             // Command
+            0x10,             // Operation: Write to I2C - start
+            address,          // I2C device address
+            data.len() as u8, // Length of data packet
+            0,                // Number of bytes to read after write (0 for write-only)
+            data,             // Data payload (bytes 9-40)
         )?;
 
         // Check initial response
         let initial_status = self.parse_i2c_status(&response)?;
-        
+
         // If operation is in progress, get the result
         if initial_status == I2cStatus::InProgress {
             // Wait a bit for the operation to complete
             std::thread::sleep(std::time::Duration::from_millis(10));
-            
+
             // Get the result with operation 0x11 - Write to I2C - get result
             let result_response = self.send_request(0xDB, 0x11, 0, 0, 0)?;
             self.parse_i2c_status(&result_response)
@@ -90,34 +94,38 @@ impl PoKeysDevice {
     /// Tuple of (status, data) where data contains the read bytes
     pub fn i2c_read(&mut self, address: u8, length: u8) -> Result<(I2cStatus, Vec<u8>)> {
         if length == 0 {
-            return Err(PoKeysError::Parameter("I2C read length cannot be zero".to_string()));
+            return Err(PoKeysError::Parameter(
+                "I2C read length cannot be zero".to_string(),
+            ));
         }
 
         if length > 32 {
-            return Err(PoKeysError::Parameter("I2C read length too long (maximum 32 bytes)".to_string()));
+            return Err(PoKeysError::Parameter(
+                "I2C read length too long (maximum 32 bytes)".to_string(),
+            ));
         }
 
         // Start I2C read operation
         // Command 0xDB, operation 0x20 - Read from I2C - start
         let response = self.send_request(
-            0xDB,               // Command
-            0x20,               // Operation: Read from I2C - start
-            address,            // I2C device address
-            length,             // Length of data packet to read
-            0,                  // Reserved
+            0xDB,    // Command
+            0x20,    // Operation: Read from I2C - start
+            address, // I2C device address
+            length,  // Length of data packet to read
+            0,       // Reserved
         )?;
 
         let initial_status = self.parse_i2c_status(&response)?;
-        
+
         // If operation is in progress, get the result
         if initial_status == I2cStatus::InProgress {
             // Wait a bit for the operation to complete
             std::thread::sleep(std::time::Duration::from_millis(10));
-            
+
             // Get the result with operation 0x21 - Read from I2C - get result
             let result_response = self.send_request(0xDB, 0x21, 0, 0, 0)?;
             let status = self.parse_i2c_status(&result_response)?;
-            
+
             let mut data = Vec::new();
             if status == I2cStatus::Ok && result_response.len() > 10 {
                 // Byte 10: data length, Bytes 11-42: data bytes
@@ -126,7 +134,7 @@ impl PoKeysDevice {
                     data.extend_from_slice(&result_response[10..10 + data_length]);
                 }
             }
-            
+
             Ok((status, data))
         } else {
             Ok((initial_status, Vec::new()))
@@ -141,9 +149,16 @@ impl PoKeysDevice {
     /// * `address` - 7-bit I2C device address
     /// * `register` - Register address
     /// * `data` - Data to write to the register
-    pub fn i2c_write_register(&mut self, address: u8, register: u8, data: &[u8]) -> Result<I2cStatus> {
+    pub fn i2c_write_register(
+        &mut self,
+        address: u8,
+        register: u8,
+        data: &[u8],
+    ) -> Result<I2cStatus> {
         if data.len() > 31 {
-            return Err(PoKeysError::Parameter("I2C register data too long (maximum 31 bytes)".to_string()));
+            return Err(PoKeysError::Parameter(
+                "I2C register data too long (maximum 31 bytes)".to_string(),
+            ));
         }
 
         let mut write_data = Vec::with_capacity(1 + data.len());
@@ -161,7 +176,12 @@ impl PoKeysDevice {
     /// * `address` - 7-bit I2C device address
     /// * `register` - Register address
     /// * `length` - Number of bytes to read
-    pub fn i2c_read_register(&mut self, address: u8, register: u8, length: u8) -> Result<(I2cStatus, Vec<u8>)> {
+    pub fn i2c_read_register(
+        &mut self,
+        address: u8,
+        register: u8,
+        length: u8,
+    ) -> Result<(I2cStatus, Vec<u8>)> {
         // First write the register address
         let status = self.i2c_write(address, &[register])?;
         if status != I2cStatus::Ok {
@@ -185,18 +205,18 @@ impl PoKeysDevice {
         // Start I2C scan operation
         // Command 0xDB, operation 0x30 - Scan I2C - start
         let response = self.send_request(0xDB, 0x30, 0, 0, 0)?;
-        
+
         let initial_status = self.parse_i2c_status(&response)?;
-        
+
         // If operation is in progress, get the result
         if initial_status == I2cStatus::InProgress {
             // Wait for scan to complete
             std::thread::sleep(std::time::Duration::from_millis(100));
-            
+
             // Get the result with operation 0x31 - Scan I2C - get result
             let result_response = self.send_request(0xDB, 0x31, 0, 0, 0)?;
             let status = self.parse_i2c_status(&result_response)?;
-            
+
             let mut found_devices = Vec::new();
             if status == I2cStatus::Ok && result_response.len() >= 25 {
                 // Bytes 10-25: bit encoded result (16 bytes = 128 bits for addresses 0x00-0x7F)
@@ -215,7 +235,7 @@ impl PoKeysDevice {
                     }
                 }
             }
-            
+
             Ok(found_devices)
         } else {
             Ok(Vec::new())
@@ -225,7 +245,9 @@ impl PoKeysDevice {
     /// Parse I2C status from response
     fn parse_i2c_status(&self, response: &[u8]) -> Result<I2cStatus> {
         if response.len() < 4 {
-            return Err(PoKeysError::Protocol("Invalid I2C response length".to_string()));
+            return Err(PoKeysError::Protocol(
+                "Invalid I2C response length".to_string(),
+            ));
         }
 
         let status = match response[3] {
