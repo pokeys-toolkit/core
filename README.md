@@ -71,7 +71,7 @@ Or install from git:
 
 ```toml
 [dependencies]
-pokeys-lib = { git = "https://github.com/pokeys-toolkit/Pokeys-lib" }
+pokeys-lib = { git = "https://github.com/pokeys-toolkit/core" }
 ```
 
 ## 📖 Usage Examples
@@ -177,9 +177,9 @@ This project is licensed under the LGPL-2.1 License - see the [LICENSE](LICENSE)
 
 ## 🔗 Related Projects
 
-- [PoKeys CLI](https://github.com/pokeys-toolkit/pokeys-cli) - Command-line interface
-- [PoKeys Thread](https://github.com/pokeys-toolkit/pokeys-thread) - Threading system
-- [PoKeys Model Manager](https://github.com/pokeys-toolkit/pokeys-model-manager) - Device model management
+- [PoKeys CLI](https://github.com/pokeys-toolkit/cli) - Command-line interface
+- [PoKeys Thread](https://github.com/pokeys-toolkit/thread) - Threading system
+- [PoKeys Model Manager](https://github.com/pokeys-toolkit/model-manager) - Device model management
 
 ---
 
