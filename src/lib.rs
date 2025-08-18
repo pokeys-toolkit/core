@@ -119,8 +119,8 @@ pub use devices::spi::{DisplayMode, Max7219, TextJustification};
 
 // Re-export LED matrix functionality
 pub use matrix::{
-    get_seven_segment_pattern, LedMatrixConfig, MatrixAction, MatrixLedProtocolConfig,
-    SevenSegmentDisplay, SEVEN_SEGMENT_DIGITS, SEVEN_SEGMENT_LETTERS,
+    LedMatrixConfig, MatrixAction, MatrixLedProtocolConfig, SEVEN_SEGMENT_DIGITS,
+    SEVEN_SEGMENT_LETTERS, SevenSegmentDisplay, get_seven_segment_pattern,
 };
 
 // Re-export protocol convenience functions

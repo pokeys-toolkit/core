@@ -732,7 +732,7 @@ impl PoKeysDevice {
                 return Err(PoKeysError::Parameter(format!(
                     "Invalid matrix ID: {}",
                     matrix_id
-                )))
+                )));
             }
         };
 
@@ -852,7 +852,7 @@ impl PoKeysDevice {
                 _ => {
                     return Err(PoKeysError::InvalidConfiguration(
                         "Invalid matrix ID".to_string(),
-                    ))
+                    ));
                 }
             }
         }
@@ -1320,7 +1320,9 @@ mod tests {
                 Ok(count) => {
                     println!("Found {} USB PoKeys devices", count);
                     if count == 0 {
-                        println!("WARNING: No PoKeys devices found. Connect a device to run hardware tests.");
+                        println!(
+                            "WARNING: No PoKeys devices found. Connect a device to run hardware tests."
+                        );
                     }
                 }
                 Err(e) => {
@@ -1526,7 +1528,9 @@ mod tests {
                     }
 
                     if devices.is_empty() {
-                        println!("No network devices found - this is normal if no network PoKeys devices are present");
+                        println!(
+                            "No network devices found - this is normal if no network PoKeys devices are present"
+                        );
                     }
                 }
                 Err(e) => {

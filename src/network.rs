@@ -642,11 +642,15 @@ mod tests {
         let long_response = [0u8; 25]; // Too long
         let sender_addr = "192.168.1.100:20055".parse().unwrap();
 
-        assert!(discovery
-            .parse_discovery_response(&short_response, sender_addr)
-            .is_none());
-        assert!(discovery
-            .parse_discovery_response(&long_response, sender_addr)
-            .is_none());
+        assert!(
+            discovery
+                .parse_discovery_response(&short_response, sender_addr)
+                .is_none()
+        );
+        assert!(
+            discovery
+                .parse_discovery_response(&long_response, sender_addr)
+                .is_none()
+        );
     }
 }

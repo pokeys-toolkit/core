@@ -244,8 +244,15 @@ impl PoKeysDevice {
         encoder.channel_b_pin = protocol_pin_b; // Store 0-based internally
         encoder.set_options(options);
 
-        log::info!("Configuring encoder {} with pins A={}, B={} (1-based: A={}, B={}), options={:08b} using protocol 0x11",
-                   encoder_id, protocol_pin_a, protocol_pin_b, channel_a_pin, channel_b_pin, options.to_byte());
+        log::info!(
+            "Configuring encoder {} with pins A={}, B={} (1-based: A={}, B={}), options={:08b} using protocol 0x11",
+            encoder_id,
+            protocol_pin_a,
+            protocol_pin_b,
+            channel_a_pin,
+            channel_b_pin,
+            options.to_byte()
+        );
 
         // Use protocol command 0x11 for individual encoder configuration
         // Per spec: byte 2: 0x11, byte 3: encoder ID (0-25), byte 4: option, byte 5: channel A, byte 6: channel B

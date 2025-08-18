@@ -1,7 +1,7 @@
 //! Private implementation details for I/O operations
+use crate::PinFunction;
 use crate::device::PoKeysDevice;
 use crate::error::{PoKeysError, Result};
-use crate::PinFunction;
 
 /// Command codes for I/O operations
 pub(crate) enum Command {

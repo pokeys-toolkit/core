@@ -243,7 +243,9 @@ impl DeviceModel {
             if *channel != (i + 1) as u32 {
                 return Err(PoKeysError::ModelValidationError(format!(
                     "PWM channels are not sequential: expected channel {}, found channel {} on pin {}",
-                    i + 1, channel, pin
+                    i + 1,
+                    channel,
+                    pin
                 )));
             }
         }
@@ -527,7 +529,7 @@ impl DeviceModel {
                 return Err(PoKeysError::ModelValidationError(format!(
                     "Invalid matrix ID: {}",
                     config.matrix_id
-                )))
+                )));
             }
         };
 
@@ -562,7 +564,7 @@ impl DeviceModel {
                 return Err(PoKeysError::ModelValidationError(format!(
                     "Invalid matrix ID: {}",
                     matrix_id
-                )))
+                )));
             }
         };
 
@@ -1148,12 +1150,16 @@ mod tests {
         // Test related capabilities
         let related = model.get_related_capabilities(1, "MatrixKeyboard_Row1");
         assert_eq!(related.len(), 2);
-        assert!(related
-            .iter()
-            .any(|(cap, pin)| cap == "MatrixKeyboard_Col1" && *pin == 3));
-        assert!(related
-            .iter()
-            .any(|(cap, pin)| cap == "MatrixKeyboard_Col2" && *pin == 4));
+        assert!(
+            related
+                .iter()
+                .any(|(cap, pin)| cap == "MatrixKeyboard_Col1" && *pin == 3)
+        );
+        assert!(
+            related
+                .iter()
+                .any(|(cap, pin)| cap == "MatrixKeyboard_Col2" && *pin == 4)
+        );
 
         // Test missing columns
         let mut invalid_model = model.clone();

@@ -330,7 +330,9 @@ fn test_inactive_pins() {
     assert!(encoder_model.validate().is_ok());
 
     // But validate_pin_capability should fail for Encoder_1A because Encoder_1B is inactive
-    assert!(encoder_model
-        .validate_pin_capability(1, "Encoder_1A")
-        .is_err());
+    assert!(
+        encoder_model
+            .validate_pin_capability(1, "Encoder_1A")
+            .is_err()
+    );
 }

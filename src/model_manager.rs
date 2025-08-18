@@ -5,7 +5,7 @@
 
 use crate::error::{PoKeysError, Result};
 use crate::models::{
-    copy_default_models_to_user_dir, get_default_model_dir, DeviceModel, PinModel,
+    DeviceModel, PinModel, copy_default_models_to_user_dir, get_default_model_dir,
 };
 use log::{info, warn};
 use std::collections::HashMap;

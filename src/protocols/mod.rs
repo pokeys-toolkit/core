@@ -46,7 +46,7 @@ mod tests {
 
         // Test buffer too long
         let _long_buffer = [0u8; 56]; // 56 bytes is too long (max 55)
-                                      // In a real implementation, this would return an error
+        // In a real implementation, this would return an error
 
         // Test zero length read
         // This should return an error for zero length

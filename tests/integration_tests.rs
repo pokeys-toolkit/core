@@ -957,12 +957,16 @@ mod integration_tests {
             .unwrap();
 
         // But invalid parameters should still fail
-        assert!(io_manager
-            .set_pin_function(0, PinFunction::DigitalOutput)
-            .is_err());
-        assert!(io_manager
-            .set_pin_function(56, PinFunction::DigitalOutput)
-            .is_err());
+        assert!(
+            io_manager
+                .set_pin_function(0, PinFunction::DigitalOutput)
+                .is_err()
+        );
+        assert!(
+            io_manager
+                .set_pin_function(56, PinFunction::DigitalOutput)
+                .is_err()
+        );
 
         // Test PWM errors
         let mut pwm_manager = MockPWMManager::new(device_info.pwm_count);

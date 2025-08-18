@@ -1,4 +1,4 @@
-use pokeys_lib::models::{get_default_model_dir, load_model, DeviceModel, PinModel};
+use pokeys_lib::models::{DeviceModel, PinModel, get_default_model_dir, load_model};
 use std::collections::HashMap;
 use std::fs;
 use tempfile::tempdir;
@@ -432,9 +432,11 @@ fn test_enhanced_validation() {
     assert!(inactive_model.validate().is_ok());
 
     // But validate_pin_capability should fail
-    assert!(inactive_model
-        .validate_pin_capability(1, "Encoder_1A")
-        .is_err());
+    assert!(
+        inactive_model
+            .validate_pin_capability(1, "Encoder_1A")
+            .is_err()
+    );
 
     // Test matrix keyboard validation
     let mut matrix_model = DeviceModel {
@@ -469,12 +471,16 @@ fn test_enhanced_validation() {
     assert!(matrix_model.validate().is_ok());
 
     // Test validate_pin_capability with matrix keyboard pins
-    assert!(matrix_model
-        .validate_pin_capability(1, "MatrixKeyboard_Row1")
-        .is_ok());
-    assert!(matrix_model
-        .validate_pin_capability(2, "MatrixKeyboard_Col1")
-        .is_ok());
+    assert!(
+        matrix_model
+            .validate_pin_capability(1, "MatrixKeyboard_Row1")
+            .is_ok()
+    );
+    assert!(
+        matrix_model
+            .validate_pin_capability(2, "MatrixKeyboard_Col1")
+            .is_ok()
+    );
 
     // Test with missing columns
     let mut invalid_matrix = matrix_model.clone();
@@ -484,9 +490,11 @@ fn test_enhanced_validation() {
     assert!(invalid_matrix.validate().is_err());
 
     // And validate_pin_capability should fail
-    assert!(invalid_matrix
-        .validate_pin_capability(1, "MatrixKeyboard_Row1")
-        .is_err());
+    assert!(
+        invalid_matrix
+            .validate_pin_capability(1, "MatrixKeyboard_Row1")
+            .is_err()
+    );
 
     // Test PWM channel validation
     let mut pwm_model = DeviceModel {

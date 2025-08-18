@@ -1,5 +1,5 @@
 use pokeys_lib::{
-    connect_to_device, enumerate_usb_devices, DeviceModel, PinFunction, PinModel, Result,
+    DeviceModel, PinFunction, PinModel, Result, connect_to_device, enumerate_usb_devices,
 };
 use std::collections::HashMap;
 use std::fs;

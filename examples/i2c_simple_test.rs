@@ -153,7 +153,9 @@ fn test_eeprom_operations(device: &mut PoKeysDevice, address: u8) -> Result<()> 
                                     "⚠️  Data mismatch - wrote: {:02X?}, read: {:02X?}",
                                     test_data, data
                                 );
-                                println!("   This could be normal if EEPROM is write-protected or different data was already stored");
+                                println!(
+                                    "   This could be normal if EEPROM is write-protected or different data was already stored"
+                                );
                             }
                         }
                         Ok((status, data)) => {
