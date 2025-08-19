@@ -22,24 +22,47 @@ hero:
       icon: external
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+<div class="hero-section">
+  <div class="container mx-auto px-6 text-center text-white">
+    <h1 class="hero-title">PoKeys Core Library</h1>
+    <p class="hero-subtitle">Pure Rust implementation of the PoKeysLib for controlling PoKeys devices</p>
+    
+    <div class="action-buttons">
+      <a href="/guides/introduction/" class="btn-primary">Get Started →</a>
+      <a href="https://github.com/pokeys-toolkit/core" class="btn-secondary">View on GitHub</a>
+      <a href="https://github.com/pokeys-toolkit/core/releases/latest" class="btn-secondary">Latest Release</a>
+      <a href="https://crates.io/crates/pokeys-lib" class="btn-secondary">View on Crates.io</a>
+    </div>
+  </div>
+</div>
 
 ## Features
 
-<CardGrid stagger>
-	<Card title="🦀 Comprehensive PoKeys Support" icon="rocket">
-		Comprehensive PoKeys support that leverages the blazing fast Rust language.
-	</Card>
-	<Card title="🚀 Performance Breakthrough" icon="setting">
-		Revolutionary dual optimization system provides massive performance improvements with 96.4% time reduction and 28x faster pin configuration.
-	</Card>
-	<Card title="🔌 Device Connectivity" icon="puzzle">
-		Full support for USB and network-connected PoKeys devices with auto-detection and multi-device management.
-	</Card>
-	<Card title="🛡️ Safety & Reliability" icon="approve-check">
-		Comprehensive pin capability validation, detailed error handling, thread safety, and failsafe settings.
-	</Card>
-</CardGrid>
+<div class="feature-grid">
+  <div class="feature-card">
+    <span class="feature-icon">🦀</span>
+    <h3>Comprehensive PoKeys Support</h3>
+    <p>Comprehensive PoKeys support that leverages the blazing fast Rust language.</p>
+  </div>
+  
+  <div class="feature-card">
+    <span class="feature-icon">🚀</span>
+    <h3>Performance Breakthrough</h3>
+    <p>Revolutionary dual optimization system provides massive performance improvements with 96.4% time reduction and 28x faster pin configuration.</p>
+  </div>
+  
+  <div class="feature-card">
+    <span class="feature-icon">🔌</span>
+    <h3>Device Connectivity</h3>
+    <p>Full support for USB and network-connected PoKeys devices with auto-detection and multi-device management.</p>
+  </div>
+  
+  <div class="feature-card">
+    <span class="feature-icon">🛡️</span>
+    <h3>Safety & Reliability</h3>
+    <p>Comprehensive pin capability validation, detailed error handling, thread safety, and failsafe settings.</p>
+  </div>
+</div>
 
 ## Supported Devices
 
