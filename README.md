@@ -6,25 +6,6 @@
 
 A pure Rust implementation of the PoKeysLib for controlling PoKeys devices. This is the **core library** that provides all fundamental device communication and control functionality for the PoKeys ecosystem.
 
-## 🚀 Performance Breakthrough: Dual Optimization System
-
-**Revolutionary dual optimization system provides massive performance improvements**:
-
-### Bulk Operations Optimization
-- **Before**: 110 individual commands, 14.44ms configuration time
-- **After**: 2 bulk commands, 513µs configuration time
-- **Result**: 96.4% time reduction, **28x faster pin configuration**
-
-### Single Enumeration Optimization
-- **Before**: Multiple 5-second device enumerations per sync
-- **After**: Single enumeration, cached results reused
-- **Result**: 65% faster device discovery, **3x faster multi-device sync**
-
-### Encoder Pin Numbering Fix
-- **Fixed**: Encoder pin numbering conversion (1-based config ↔ 0-based protocol)
-- **Result**: Correct encoder pin assignments in vendor tools
-- **Impact**: Reliable encoder configuration and monitoring
-
 ## ✨ Core Features
 
 ### Device Connectivity
