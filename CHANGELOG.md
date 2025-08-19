@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.0] - 2025-08-19
+
+- feat: add comprehensive getting started guide
+
 ## [0.11.0] - 2025-08-19
 
 - feat: add documentation section with Getting Started, Examples, and API links
