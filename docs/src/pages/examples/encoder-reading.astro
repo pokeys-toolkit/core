@@ -1,0 +1,418 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Encoder Reading - PoKeys Examples</title>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 w-full z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="flex justify-between items-center py-4">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="hover:text-blue-400 transition-colors">Home</a>
+						<a href="/core/examples" class="hover:text-blue-400 transition-colors">← Back to Examples</a>
+						<a href="https://github.com/pokeys-toolkit/core" class="hover:text-blue-400 transition-colors">GitHub</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Content -->
+		<div class="pt-20 min-h-screen bg-gray-900">
+			<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+				<!-- Header -->
+				<div class="mb-8">
+					<div class="flex items-center gap-2 mb-4">
+						<span class="px-3 py-1 bg-yellow-600/20 text-yellow-300 text-sm rounded-full">Intermediate</span>
+						<span class="px-3 py-1 bg-orange-600/20 text-orange-300 text-sm rounded-full">Encoder</span>
+					</div>
+					<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+						Encoder Reading
+					</h1>
+					<p class="text-xl text-gray-400">
+						Read quadrature encoders for precise position and velocity tracking
+					</p>
+				</div>
+
+				<!-- Overview -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<p class="text-gray-300 mb-4">
+							Quadrature encoders provide precise position feedback using two phase-shifted signals (A and B).
+							This example demonstrates:
+						</p>
+						<ul class="text-gray-300 space-y-2">
+							<li>• <strong>Encoder configuration</strong> - Setting up quadrature inputs</li>
+							<li>• <strong>Position tracking</strong> - Reading absolute and relative position</li>
+							<li>• <strong>Velocity calculation</strong> - Computing speed from position changes</li>
+							<li>• <strong>Direction detection</strong> - Determining rotation direction</li>
+							<li>• <strong>Resolution modes</strong> - 1x, 2x, and 4x counting</li>
+						</ul>
+					</div>
+				</section>
+
+				<!-- Hardware Setup -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Hardware Setup</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-yellow-400">Rotary Encoder</h3>
+								<ul class="text-gray-300 space-y-1 text-sm">
+									<li>• Quadrature rotary encoder</li>
+									<li>• A phase → Pin 10</li>
+									<li>• B phase → Pin 11</li>
+									<li>• VCC → +3.3V or +5V</li>
+									<li>• GND → GND</li>
+								</ul>
+							</div>
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-orange-400">Motor Encoder</h3>
+								<ul class="text-gray-300 space-y-1 text-sm">
+									<li>• Motor with built-in encoder</li>
+									<li>• Encoder A → Pin 12</li>
+									<li>• Encoder B → Pin 13</li>
+									<li>• Power and ground as required</li>
+									<li>• Pull-up resistors if needed</li>
+								</ul>
+							</div>
+						</div>
+						<div class="mt-4 p-4 bg-blue-900/20 border border-blue-500/30 rounded">
+							<p class="text-blue-300 text-sm">
+								💡 <strong>Tip:</strong> Most encoders need pull-up resistors (1-10kΩ) on the A and B signals for reliable operation.
+							</p>
+						</div>
+					</div>
+				</section>
+
+				<!-- Basic Example -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Basic Encoder Reading</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">use pokeys_lib::*;
+use std::&#123;thread, time::Duration&#125;;
+
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#123;
+    println!("🔄 PoKeys Encoder Reading Example");
+    println!("=================================");
+    
+    // Connect to device
+    let device_count = enumerate_usb_devices()?;
+    if device_count == 0 &#123;
+        println!("❌ No PoKeys devices found!");
+        return Ok(());
+    &#125;
+    
+    let mut device = connect_to_device(0)?;
+    println!("✅ Connected to: &#123;&#125;", device.get_device_name()?);
+    
+    // Configure encoder 0 on pins 10 and 11
+    let encoder_options = EncoderOptions::&#123;
+        sampling_mode: EncoderSamplingMode::Quadrature4x, // 4x resolution
+        reset_on_index: false,
+        invert_direction: false,
+    &#125;;
+    
+    device.configure_encoder(0, 10, 11, encoder_options)?;
+    println!("⚙️  Configured encoder 0 on pins 10 (A) and 11 (B)");
+    
+    // Reset encoder position to zero
+    device.reset_encoder_position(0)?;
+    println!("🔄 Reset encoder position to zero");
+    
+    println!("📊 Encoder readings (turn the encoder):");
+    println!("Time | Position | Delta | Direction | Speed (counts/s)");
+    println!("-----|----------|-------|-----------|----------------");
+    
+    let mut last_position = 0i32;
+    let mut last_time = std::time::Instant::now();
+    
+    for i in 0..200 &#123;
+        // Read current encoder position
+        let current_position = device.get_encoder_value(0)?;
+        let current_time = std::time::Instant::now();
+        
+        // Calculate delta and speed
+        let delta = current_position - last_position;
+        let time_diff = current_time.duration_since(last_time).as_secs_f32();
+        let speed = if time_diff &gt; 0.0 &#123; delta as f32 / time_diff &#125; else &#123; 0.0 &#125;;
+        
+        // Determine direction
+        let direction = match delta &#123;
+            d if d &gt; 0 =&gt; "CW ",
+            d if d &lt; 0 =&gt; "CCW",
+            _ =&gt; "---",
+        &#125;;
+        
+        println!("&#123;:>4&#125; | &#123;:>8&#125; | &#123;:>5&#125; | &#123;:>9&#125; | &#123;:>13.1&#125;", 
+                 i, current_position, delta, direction, speed);
+        
+        last_position = current_position;
+        last_time = current_time;
+        
+        thread::sleep(Duration::from_millis(100));
+    &#125;
+    
+    println!("🎉 Encoder reading completed!");
+    Ok(())
+&#125;</code></pre>
+					</div>
+				</section>
+
+				<!-- Advanced Example -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Multi-Encoder Position Control</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">use pokeys_lib::*;
+use std::&#123;collections::VecDeque, thread, time::&#123;Duration, Instant&#125;&#125;;
+
+struct EncoderTracker &#123;
+    id: u8,
+    name: String,
+    position: i32,
+    velocity_samples: VecDeque&lt;f32&gt;,
+    last_position: i32,
+    last_time: Instant,
+    counts_per_revolution: i32,
+&#125;
+
+impl EncoderTracker &#123;
+    fn new(id: u8, name: &str, counts_per_revolution: i32) -&gt; Self &#123;
+        Self &#123;
+            id,
+            name: name.to_string(),
+            position: 0,
+            velocity_samples: VecDeque::new(),
+            last_position: 0,
+            last_time: Instant::now(),
+            counts_per_revolution,
+        &#125;
+    &#125;
+    
+    fn update(&mut self, device: &mut Device) -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#123;
+        let current_time = Instant::now();
+        self.position = device.get_encoder_value(self.id)?;
+        
+        // Calculate velocity
+        let delta_pos = self.position - self.last_position;
+        let delta_time = current_time.duration_since(self.last_time).as_secs_f32();
+        
+        if delta_time &gt; 0.0 &#123;
+            let velocity = delta_pos as f32 / delta_time;
+            self.velocity_samples.push_back(velocity);
+            
+            // Keep only last 10 samples for smoothing
+            if self.velocity_samples.len() &gt; 10 &#123;
+                self.velocity_samples.pop_front();
+            &#125;
+        &#125;
+        
+        self.last_position = self.position;
+        self.last_time = current_time;
+        Ok(())
+    &#125;
+    
+    fn get_average_velocity(&self) -&gt; f32 &#123;
+        if self.velocity_samples.is_empty() &#123;
+            return 0.0;
+        &#125;
+        let sum: f32 = self.velocity_samples.iter().sum();
+        sum / self.velocity_samples.len() as f32
+    &#125;
+    
+    fn get_revolutions(&self) -&gt; f32 &#123;
+        self.position as f32 / self.counts_per_revolution as f32
+    &#125;
+    
+    fn get_rpm(&self) -&gt; f32 &#123;
+        (self.get_average_velocity() / self.counts_per_revolution as f32) * 60.0
+    &#125;
+&#125;
+
+fn multi_encoder_example() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#123;
+    let mut device = connect_to_device(0)?;
+    
+    // Configure multiple encoders
+    let encoder_options = EncoderOptions::&#123;
+        sampling_mode: EncoderSamplingMode::Quadrature4x,
+        reset_on_index: false,
+        invert_direction: false,
+    &#125;;
+    
+    // Encoder 0: Rotary knob (24 counts/rev)
+    device.configure_encoder(0, 10, 11, encoder_options)?;
+    device.reset_encoder_position(0)?;
+    
+    // Encoder 1: Motor encoder (1000 counts/rev)
+    device.configure_encoder(1, 12, 13, encoder_options)?;
+    device.reset_encoder_position(1)?;
+    
+    println!("🔄 Multi-Encoder Position Control");
+    println!("=================================");
+    
+    let mut knob = EncoderTracker::new(0, "Rotary Knob", 24);
+    let mut motor = EncoderTracker::new(1, "Motor", 1000);
+    
+    println!("Knob: Pos | Rev | RPM  || Motor: Pos  | Rev  | RPM");
+    println!("----------|-----|------||-------------|------|----");
+    
+    for _ in 0..300 &#123;
+        // Update both encoders
+        knob.update(&mut device)?;
+        motor.update(&mut device)?;
+        
+        println!("&#123;:>9&#125; |&#123;:>4.1&#125; |&#123;:>5.0&#125; || &#123;:>10&#125; |&#123;:>5.2&#125; |&#123;:>4.0&#125;",
+                 knob.position,
+                 knob.get_revolutions(),
+                 knob.get_rpm(),
+                 motor.position,
+                 motor.get_revolutions(),
+                 motor.get_rpm());
+        
+        thread::sleep(Duration::from_millis(100));
+    &#125;
+    
+    Ok(())
+&#125;</code></pre>
+					</div>
+				</section>
+
+				<!-- Encoder Theory -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Quadrature Encoder Theory</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-yellow-400">Signal Phases</h3>
+								<p class="text-gray-300 text-sm mb-2">
+									Quadrature encoders generate two square wave signals (A and B) that are 90° out of phase:
+								</p>
+								<ul class="text-gray-300 text-sm space-y-1">
+									<li>• <strong>Clockwise:</strong> A leads B</li>
+									<li>• <strong>Counter-clockwise:</strong> B leads A</li>
+									<li>• <strong>Resolution:</strong> Depends on counting mode</li>
+								</ul>
+							</div>
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-orange-400">Counting Modes</h3>
+								<ul class="text-gray-300 text-sm space-y-1">
+									<li>• <strong>1x:</strong> Count A edges only</li>
+									<li>• <strong>2x:</strong> Count A rising and falling</li>
+									<li>• <strong>4x:</strong> Count all A and B edges</li>
+									<li>• <strong>4x mode</strong> provides highest resolution</li>
+								</ul>
+							</div>
+						</div>
+						<div class="mt-6 p-4 bg-gray-700 rounded">
+							<h4 class="font-semibold text-white mb-2">Resolution Calculation</h4>
+							<pre class="text-green-400 text-sm"><code>// For a 1000 PPR (Pulses Per Revolution) encoder:
+// 1x mode: 1000 counts/revolution
+// 2x mode: 2000 counts/revolution  
+// 4x mode: 4000 counts/revolution
+
+let degrees_per_count = 360.0 / (ppr * multiplier);
+let position_degrees = encoder_counts * degrees_per_count;</code></pre>
+						</div>
+					</div>
+				</section>
+
+				<!-- Applications -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Common Applications</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-blue-400">Position Control</h3>
+								<pre class="bg-gray-900 p-3 rounded text-sm"><code class="text-green-400">// Simple position control loop
+let target_position = 1000; // counts
+let current_position = device.get_encoder_value(0)?;
+let error = target_position - current_position;
+
+if error.abs() &gt; 5 &#123; // deadband
+    let pwm_output = (error as f32 * 0.1).clamp(-100.0, 100.0);
+    device.set_pwm_duty_cycle(4, pwm_output.abs())?;
+    
+    // Set direction pin based on error sign
+    device.set_digital_output(5, error &gt; 0)?;
+&#125;</code></pre>
+							</div>
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-green-400">Velocity Control</h3>
+								<pre class="bg-gray-900 p-3 rounded text-sm"><code class="text-green-400">// PID velocity control
+let target_rpm = 100.0;
+let current_rpm = calculate_rpm(&encoder_tracker);
+let error = target_rpm - current_rpm;
+
+pid_controller.update(error);
+let output = pid_controller.get_output();
+
+device.set_pwm_duty_cycle(4, output.abs())?;
+device.set_digital_output(5, output &gt; 0.0)?;</code></pre>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Troubleshooting -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Troubleshooting</h2>
+					<div class="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
+						<div class="space-y-4">
+							<div>
+								<h4 class="font-semibold text-white">Encoder not counting</h4>
+								<ul class="text-gray-300 mt-1 space-y-1">
+									<li>• Check power supply to encoder</li>
+									<li>• Verify A and B signal connections</li>
+									<li>• Add pull-up resistors (1-10kΩ)</li>
+									<li>• Check signal voltage levels (should be 0-3.3V or 0-5V)</li>
+								</ul>
+							</div>
+							<div>
+								<h4 class="font-semibold text-white">Wrong direction</h4>
+								<ul class="text-gray-300 mt-1 space-y-1">
+									<li>• Swap A and B signal connections</li>
+									<li>• Or set invert_direction: true in encoder options</li>
+									<li>• Check encoder wiring diagram</li>
+								</ul>
+							</div>
+							<div>
+								<h4 class="font-semibold text-white">Missed counts at high speed</h4>
+								<ul class="text-gray-300 mt-1 space-y-1">
+									<li>• Use shorter, shielded cables</li>
+									<li>• Add hardware filtering (RC filter)</li>
+									<li>• Reduce maximum rotation speed</li>
+									<li>• Check for electrical noise sources</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Next Steps -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Next Steps</h2>
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<a href="/core/examples/spi-communication" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-red-500/50 transition-all duration-300">
+							<h3 class="text-lg font-semibold mb-2 text-white group-hover:text-red-400">SPI Communication →</h3>
+							<p class="text-gray-400 text-sm">Learn to communicate with SPI devices and sensors</p>
+						</a>
+						<a href="/core/examples/pwm-control" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-purple-500/50 transition-all duration-300">
+							<h3 class="text-lg font-semibold mb-2 text-white group-hover:text-purple-400">PWM Control →</h3>
+							<p class="text-gray-400 text-sm">Combine encoders with PWM for closed-loop motor control</p>
+						</a>
+					</div>
+				</section>
+			</div>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,316 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>SPI Communication - PoKeys Examples</title>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 w-full z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="flex justify-between items-center py-4">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="hover:text-blue-400 transition-colors">Home</a>
+						<a href="/core/examples" class="hover:text-blue-400 transition-colors">Examples</a>
+						<a href="https://github.com/pokeys-toolkit/core" class="hover:text-blue-400 transition-colors">GitHub</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Content -->
+		<div class="pt-20 min-h-screen bg-gray-900">
+			<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+				<!-- Header -->
+				<div class="mb-12">
+					<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text text-transparent">
+						SPI Communication
+					</h1>
+					<p class="text-xl text-gray-400">
+						Learn how to communicate with SPI devices using the PoKeys SPI master interface
+					</p>
+				</div>
+
+				<!-- Overview -->
+				<div class="bg-gradient-to-r from-red-900/20 to-orange-900/20 border border-red-500/30 rounded-lg p-6 mb-8">
+					<h2 class="text-2xl font-bold mb-4 text-red-400">What You'll Learn</h2>
+					<ul class="text-gray-300 space-y-2">
+						<li>• Configure SPI master interface with custom settings</li>
+						<li>• Communicate with SPI devices using chip select pins</li>
+						<li>• Read data from SPI sensors and peripherals</li>
+						<li>• Handle SPI timing and protocol requirements</li>
+					</ul>
+				</div>
+
+				<!-- Hardware Setup -->
+				<div class="mb-8">
+					<h2 class="text-2xl font-bold mb-4 text-white">Hardware Setup</h2>
+					<div class="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+						<h3 class="text-lg font-semibold mb-3 text-red-400">Required Connections</h3>
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-300">
+							<div>
+								<h4 class="font-semibold mb-2">SPI Bus Pins (Fixed)</h4>
+								<ul class="space-y-1">
+									<li>• Pin 23: MOSI (Master Out, Slave In)</li>
+									<li>• Pin 24: MISO (Master In, Slave Out)</li>
+									<li>• Pin 25: CLK (Clock)</li>
+								</ul>
+							</div>
+							<div>
+								<h4 class="font-semibold mb-2">Chip Select Pins</h4>
+								<ul class="space-y-1">
+									<li>• Any available pin (1-55)</li>
+									<li>• Connect to CS/SS pin of SPI device</li>
+									<li>• Multiple devices need separate CS pins</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Basic Example -->
+				<div class="mb-8">
+					<h2 class="text-2xl font-bold mb-4 text-white">Basic SPI Communication</h2>
+					<div class="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+						<pre class="text-sm text-gray-300 overflow-x-auto"><code>use pokeys_lib::*;
+use std::thread;
+use std::time::Duration;
+
+fn main() -&#62; Result&#60;()&#62; &#123;
+    // Connect to device
+    let device_count = enumerate_usb_devices()?;
+    if device_count == 0 &#123;
+        println!("No PoKeys devices found");
+        return Ok(());
+    &#125;
+
+    let mut device = connect_to_device(0)?;
+    println!("Connected to PoKeys device");
+
+    // Configure SPI with 1MHz clock
+    let spi_config = SpiConfiguration &#123;
+        clock_frequency: 1_000_000, // 1 MHz
+        mode: SpiMode::Mode0,       // CPOL=0, CPHA=0
+        bit_order: SpiBitOrder::MsbFirst,
+    &#125;;
+
+    device.configure_spi(spi_config)?;
+    println!("SPI configured: 1MHz, Mode 0, MSB first");
+
+    // Configure chip select pin
+    let cs_pin = 10;
+    device.set_pin_function(cs_pin, PinFunction::DigitalOutput)?;
+    device.set_digital_output(cs_pin, true)?; // CS idle high
+
+    // Example: Read device ID from SPI sensor
+    let device_id = read_spi_device_id(&mut device, cs_pin)?;
+    println!("SPI Device ID: 0x&#123;:02X&#125;", device_id);
+
+    Ok(())
+&#125;
+
+fn read_spi_device_id(device: &mut PoKeysDevice, cs_pin: u8) -&#62; Result&#60;u8&#62; &#123;
+    // Pull CS low to start transaction
+    device.set_digital_output(cs_pin, false)?;
+    thread::sleep(Duration::from_micros(10));
+
+    // Send read ID command (example: 0x9F for many flash chips)
+    let tx_data = vec![0x9F, 0x00]; // Command + dummy byte
+    let rx_data = device.spi_transfer(&tx_data)?;
+
+    // Pull CS high to end transaction
+    device.set_digital_output(cs_pin, true)?;
+
+    // Return device ID (second byte in response)
+    Ok(rx_data[1])
+&#125;</code></pre>
+					</div>
+				</div>
+
+				<!-- Advanced Example -->
+				<div class="mb-8">
+					<h2 class="text-2xl font-bold mb-4 text-white">Advanced: Multiple SPI Devices</h2>
+					<div class="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+						<pre class="text-sm text-gray-300 overflow-x-auto"><code>use pokeys_lib::*;
+use std::collections::HashMap;
+
+struct SpiDevice &#123;
+    cs_pin: u8,
+    name: String,
+&#125;
+
+fn main() -&#62; Result&#60;()&#62; &#123;
+    let mut device = connect_to_device(0)?;
+
+    // Configure SPI bus
+    let spi_config = SpiConfiguration &#123;
+        clock_frequency: 2_000_000, // 2 MHz
+        mode: SpiMode::Mode0,
+        bit_order: SpiBitOrder::MsbFirst,
+    &#125;;
+    device.configure_spi(spi_config)?;
+
+    // Define multiple SPI devices
+    let mut spi_devices = HashMap::new();
+    spi_devices.insert("flash", SpiDevice &#123; cs_pin: 10, name: "Flash Memory".to_string() &#125;);
+    spi_devices.insert("adc", SpiDevice &#123; cs_pin: 11, name: "ADC Converter".to_string() &#125;);
+    spi_devices.insert("dac", SpiDevice &#123; cs_pin: 12, name: "DAC Output".to_string() &#125;);
+
+    // Configure all CS pins
+    for spi_dev in spi_devices.values() &#123;
+        device.set_pin_function(spi_dev.cs_pin, PinFunction::DigitalOutput)?;
+        device.set_digital_output(spi_dev.cs_pin, true)?; // CS idle high
+        println!("Configured CS pin &#123;&#125; for &#123;&#125;", spi_dev.cs_pin, spi_dev.name);
+    &#125;
+
+    // Communicate with each device
+    for (key, spi_dev) in &spi_devices &#123;
+        match key &#123;
+            "flash" =&#62; &#123;
+                let id = read_flash_id(&mut device, spi_dev.cs_pin)?;
+                println!("Flash ID: 0x&#123;:04X&#125;", id);
+            &#125;,
+            "adc" =&#62; &#123;
+                let value = read_adc_channel(&mut device, spi_dev.cs_pin, 0)?;
+                println!("ADC Channel 0: &#123;&#125;", value);
+            &#125;,
+            "dac" =&#62; &#123;
+                write_dac_value(&mut device, spi_dev.cs_pin, 2048)?;
+                println!("DAC set to mid-scale");
+            &#125;,
+            _ =&#62; &#123;&#125;
+        &#125;
+    &#125;
+
+    Ok(())
+&#125;
+
+fn read_flash_id(device: &mut PoKeysDevice, cs_pin: u8) -&#62; Result&#60;u16&#62; &#123;
+    device.set_digital_output(cs_pin, false)?;
+    let tx_data = vec![0x90, 0x00, 0x00, 0x00, 0x00]; // Read ID command
+    let rx_data = device.spi_transfer(&tx_data)?;
+    device.set_digital_output(cs_pin, true)?;
+
+    Ok(((rx_data[3] as u16) &#60;&#60; 8) | (rx_data[4] as u16))
+&#125;
+
+fn read_adc_channel(device: &mut PoKeysDevice, cs_pin: u8, channel: u8) -&#62; Result&#60;u16&#62; &#123;
+    device.set_digital_output(cs_pin, false)?;
+    let tx_data = vec![0x01, (channel &#60;&#60; 4) | 0x80, 0x00]; // Start bit + channel
+    let rx_data = device.spi_transfer(&tx_data)?;
+    device.set_digital_output(cs_pin, true)?;
+
+    Ok(((rx_data[1] as u16 & 0x0F) &#60;&#60; 8) | (rx_data[2] as u16))
+&#125;
+
+fn write_dac_value(device: &mut PoKeysDevice, cs_pin: u8, value: u16) -&#62; Result&#60;()&#62; &#123;
+    device.set_digital_output(cs_pin, false)?;
+    let tx_data = vec![
+        0x30 | ((value &#62;&#62; 8) & 0x0F) as u8, // Command + upper 4 bits
+        (value & 0xFF) as u8,                    // Lower 8 bits
+    ];
+    device.spi_transfer(&tx_data)?;
+    device.set_digital_output(cs_pin, true)?;
+
+    Ok(())
+&#125;</code></pre>
+					</div>
+				</div>
+
+				<!-- SPI Modes -->
+				<div class="mb-8">
+					<h2 class="text-2xl font-bold mb-4 text-white">SPI Modes and Configuration</h2>
+					<div class="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+						<h3 class="text-lg font-semibold mb-3 text-red-400">SPI Clock Modes</h3>
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+							<div class="bg-gray-700/50 p-4 rounded">
+								<h4 class="font-semibold text-white mb-2">Mode 0 (CPOL=0, CPHA=0)</h4>
+								<p class="text-gray-300 text-sm">Clock idle low, data sampled on rising edge</p>
+							</div>
+							<div class="bg-gray-700/50 p-4 rounded">
+								<h4 class="font-semibold text-white mb-2">Mode 1 (CPOL=0, CPHA=1)</h4>
+								<p class="text-gray-300 text-sm">Clock idle low, data sampled on falling edge</p>
+							</div>
+							<div class="bg-gray-700/50 p-4 rounded">
+								<h4 class="font-semibold text-white mb-2">Mode 2 (CPOL=1, CPHA=0)</h4>
+								<p class="text-gray-300 text-sm">Clock idle high, data sampled on falling edge</p>
+							</div>
+							<div class="bg-gray-700/50 p-4 rounded">
+								<h4 class="font-semibold text-white mb-2">Mode 3 (CPOL=1, CPHA=1)</h4>
+								<p class="text-gray-300 text-sm">Clock idle high, data sampled on rising edge</p>
+							</div>
+						</div>
+
+						<pre class="text-sm text-gray-300 overflow-x-auto"><code>// Configure different SPI modes
+let configs = [
+    SpiConfiguration &#123; mode: SpiMode::Mode0, clock_frequency: 1_000_000, bit_order: SpiBitOrder::MsbFirst &#125;,
+    SpiConfiguration &#123; mode: SpiMode::Mode1, clock_frequency: 500_000, bit_order: SpiBitOrder::LsbFirst &#125;,
+    SpiConfiguration &#123; mode: SpiMode::Mode2, clock_frequency: 2_000_000, bit_order: SpiBitOrder::MsbFirst &#125;,
+    SpiConfiguration &#123; mode: SpiMode::Mode3, clock_frequency: 100_000, bit_order: SpiBitOrder::MsbFirst &#125;,
+];
+
+// Apply configuration based on device requirements
+device.configure_spi(configs[0])?; // Most common: Mode 0</code></pre>
+					</div>
+				</div>
+
+				<!-- Troubleshooting -->
+				<div class="mb-8">
+					<h2 class="text-2xl font-bold mb-4 text-white">Troubleshooting</h2>
+					<div class="space-y-4">
+						<div class="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
+							<h3 class="font-semibold text-yellow-400 mb-2">No Response from SPI Device</h3>
+							<ul class="text-gray-300 text-sm space-y-1">
+								<li>• Check wiring: MOSI, MISO, CLK, and CS connections</li>
+								<li>• Verify SPI mode matches device requirements</li>
+								<li>• Ensure clock frequency is within device limits</li>
+								<li>• Check CS pin polarity (active low vs active high)</li>
+							</ul>
+						</div>
+
+						<div class="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
+							<h3 class="font-semibold text-red-400 mb-2">Data Corruption</h3>
+							<ul class="text-gray-300 text-sm space-y-1">
+								<li>• Reduce clock frequency for long wires</li>
+								<li>• Check bit order (MSB vs LSB first)</li>
+								<li>• Add delays between CS transitions</li>
+								<li>• Verify power supply stability</li>
+							</ul>
+						</div>
+
+						<div class="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+							<h3 class="font-semibold text-blue-400 mb-2">Pin Conflicts</h3>
+							<ul class="text-gray-300 text-sm space-y-1">
+								<li>• Pins 23, 24, 25 are reserved for SPI bus</li>
+								<li>• Choose CS pins that support digital output</li>
+								<li>• Avoid pins used for other functions</li>
+								<li>• Check device model pin capabilities</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+
+				<!-- Navigation -->
+				<div class="flex justify-between items-center pt-8 border-t border-gray-700">
+					<a href="/core/examples/encoder-reading" class="flex items-center text-blue-400 hover:text-blue-300 transition-colors">
+						<span class="mr-2">←</span> Encoder Reading
+					</a>
+					<a href="/core/examples" class="text-gray-400 hover:text-white transition-colors">
+						Back to Examples
+					</a>
+					<a href="/core/examples/multi-device" class="flex items-center text-blue-400 hover:text-blue-300 transition-colors">
+						Multi-Device Management <span class="ml-2">→</span>
+					</a>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

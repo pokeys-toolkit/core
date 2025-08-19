@@ -1,0 +1,605 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Multi-Device Management - PoKeys Examples</title>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 w-full z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="flex justify-between items-center py-4">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="hover:text-blue-400 transition-colors">Home</a>
+						<a href="/core/examples" class="hover:text-blue-400 transition-colors">Examples</a>
+						<a href="https://github.com/pokeys-toolkit/core" class="hover:text-blue-400 transition-colors">GitHub</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Content -->
+		<div class="pt-20 min-h-screen bg-gray-900">
+			<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+				<!-- Header -->
+				<div class="mb-12">
+					<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-indigo-400 to-cyan-500 bg-clip-text text-transparent">
+						Multi-Device Management
+					</h1>
+					<p class="text-xl text-gray-400">
+						Learn how to manage multiple PoKeys devices simultaneously for complex automation systems
+					</p>
+				</div>
+
+				<!-- Overview -->
+				<div class="bg-gradient-to-r from-indigo-900/20 to-cyan-900/20 border border-indigo-500/30 rounded-lg p-6 mb-8">
+					<h2 class="text-2xl font-bold mb-4 text-indigo-400">What You'll Learn</h2>
+					<ul class="text-gray-300 space-y-2">
+						<li>• Discover and connect to multiple PoKeys devices</li>
+						<li>• Coordinate operations across multiple devices</li>
+						<li>• Handle device-specific configurations and capabilities</li>
+						<li>• Implement robust error handling for multi-device systems</li>
+					</ul>
+				</div>
+
+				<!-- Basic Multi-Device -->
+				<div class="mb-8">
+					<h2 class="text-2xl font-bold mb-4 text-white">Basic Multi-Device Discovery</h2>
+					<div class="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+						<pre class="text-sm text-gray-300 overflow-x-auto"><code>use pokeys_lib::*;
+use std::collections::HashMap;
+
+fn main() -&#62; Result&#60;()&#62; &#123;
+    // Discover all connected devices
+    let usb_count = enumerate_usb_devices()?;
+    let network_devices = discover_network_devices(5000)?; // 5 second timeout
+
+    println!("Found &#123;&#125; USB devices", usb_count);
+    println!("Found &#123;&#125; network devices", network_devices.len());
+
+    // Connect to all USB devices
+    let mut devices = HashMap::new();
+
+    for device_id in 0..usb_count &#123;
+        match connect_to_device(device_id) &#123;
+            Ok(device) =&#62; &#123;
+                let info = device.get_device_info()?;
+                println!("Connected to USB device &#123;&#125;: &#123;&#125;", device_id, info.device_name);
+                devices.insert(format!("usb_&#123;&#125;", device_id), device);
+            &#125;,
+            Err(e) =&#62; println!("Failed to connect to USB device &#123;&#125;: &#123;&#125;", device_id, e),
+        &#125;
+    &#125;
+
+    // Connect to network devices
+    for (i, net_device) in network_devices.iter().enumerate() &#123;
+        match connect_to_network_device(&net_device.ip_address, net_device.port) &#123;
+            Ok(device) =&#62; &#123;
+                let info = device.get_device_info()?;
+                println!("Connected to network device &#123;&#125;: &#123;&#125;", net_device.ip_address, info.device_name);
+                devices.insert(format!("net_&#123;&#125;", i), device);
+            &#125;,
+            Err(e) =&#62; println!("Failed to connect to &#123;&#125;: &#123;&#125;", net_device.ip_address, e),
+        &#125;
+    &#125;
+
+    println!("Successfully connected to &#123;&#125; devices total", devices.len());
+
+    // Perform operations on all devices
+    for (name, device) in &mut devices &#123;
+        match configure_device_basics(device) &#123;
+            Ok(_) =&#62; println!("Configured device: &#123;&#125;", name),
+            Err(e) =&#62; println!("Failed to configure &#123;&#125;: &#123;&#125;", name, e),
+        &#125;
+    &#125;
+
+    Ok(())
+&#125;
+
+fn configure_device_basics(device: &mut PoKeysDevice) -&#62; Result&#60;()&#62; &#123;
+    // Set pin 1 as digital output on all devices
+    device.set_pin_function(1, PinFunction::DigitalOutput)?;
+    device.set_digital_output(1, false)?;
+    Ok(())
+&#125;</code></pre>
+					</div>
+				</div>
+
+				<!-- Advanced Coordination -->
+				<div class="mb-8">
+					<h2 class="text-2xl font-bold mb-4 text-white">Advanced: Coordinated Device Control</h2>
+					<div class="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+						<pre class="text-sm text-gray-300 overflow-x-auto"><code>use pokeys_lib::*;
+use std::collections::HashMap;
+use std::thread;
+use std::time:&#123;Duration, Instant&#125;;
+
+struct DeviceManager &#123;
+    devices: HashMap&#60;String, PoKeysDevice&#62;,
+    device_roles: HashMap&#60;String, DeviceRole&#62;,
+&#125;
+
+#[derive(Clone)]
+enum DeviceRole &#123;
+    InputController,    // Reads sensors and inputs
+    OutputController,   // Controls actuators and outputs
+    CommunicationHub,   // Handles SPI/I2C communication
+&#125;
+
+impl DeviceManager &#123;
+    fn new() -&#62; Result&#60;Self&#62; &#123;
+        let mut manager = DeviceManager &#123;
+            devices: HashMap::new(),
+            device_roles: HashMap::new(),
+        &#125;;
+
+        manager.discover_and_assign_devices()?;
+        Ok(manager)
+    &#125;
+
+    fn discover_and_assign_devices(&mut self) -&#62; Result&#60;()&#62; &#123;
+        let usb_count = enumerate_usb_devices()?;
+
+        for device_id in 0..usb_count &#123;
+            let device = connect_to_device(device_id)?;
+            let info = device.get_device_info()?;
+            let device_name = format!("device_&#123;&#125;", device_id);
+
+            // Assign roles based on device capabilities or serial number
+            let role = match device_id &#123;
+                0 =&#62; DeviceRole::InputController,
+                1 =&#62; DeviceRole::OutputController,
+                _ =&#62; DeviceRole::CommunicationHub,
+            &#125;;
+
+            println!("Assigned &#123;&#125; as &#123;:?&#125;", device_name, role);
+
+            self.devices.insert(device_name.clone(), device);
+            self.device_roles.insert(device_name, role);
+        &#125;
+
+        Ok(())
+    &#125;
+
+    fn configure_all_devices(&mut self) -&#62; Result&#60;()&#62; &#123;
+        for (name, device) in &mut self.devices &#123;
+            let role = self.device_roles.get(name).unwrap();
+
+            match role &#123;
+                DeviceRole::InputController =&#62; self.configure_input_device(device)?,
+                DeviceRole::OutputController =&#62; self.configure_output_device(device)?,
+                DeviceRole::CommunicationHub =&#62; self.configure_communication_device(device)?,
+            &#125;
+
+            println!("Configured &#123;&#125; for role &#123;:?&#125;", name, role);
+        &#125;
+
+        Ok(())
+    &#125;
+
+    fn configure_input_device(&self, device: &mut PoKeysDevice) -&#62; Result&#60;()&#62; &#123;
+        // Configure pins for input sensing
+        for pin in 1..=10 &#123;
+            device.set_pin_function(pin, PinFunction::DigitalInput)?;
+        &#125;
+
+        // Configure analog inputs
+        for pin in 41..=47 &#123;
+            device.set_pin_function(pin, PinFunction::AnalogInput)?;
+        &#125;
+
+        // Configure encoders
+        device.configure_encoder(0, 11, 12, EncoderOptions::with_4x_sampling())?;
+
+        Ok(())
+    &#125;
+
+    fn configure_output_device(&self, device: &mut PoKeysDevice) -&#62; Result&#60;()&#62; &#123;
+        // Configure digital outputs
+        for pin in 1..=20 &#123;
+            device.set_pin_function(pin, PinFunction::DigitalOutput)?;
+            device.set_digital_output(pin, false)?;
+        &#125;
+
+        // Configure PWM outputs
+        for channel in 0..6 &#123;
+            let pin = 21 + channel;
+            device.set_pin_function(pin, PinFunction::PwmOutput)?;
+            device.set_pwm_duty_cycle(channel as u8, 0.0)?;
+        &#125;
+
+        Ok(())
+    &#125;
+
+    fn configure_communication_device(&self, device: &mut PoKeysDevice) -&#62; Result&#60;()&#62; &#123;
+        // Configure SPI
+        let spi_config = SpiConfiguration &#123;
+            clock_frequency: 1_000_000,
+            mode: SpiMode::Mode0,
+            bit_order: SpiBitOrder::MsbFirst,
+        &#125;;
+        device.configure_spi(spi_config)?;
+
+        // Configure I2C
+        device.configure_i2c(100000)?; // 100kHz
+
+        // Configure CS pins for SPI devices
+        for pin in 10..=15 &#123;
+            device.set_pin_function(pin, PinFunction::DigitalOutput)?;
+            device.set_digital_output(pin, true)?; // CS idle high
+        &#125;
+
+        Ok(())
+    &#125;
+
+    fn run_coordinated_operation(&mut self) -&#62; Result&#60;()&#62; &#123;
+        println!("Starting coordinated multi-device operation...");
+
+        let start_time = Instant::now();
+        let mut cycle_count = 0;
+
+        loop &#123;
+            // Read inputs from input controller
+            if let Some(input_device) = self.get_device_by_role(DeviceRole::InputController) &#123;
+                let sensor_values = self.read_all_sensors(input_device)?;
+
+                // Process sensor data and determine outputs
+                let output_commands = self.process_sensor_data(sensor_values);
+
+                // Send commands to output controller
+                if let Some(output_device) = self.get_device_by_role(DeviceRole::OutputController) &#123;
+                    self.execute_output_commands(output_device, output_commands)?;
+                &#125;
+
+                // Handle communication tasks
+                if let Some(comm_device) = self.get_device_by_role(DeviceRole::CommunicationHub) &#123;
+                    self.handle_communication_tasks(comm_device)?;
+                &#125;
+            &#125;
+
+            cycle_count += 1;
+            if cycle_count % 100 == 0 &#123;
+                let elapsed = start_time.elapsed();
+                println!("Completed &#123;&#125; cycles in &#123;:.2&#125;s", cycle_count, elapsed.as_secs_f64());
+            &#125;
+
+            thread::sleep(Duration::from_millis(10)); // 100Hz update rate
+        &#125;
+    &#125;
+
+    fn get_device_by_role(&mut self, role: DeviceRole) -&#62; Option&#60;&mut PoKeysDevice&#62; &#123;
+        for (name, device_role) in &self.device_roles &#123;
+            if matches!(device_role, role) &#123;
+                return self.devices.get_mut(name);
+            &#125;
+        &#125;
+        None
+    &#125;
+
+    fn read_all_sensors(&mut self, device: &mut PoKeysDevice) -&#62; Result&#60;SensorData&#62; &#123;
+        let digital_inputs = device.get_digital_inputs(1, 10)?;
+        let analog_values = device.get_analog_inputs(41, 47)?;
+        let encoder_position = device.get_encoder_value(0)?;
+
+        Ok(SensorData &#123;
+            digital_inputs,
+            analog_values,
+            encoder_position,
+        &#125;)
+    &#125;
+
+    fn process_sensor_data(&self, data: SensorData) -&#62; OutputCommands &#123;
+        // Simple example: control outputs based on inputs
+        let mut commands = OutputCommands::default();
+
+        // Mirror digital inputs to first 10 outputs
+        commands.digital_outputs = data.digital_inputs.clone();
+
+        // Convert analog input to PWM duty cycle
+        if !data.analog_values.is_empty() &#123;
+            let duty_cycle = data.analog_values[0] / 4095.0; // Normalize to 0-1
+            commands.pwm_values.push((0, duty_cycle));
+        &#125;
+
+        commands
+    &#125;
+
+    fn execute_output_commands(&mut self, device: &mut PoKeysDevice, commands: OutputCommands) -&#62; Result&#60;()&#62; &#123;
+        // Set digital outputs
+        for (pin, state) in commands.digital_outputs.iter().enumerate() &#123;
+            device.set_digital_output((pin + 1) as u8, *state)?;
+        &#125;
+
+        // Set PWM outputs
+        for (channel, duty_cycle) in commands.pwm_values &#123;
+            device.set_pwm_duty_cycle(channel, duty_cycle)?;
+        &#125;
+
+        Ok(())
+    &#125;
+
+    fn handle_communication_tasks(&mut self, device: &mut PoKeysDevice) -&#62; Result&#60;()&#62; &#123;
+        // Example: Read temperature sensor via I2C
+        match device.i2c_read(0x48, 2) &#123; // Common temp sensor address
+            Ok(data) =&#62; &#123;
+                let temp = ((data[0] as u16) &#60;&#60; 8 | data[1] as u16) as f32 / 256.0;
+                if temp &#62; 50.0 &#123; // Temperature threshold
+                    println!("High temperature detected: &#123;:.1&#125;°C", temp);
+                &#125;
+            &#125;,
+            Err(_) =&#62; &#123;&#125; // Sensor not connected, ignore
+        &#125;
+
+        Ok(())
+    &#125;
+&#125;
+
+#[derive(Default)]
+struct SensorData &#123;
+    digital_inputs: Vec&#60;bool&#62;,
+    analog_values: Vec&#60;f32&#62;,
+    encoder_position: i32,
+&#125;
+
+#[derive(Default)]
+struct OutputCommands &#123;
+    digital_outputs: Vec&#60;bool&#62;,
+    pwm_values: Vec&#60;(u8, f32)&#62;,
+&#125;
+
+fn main() -&#62; Result&#60;()&#62; &#123;
+    let mut manager = DeviceManager::new()?;
+    manager.configure_all_devices()?;
+    manager.run_coordinated_operation()?;
+
+    Ok(())
+&#125;</code></pre>
+					</div>
+				</div>
+
+				<!-- Error Handling -->
+				<div class="mb-8">
+					<h2 class="text-2xl font-bold mb-4 text-white">Robust Error Handling</h2>
+					<div class="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
+						<pre class="text-sm text-gray-300 overflow-x-auto"><code>use pokeys_lib::*;
+use std::collections::HashMap;
+use std::time:&#123;Duration, Instant&#125;;
+
+struct RobustDeviceManager &#123;
+    devices: HashMap&#60;String, Option&#60;PoKeysDevice&#62;&#62;,
+    last_successful_contact: HashMap&#60;String, Instant&#62;,
+    reconnect_attempts: HashMap&#60;String, u32&#62;,
+&#125;
+
+impl RobustDeviceManager &#123;
+    fn new() -&#62; Self &#123;
+        RobustDeviceManager &#123;
+            devices: HashMap::new(),
+            last_successful_contact: HashMap::new(),
+            reconnect_attempts: HashMap::new(),
+        &#125;
+    &#125;
+
+    fn discover_devices(&mut self) -&#62; Result&#60;()&#62; &#123;
+        // Try USB devices
+        match enumerate_usb_devices() &#123;
+            Ok(count) =&#62; &#123;
+                for device_id in 0..count &#123;
+                    let device_name = format!("usb_&#123;&#125;", device_id);
+                    match connect_to_device(device_id) &#123;
+                        Ok(device) =&#62; &#123;
+                            self.devices.insert(device_name.clone(), Some(device));
+                            self.last_successful_contact.insert(device_name.clone(), Instant::now());
+                            self.reconnect_attempts.insert(device_name, 0);
+                            println!("Connected to USB device &#123;&#125;", device_id);
+                        &#125;,
+                        Err(e) =&#62; &#123;
+                            println!("Failed to connect to USB device &#123;&#125;: &#123;&#125;", device_id, e);
+                            self.devices.insert(device_name, None);
+                        &#125;
+                    &#125;
+                &#125;
+            &#125;,
+            Err(e) =&#62; println!("Failed to enumerate USB devices: &#123;&#125;", e),
+        &#125;
+
+        // Try network devices
+        match discover_network_devices(3000) &#123;
+            Ok(network_devices) =&#62; &#123;
+                for (i, net_device) in network_devices.iter().enumerate() &#123;
+                    let device_name = format!("net_&#123;&#125;", i);
+                    match connect_to_network_device(&net_device.ip_address, net_device.port) &#123;
+                        Ok(device) =&#62; &#123;
+                            self.devices.insert(device_name.clone(), Some(device));
+                            self.last_successful_contact.insert(device_name.clone(), Instant::now());
+                            self.reconnect_attempts.insert(device_name, 0);
+                            println!("Connected to network device &#123;&#125;", net_device.ip_address);
+                        &#125;,
+                        Err(e) =&#62; &#123;
+                            println!("Failed to connect to &#123;&#125;: &#123;&#125;", net_device.ip_address, e);
+                            self.devices.insert(device_name, None);
+                        &#125;
+                    &#125;
+                &#125;
+            &#125;,
+            Err(e) =&#62; println!("Failed to discover network devices: &#123;&#125;", e),
+        &#125;
+
+        Ok(())
+    &#125;
+
+    fn execute_with_retry&#60;F, R&#62;(&mut self, device_name: &str, operation: F) -&#62; Option&#60;R&#62;
+    where
+        F: Fn(&mut PoKeysDevice) -&#62; Result&#60;R&#62;,
+    &#123;
+        if let Some(device_opt) = self.devices.get_mut(device_name) &#123;
+            if let Some(device) = device_opt &#123;
+                match operation(device) &#123;
+                    Ok(result) =&#62; &#123;
+                        // Success - update last contact time and reset retry count
+                        self.last_successful_contact.insert(device_name.to_string(), Instant::now());
+                        self.reconnect_attempts.insert(device_name.to_string(), 0);
+                        return Some(result);
+                    &#125;,
+                    Err(e) =&#62; &#123;
+                        println!("Operation failed on &#123;&#125;: &#123;&#125;", device_name, e);
+
+                        // Mark device as disconnected
+                        *device_opt = None;
+
+                        // Attempt reconnection
+                        self.attempt_reconnection(device_name);
+                    &#125;
+                &#125;
+            &#125; else &#123;
+                // Device is disconnected, try to reconnect
+                self.attempt_reconnection(device_name);
+            &#125;
+        &#125;
+
+        None
+    &#125;
+
+    fn attempt_reconnection(&mut self, device_name: &str) &#123;
+        let attempts = self.reconnect_attempts.get(device_name).unwrap_or(&0);
+
+        if *attempts &#60; 5 &#123; // Max 5 reconnection attempts
+            println!("Attempting to reconnect to &#123;&#125; (attempt &#123;&#125;)", device_name, attempts + 1);
+
+            // Try to reconnect based on device type
+            let reconnected = if device_name.starts_with("usb_") &#123;
+                if let Ok(device_id) = device_name[4..].parse::&#60;u32&#62;() &#123;
+                    connect_to_device(device_id).ok()
+                &#125; else &#123;
+                    None
+                &#125;
+            &#125; else &#123;
+                // For network devices, you'd need to store IP/port info
+                None
+            &#125;;
+
+            if let Some(device) = reconnected &#123;
+                println!("Successfully reconnected to &#123;&#125;", device_name);
+                self.devices.insert(device_name.to_string(), Some(device));
+                self.last_successful_contact.insert(device_name.to_string(), Instant::now());
+                self.reconnect_attempts.insert(device_name.to_string(), 0);
+            &#125; else &#123;
+                self.reconnect_attempts.insert(device_name.to_string(), attempts + 1);
+            &#125;
+        &#125;
+    &#125;
+
+    fn get_system_status(&self) -&#62; SystemStatus &#123;
+        let total_devices = self.devices.len();
+        let connected_devices = self.devices.values().filter(|d| d.is_some()).count();
+        let disconnected_devices = total_devices - connected_devices;
+
+        SystemStatus &#123;
+            total_devices,
+            connected_devices,
+            disconnected_devices,
+            devices_with_errors: self.reconnect_attempts.values().filter(|&&attempts| attempts &#62; 0).count(),
+        &#125;
+    &#125;
+
+    fn run_monitoring_loop(&mut self) -&#62; Result&#60;()&#62; &#123;
+        loop &#123;
+            // Perform operations on all available devices
+            for device_name in self.devices.keys().cloned().collect::&#60;Vec&#60;_&#62;&#62;() &#123;
+                // Example: Read pin 1 status
+                self.execute_with_retry(&device_name, |device| &#123;
+                    device.get_digital_input(1)
+                &#125;);
+
+                // Example: Toggle pin 2
+                self.execute_with_retry(&device_name, |device| &#123;
+                    let current = device.get_digital_output(2)?;
+                    device.set_digital_output(2, !current)
+                &#125;);
+            &#125;
+
+            // Print system status every 10 seconds
+            let status = self.get_system_status();
+            println!("System Status: &#123;&#125;/&#123;&#125; devices connected, &#123;&#125; errors",
+                     status.connected_devices, status.total_devices, status.devices_with_errors);
+
+            std::thread::sleep(Duration::from_millis(100));
+        &#125;
+    &#125;
+&#125;
+
+struct SystemStatus &#123;
+    total_devices: usize,
+    connected_devices: usize,
+    disconnected_devices: usize,
+    devices_with_errors: usize,
+&#125;
+
+fn main() -&#62; Result&#60;()&#62; &#123;
+    let mut manager = RobustDeviceManager::new();
+    manager.discover_devices()?;
+    manager.run_monitoring_loop()?;
+
+    Ok(())
+&#125;</code></pre>
+					</div>
+				</div>
+
+				<!-- Best Practices -->
+				<div class="mb-8">
+					<h2 class="text-2xl font-bold mb-4 text-white">Best Practices</h2>
+					<div class="space-y-4">
+						<div class="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
+							<h3 class="font-semibold text-green-400 mb-2">Device Management</h3>
+							<ul class="text-gray-300 text-sm space-y-1">
+								<li>• Assign specific roles to each device for clear separation of concerns</li>
+								<li>• Implement robust error handling and automatic reconnection</li>
+								<li>• Monitor device health and connection status continuously</li>
+								<li>• Use device serial numbers or IP addresses for consistent identification</li>
+							</ul>
+						</div>
+
+						<div class="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+							<h3 class="font-semibold text-blue-400 mb-2">Performance Optimization</h3>
+							<ul class="text-gray-300 text-sm space-y-1">
+								<li>• Use bulk operations when possible to reduce communication overhead</li>
+								<li>• Implement appropriate update rates for different device functions</li>
+								<li>• Cache device capabilities and configurations to avoid repeated queries</li>
+								<li>• Consider using separate threads for each device to prevent blocking</li>
+							</ul>
+						</div>
+
+						<div class="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4">
+							<h3 class="font-semibold text-yellow-400 mb-2">Safety Considerations</h3>
+							<ul class="text-gray-300 text-sm space-y-1">
+								<li>• Implement failsafe behavior when devices become unavailable</li>
+								<li>• Validate device capabilities before assigning critical functions</li>
+								<li>• Use watchdog timers to detect communication failures</li>
+								<li>• Implement emergency stop functionality across all devices</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+
+				<!-- Navigation -->
+				<div class="flex justify-between items-center pt-8 border-t border-gray-700">
+					<a href="/core/examples/spi-communication" class="flex items-center text-blue-400 hover:text-blue-300 transition-colors">
+						<span class="mr-2">←</span> SPI Communication
+					</a>
+					<a href="/core/examples" class="text-gray-400 hover:text-white transition-colors">
+						Back to Examples
+					</a>
+					<div class="w-32"></div> <!-- Spacer for alignment -->
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
