@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.2] - 2025-08-19
+
+- fix: escape curly braces in git dependency example
+- fix: properly escape curly braces in code examples using HTML entities
+
 ## [0.12.1] - 2025-08-19
 
 - fix: escape HTML characters in Rust code examples for Astro build
