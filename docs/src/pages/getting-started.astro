@@ -14,13 +14,13 @@
 		<nav class="fixed top-0 w-full z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 				<div class="flex justify-between items-center py-4">
-					<a href="/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
 						PoKeys
 					</a>
 					<div class="hidden md:flex space-x-8">
-						<a href="/" class="hover:text-blue-400 transition-colors">Home</a>
-						<a href="/#features" class="hover:text-blue-400 transition-colors">Features</a>
-						<a href="/getting-started" class="text-blue-400">Getting Started</a>
+						<a href="/core/" class="hover:text-blue-400 transition-colors">Home</a>
+						<a href="/core/#features" class="hover:text-blue-400 transition-colors">Features</a>
+						<a href="/core/getting-started" class="text-blue-400">Getting Started</a>
 						<a href="https://github.com/pokeys-toolkit/core" class="hover:text-blue-400 transition-colors">GitHub</a>
 					</div>
 				</div>
@@ -81,7 +81,7 @@ pokeys-lib = "0.10.0"</code></pre>
 				<section class="mb-16">
 					<h2 class="text-3xl font-bold mb-6 text-white">Your First Program</h2>
 					<p class="text-gray-300 mb-6">Let's create a simple program that connects to a PoKeys device and controls a digital output pin.</p>
-					
+
 					<div class="bg-gray-800 rounded-lg p-6 mb-6">
 						<h3 class="text-xl font-semibold mb-4 text-yellow-400">Step 1: Create a new Rust project</h3>
 						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">cargo new pokeys-example
@@ -102,35 +102,35 @@ pokeys-lib = "0.10.0"</code></pre>
 
 fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#123;
     println!("🚀 Starting PoKeys example...");
-    
+
     // Enumerate USB devices
     let device_count = enumerate_usb_devices()?;
     println!("📱 Found &#123;&#125; PoKeys devices", device_count);
-    
+
     if device_count == 0 &#123;
         println!("❌ No PoKeys devices found. Please connect a device.");
         return Ok(());
     &#125;
-    
+
     // Connect to the first device
     let mut device = connect_to_device(0)?;
     println!("✅ Connected to device: &#123;&#125;", device.get_device_name()?);
-    
+
     // Configure pin 1 as digital output
     device.set_pin_function(1, PinFunction::DigitalOutput)?;
     println!("🔧 Configured pin 1 as digital output");
-    
+
     // Blink the LED 5 times
     for i in 1..=5 &#123;
         println!("💡 Blink &#123;&#125; - Turning pin 1 ON", i);
         device.set_digital_output(1, true)?;
         std::thread::sleep(std::time::Duration::from_millis(500));
-        
+
         println!("💡 Blink &#123;&#125; - Turning pin 1 OFF", i);
         device.set_digital_output(1, false)?;
         std::thread::sleep(std::time::Duration::from_millis(500));
     &#125;
-    
+
     println!("🎉 Example completed successfully!");
     Ok(())
 &#125;</code></pre>
@@ -231,7 +231,7 @@ let position = device.get_encoder_value(0)?;</code></pre>
 				<section class="mb-16">
 					<h2 class="text-3xl font-bold mb-6 text-white">Error Handling</h2>
 					<p class="text-gray-300 mb-6">The PoKeys library uses Rust's <code class="bg-gray-700 px-2 py-1 rounded">Result</code> type for error handling. Here's how to handle common errors:</p>
-					
+
 					<div class="bg-gray-800 rounded-lg p-6">
 						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">use pokeys_lib::*;
 
@@ -251,7 +251,7 @@ fn run_pokeys_app() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#1
     if device_count == 0 &#123;
         return Err("No PoKeys devices found. Please connect a device.".into());
     &#125;
-    
+
     // Try to connect
     let mut device = match connect_to_device(0) &#123;
         Ok(dev) =&gt; dev,
@@ -259,16 +259,16 @@ fn run_pokeys_app() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#1
             return Err(format!("Failed to connect to device: &#123;&#125;", e).into());
         &#125;
     &#125;;
-    
+
     // Validate pin capabilities
     if !device.is_pin_available(1)? &#123;
         return Err("Pin 1 is not available on this device".into());
     &#125;
-    
+
     // Your application logic here...
     device.set_pin_function(1, PinFunction::DigitalOutput)?;
     device.set_digital_output(1, true)?;
-    
+
     Ok(())
 &#125;</code></pre>
 					</div>
@@ -278,7 +278,7 @@ fn run_pokeys_app() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#1
 				<section class="mb-16">
 					<h2 class="text-3xl font-bold mb-6 text-white">Next Steps</h2>
 					<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-						<a href="/examples" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-blue-500/50 transition-all duration-300 hover:transform hover:scale-105">
+						<a href="/core/examples" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-blue-500/50 transition-all duration-300 hover:transform hover:scale-105">
 							<div class="text-3xl mb-3">💡</div>
 							<h3 class="text-lg font-semibold mb-2 text-white group-hover:text-blue-400">View Examples</h3>
 							<p class="text-gray-400 text-sm">Explore practical examples for common use cases</p>
