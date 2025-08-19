@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.0] - 2025-08-19
+
+- feat: recreate site with exact Astrolus design
+
 ## [0.9.0] - 2025-08-19
 
 - feat: implement Astrolus-inspired design with gradient hero and glass morphism cards
