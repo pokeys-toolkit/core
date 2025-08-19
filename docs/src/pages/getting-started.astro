@@ -100,33 +100,33 @@ pokeys-lib = "0.10.0"</code></pre>
 						<p class="text-gray-300 mb-3">Replace the contents of <code class="bg-gray-700 px-2 py-1 rounded">src/main.rs</code>:</p>
 						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">use pokeys_lib::*;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {`
     println!("🚀 Starting PoKeys example...");
     
     // Enumerate USB devices
     let device_count = enumerate_usb_devices()?;
-    println!("📱 Found {} PoKeys devices", device_count);
+    println!("📱 Found {`{`} PoKeys devices", device_count);
     
-    if device_count == 0 {
+    if device_count == 0 {`
         println!("❌ No PoKeys devices found. Please connect a device.");
         return Ok(());
     }
     
     // Connect to the first device
     let mut device = connect_to_device(0)?;
-    println!("✅ Connected to device: {}", device.get_device_name()?);
+    println!("✅ Connected to device: {`{`}", device.get_device_name()?);
     
     // Configure pin 1 as digital output
     device.set_pin_function(1, PinFunction::DigitalOutput)?;
     println!("🔧 Configured pin 1 as digital output");
     
     // Blink the LED 5 times
-    for i in 1..=5 {
-        println!("💡 Blink {} - Turning pin 1 ON", i);
+    for i in 1..=5 {`
+        println!("💡 Blink {`{`} - Turning pin 1 ON", i);
         device.set_digital_output(1, true)?;
         std::thread::sleep(std::time::Duration::from_millis(500));
         
-        println!("💡 Blink {} - Turning pin 1 OFF", i);
+        println!("💡 Blink {`{`} - Turning pin 1 OFF", i);
         device.set_digital_output(1, false)?;
         std::thread::sleep(std::time::Duration::from_millis(500));
     }
@@ -235,33 +235,33 @@ let position = device.get_encoder_value(0)?;</code></pre>
 					<div class="bg-gray-800 rounded-lg p-6">
 						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">use pokeys_lib::*;
 
-fn main() {
-    match run_pokeys_app() {
-        Ok(()) => println!("✅ Application completed successfully"),
-        Err(e) => {
-            eprintln!("❌ Error: {}", e);
+fn main() {`
+    match run_pokeys_app() {`
+        Ok(()) =&gt; println!("✅ Application completed successfully"),
+        Err(e) =&gt; {`
+            eprintln!("❌ Error: {`{`}", e);
             std::process::exit(1);
         }
     }
 }
 
-fn run_pokeys_app() -> Result<(), Box<dyn std::error::Error>> {
+fn run_pokeys_app() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {`
     // Check if devices are available
     let device_count = enumerate_usb_devices()?;
-    if device_count == 0 {
+    if device_count == 0 {`
         return Err("No PoKeys devices found. Please connect a device.".into());
     }
     
     // Try to connect
-    let mut device = match connect_to_device(0) {
-        Ok(dev) => dev,
-        Err(e) => {
-            return Err(format!("Failed to connect to device: {}", e).into());
+    let mut device = match connect_to_device(0) {`
+        Ok(dev) =&gt; dev,
+        Err(e) =&gt; {`
+            return Err(format!("Failed to connect to device: {`{`}", e).into());
         }
     };
     
     // Validate pin capabilities
-    if !device.is_pin_available(1)? {
+    if !device.is_pin_available(1)? {`
         return Err("Pin 1 is not available on this device".into());
     }
     
