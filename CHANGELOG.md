@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.13.0] - 2025-08-19
+
+- fix: Resolve CI clippy and formatting issues
+- feat: Enhanced I2C support and comprehensive testing integration
+- fix(docs): Remove performance from README.md
+
 ## [0.12.3] - 2025-08-19
 
 - fix: exclude documentation changes from triggering library releases
