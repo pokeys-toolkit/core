@@ -56,7 +56,8 @@ impl PoKeysDevice {
             return Err(PoKeysError::I2cPacketTooLarge {
                 size: data.len(),
                 max_size: 32,
-                suggestion: "Use i2c_write_fragmented() for large packets or split data manually".to_string(),
+                suggestion: "Use i2c_write_fragmented() for large packets or split data manually"
+                    .to_string(),
             });
         }
 
@@ -276,25 +277,25 @@ impl PoKeysDevice {
     /// I2C operation status
     pub fn i2c_write_fragmented(&mut self, address: u8, data: &[u8]) -> Result<I2cStatus> {
         const MAX_PACKET_SIZE: usize = 32;
-        
+
         if data.len() <= MAX_PACKET_SIZE {
             return self.i2c_write(address, data);
         }
-        
+
         // Fragment into multiple packets with sequence numbers
         for (seq, chunk) in data.chunks(MAX_PACKET_SIZE - 2).enumerate() {
             let mut packet = vec![0xF0 | (seq as u8 & 0x0F)]; // Fragment header
             packet.extend_from_slice(chunk);
-            
+
             let status = self.i2c_write(address, &packet)?;
             if status != I2cStatus::Ok {
                 return Ok(status);
             }
-            
+
             // Wait for acknowledgment before sending next fragment
             std::thread::sleep(Duration::from_millis(10));
         }
-        
+
         // Send end-of-transmission marker
         self.i2c_write(address, &[0xFF])
     }
@@ -308,9 +309,14 @@ impl PoKeysDevice {
     ///
     /// # Returns
     /// I2C operation status
-    pub fn i2c_write_with_retry(&mut self, address: u8, data: &[u8], config: &RetryConfig) -> Result<I2cStatus> {
+    pub fn i2c_write_with_retry(
+        &mut self,
+        address: u8,
+        data: &[u8],
+        config: &RetryConfig,
+    ) -> Result<I2cStatus> {
         let mut delay = config.base_delay_ms;
-        
+
         for attempt in 0..config.max_attempts {
             match self.i2c_write(address, data) {
                 Ok(status) => return Ok(status),
@@ -321,18 +327,18 @@ impl PoKeysDevice {
                         } else {
                             delay
                         };
-                        
+
                         std::thread::sleep(Duration::from_millis(actual_delay));
                         delay = std::cmp::min(
                             (delay as f64 * config.backoff_multiplier) as u64,
-                            config.max_delay_ms
+                            config.max_delay_ms,
                         );
                     }
                 }
                 Err(e) => return Err(e), // Non-recoverable error
             }
         }
-        
+
         Err(PoKeysError::MaxRetriesExceeded)
     }
 

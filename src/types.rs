@@ -194,9 +194,9 @@ impl Default for RetryConfig {
 /// Validation levels for protocol validation
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ValidationLevel {
-    None,       // Current behavior - pass everything through
-    Basic,      // Validate packet structure only
-    Strict,     // Full protocol validation
+    None,   // Current behavior - pass everything through
+    Basic,  // Validate packet structure only
+    Strict, // Full protocol validation
     Custom(ValidationConfig),
 }
 

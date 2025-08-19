@@ -143,10 +143,7 @@ pub enum PoKeysError {
     InvalidDeviceId(u8),
 
     #[error("Invalid checksum: expected 0x{expected:02X}, received 0x{received:02X}")]
-    InvalidChecksumDetailed {
-        expected: u8,
-        received: u8,
-    },
+    InvalidChecksumDetailed { expected: u8, received: u8 },
 }
 
 /// Recovery strategies for different error types
@@ -231,10 +228,18 @@ impl PartialEq for PoKeysError {
             }
             (Self::RelatedCapabilityError(a), Self::RelatedCapabilityError(b)) => a == b,
             // Enhanced I2C errors
-            (Self::I2cPacketTooLarge { size: s1, max_size: m1, suggestion: sg1 }, 
-             Self::I2cPacketTooLarge { size: s2, max_size: m2, suggestion: sg2 }) => {
-                s1 == s2 && m1 == m2 && sg1 == sg2
-            }
+            (
+                Self::I2cPacketTooLarge {
+                    size: s1,
+                    max_size: m1,
+                    suggestion: sg1,
+                },
+                Self::I2cPacketTooLarge {
+                    size: s2,
+                    max_size: m2,
+                    suggestion: sg2,
+                },
+            ) => s1 == s2 && m1 == m2 && sg1 == sg2,
             (Self::I2cTimeout, Self::I2cTimeout) => true,
             (Self::I2cBusError, Self::I2cBusError) => true,
             (Self::I2cNack, Self::I2cNack) => true,
@@ -244,8 +249,16 @@ impl PartialEq for PoKeysError {
             (Self::InvalidPacketStructure(a), Self::InvalidPacketStructure(b)) => a == b,
             (Self::InvalidCommand(a), Self::InvalidCommand(b)) => a == b,
             (Self::InvalidDeviceId(a), Self::InvalidDeviceId(b)) => a == b,
-            (Self::InvalidChecksumDetailed { expected: e1, received: r1 },
-             Self::InvalidChecksumDetailed { expected: e2, received: r2 }) => e1 == e2 && r1 == r2,
+            (
+                Self::InvalidChecksumDetailed {
+                    expected: e1,
+                    received: r1,
+                },
+                Self::InvalidChecksumDetailed {
+                    expected: e2,
+                    received: r2,
+                },
+            ) => e1 == e2 && r1 == r2,
             // IO errors are not compared
             (Self::Io(_), Self::Io(_)) => false,
             _ => false,
@@ -288,12 +301,16 @@ impl From<PoKeysError> for ReturnCode {
             | PoKeysError::RelatedCapabilityError(_) => ReturnCode::ErrParameter,
             // Enhanced I2C errors
             PoKeysError::I2cPacketTooLarge { .. } => ReturnCode::ErrParameter,
-            PoKeysError::I2cTimeout | PoKeysError::I2cBusError | PoKeysError::I2cNack => ReturnCode::ErrTransfer,
+            PoKeysError::I2cTimeout | PoKeysError::I2cBusError | PoKeysError::I2cNack => {
+                ReturnCode::ErrTransfer
+            }
             PoKeysError::NetworkTimeout => ReturnCode::ErrTransfer,
             PoKeysError::MaxRetriesExceeded => ReturnCode::ErrTransfer,
             // Enhanced validation errors
-            PoKeysError::InvalidPacketStructure(_) | PoKeysError::InvalidCommand(_) 
-            | PoKeysError::InvalidDeviceId(_) | PoKeysError::InvalidChecksumDetailed { .. } => ReturnCode::ErrParameter,
+            PoKeysError::InvalidPacketStructure(_)
+            | PoKeysError::InvalidCommand(_)
+            | PoKeysError::InvalidDeviceId(_)
+            | PoKeysError::InvalidChecksumDetailed { .. } => ReturnCode::ErrParameter,
             _ => ReturnCode::ErrGeneric,
         }
     }

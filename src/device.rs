@@ -371,14 +371,12 @@ impl PoKeysDevice {
 
     /// Perform device health check
     pub fn health_check(&mut self) -> HealthStatus {
-        let status = HealthStatus {
+        HealthStatus {
             connectivity: self.test_connectivity(),
             i2c_health: self.test_i2c_health(),
             error_rate: self.calculate_error_rate(),
             performance: self.get_performance_summary(),
-        };
-        
-        status
+        }
     }
 
     /// Test basic connectivity
@@ -423,6 +421,7 @@ impl PoKeysDevice {
     }
 
     /// Validate packet according to current validation level
+    #[allow(dead_code)]
     fn validate_packet(&self, data: &[u8]) -> Result<()> {
         match &self.validation_level {
             ValidationLevel::None => Ok(()),
@@ -433,20 +432,22 @@ impl PoKeysDevice {
     }
 
     /// Validate basic packet structure
+    #[allow(dead_code)]
     fn validate_basic_structure(&self, data: &[u8]) -> Result<()> {
         if data.len() < 3 {
             return Err(PoKeysError::InvalidPacketStructure(
-                "Minimum packet size is 3 bytes".to_string()
+                "Minimum packet size is 3 bytes".to_string(),
             ));
         }
         Ok(())
     }
 
     /// Validate strict protocol compliance
+    #[allow(dead_code)]
     fn validate_strict_protocol(&self, data: &[u8]) -> Result<()> {
         if data.len() < 3 {
             return Err(PoKeysError::InvalidPacketStructure(
-                "Minimum packet size is 3 bytes".to_string()
+                "Minimum packet size is 3 bytes".to_string(),
             ));
         }
 
@@ -460,12 +461,13 @@ impl PoKeysDevice {
         }
 
         // Validate device ID
-        if device_id >= 16 { // Reasonable max device count
+        if device_id >= 16 {
+            // Reasonable max device count
             return Err(PoKeysError::InvalidDeviceId(device_id));
         }
 
         // Validate checksum
-        let calculated_checksum = self.calculate_checksum(&data[..data.len()-1]);
+        let calculated_checksum = self.calculate_checksum(&data[..data.len() - 1]);
         if checksum != calculated_checksum {
             return Err(PoKeysError::InvalidChecksumDetailed {
                 expected: calculated_checksum,
@@ -477,10 +479,11 @@ impl PoKeysDevice {
     }
 
     /// Validate with custom configuration
+    #[allow(dead_code)]
     fn validate_custom(&self, data: &[u8], config: &crate::types::ValidationConfig) -> Result<()> {
         if config.validate_packet_structure && data.len() < 3 {
             return Err(PoKeysError::InvalidPacketStructure(
-                "Minimum packet size is 3 bytes".to_string()
+                "Minimum packet size is 3 bytes".to_string(),
             ));
         }
 
@@ -489,7 +492,10 @@ impl PoKeysDevice {
             let device_id = data[1];
             let checksum = data[data.len() - 1];
 
-            if config.validate_command_ids && !config.valid_commands.is_empty() && !config.valid_commands.contains(&command) {
+            if config.validate_command_ids
+                && !config.valid_commands.is_empty()
+                && !config.valid_commands.contains(&command)
+            {
                 return Err(PoKeysError::InvalidCommand(command));
             }
 
@@ -498,7 +504,7 @@ impl PoKeysDevice {
             }
 
             if config.validate_checksums {
-                let calculated_checksum = self.calculate_checksum(&data[..data.len()-1]);
+                let calculated_checksum = self.calculate_checksum(&data[..data.len() - 1]);
                 if checksum != calculated_checksum {
                     return Err(PoKeysError::InvalidChecksumDetailed {
                         expected: calculated_checksum,
@@ -512,6 +518,7 @@ impl PoKeysDevice {
     }
 
     /// Calculate XOR checksum
+    #[allow(dead_code)]
     fn calculate_checksum(&self, data: &[u8]) -> u8 {
         data.iter().fold(0, |acc, &byte| acc ^ byte)
     }

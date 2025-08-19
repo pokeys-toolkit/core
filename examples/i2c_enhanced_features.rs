@@ -25,7 +25,10 @@ fn main() -> Result<()> {
         }
     };
 
-    println!("✅ Connected to device (Serial: {})", device.device_data.serial_number);
+    println!(
+        "✅ Connected to device (Serial: {})",
+        device.device_data.serial_number
+    );
 
     // Initialize I2C
     device.i2c_init()?;
@@ -75,7 +78,11 @@ fn demonstrate_packet_fragmentation(device: &mut PoKeysDevice) -> Result<()> {
 
     // First, show what happens with regular i2c_write (should fail)
     match device.i2c_write(test_address, &large_data) {
-        Err(PoKeysError::I2cPacketTooLarge { size, max_size, suggestion }) => {
+        Err(PoKeysError::I2cPacketTooLarge {
+            size,
+            max_size,
+            suggestion,
+        }) => {
             println!("❌ Regular i2c_write failed as expected:");
             println!("   📊 Packet size: {} bytes", size);
             println!("   📏 Maximum size: {} bytes", max_size);
@@ -93,7 +100,10 @@ fn demonstrate_packet_fragmentation(device: &mut PoKeysDevice) -> Result<()> {
         }
         Err(e) => {
             println!("⚠️  Fragmented write failed: {}", e);
-            println!("   (This is expected if no device is connected at address 0x{:02X})", test_address);
+            println!(
+                "   (This is expected if no device is connected at address 0x{:02X})",
+                test_address
+            );
         }
     }
 
@@ -117,15 +127,21 @@ fn demonstrate_retry_mechanisms(device: &mut PoKeysDevice) -> Result<()> {
     println!("   🔢 Max attempts: {}", retry_config.max_attempts);
     println!("   ⏱️  Base delay: {}ms", retry_config.base_delay_ms);
     println!("   ⏱️  Max delay: {}ms", retry_config.max_delay_ms);
-    println!("   📈 Backoff multiplier: {}", retry_config.backoff_multiplier);
+    println!(
+        "   📈 Backoff multiplier: {}",
+        retry_config.backoff_multiplier
+    );
     println!("   🎲 Jitter enabled: {}", retry_config.jitter);
 
     // Try to write to a non-existent device (will likely fail and retry)
     let test_data = vec![0x01, 0x02, 0x03];
     let non_existent_address = 0x77; // Address unlikely to have a device
 
-    println!("\n🎯 Attempting write with retry to address 0x{:02X}...", non_existent_address);
-    
+    println!(
+        "\n🎯 Attempting write with retry to address 0x{:02X}...",
+        non_existent_address
+    );
+
     let start_time = std::time::Instant::now();
     match device.i2c_write_with_retry(non_existent_address, &test_data, &retry_config) {
         Ok(status) => {
@@ -133,7 +149,10 @@ fn demonstrate_retry_mechanisms(device: &mut PoKeysDevice) -> Result<()> {
         }
         Err(PoKeysError::MaxRetriesExceeded) => {
             let elapsed = start_time.elapsed();
-            println!("❌ Write failed after {} attempts", retry_config.max_attempts);
+            println!(
+                "❌ Write failed after {} attempts",
+                retry_config.max_attempts
+            );
             println!("   ⏱️  Total time: {:?}", elapsed);
             println!("   (This is expected behavior when no device responds)");
         }
@@ -160,7 +179,7 @@ fn demonstrate_validation_levels(device: &mut PoKeysDevice) -> Result<()> {
     let mut valid_commands = HashSet::new();
     valid_commands.insert(0xDB); // I2C command
     valid_commands.insert(0x00); // Device info command
-    
+
     let custom_config = ValidationConfig {
         validate_checksums: true,
         validate_command_ids: true,
@@ -190,12 +209,15 @@ fn demonstrate_health_monitoring(device: &mut PoKeysDevice) -> Result<()> {
     println!("   📈 Total commands: {}", metrics.total_commands);
     println!("   ✅ Successful commands: {}", metrics.successful_commands);
     println!("   ❌ Failed commands: {}", metrics.failed_commands);
-    println!("   ⏱️  Average response time: {:?}", metrics.average_response_time);
+    println!(
+        "   ⏱️  Average response time: {:?}",
+        metrics.average_response_time
+    );
 
     // Perform health check
     println!("\n🔍 Performing health check...");
     let health = device.health_check();
-    
+
     println!("🏥 Health Status:");
     match health.connectivity {
         ConnectivityStatus::Healthy => println!("   🟢 Connectivity: Healthy"),
@@ -211,8 +233,14 @@ fn demonstrate_health_monitoring(device: &mut PoKeysDevice) -> Result<()> {
 
     println!("   📊 Error rate: {:.2}%", health.error_rate * 100.0);
     println!("   ⚡ Performance:");
-    println!("      ⏱️  Avg response time: {:.2}ms", health.performance.avg_response_time_ms);
-    println!("      ✅ Success rate: {:.2}%", health.performance.success_rate * 100.0);
+    println!(
+        "      ⏱️  Avg response time: {:.2}ms",
+        health.performance.avg_response_time_ms
+    );
+    println!(
+        "      ✅ Success rate: {:.2}%",
+        health.performance.success_rate * 100.0
+    );
 
     // Demonstrate I2C configuration
     println!("\n⚙️  I2C Configuration:");
@@ -229,7 +257,7 @@ fn demonstrate_health_monitoring(device: &mut PoKeysDevice) -> Result<()> {
         fragment_delay_ms: 5,
         validation_level: ValidationLevel::Basic,
     };
-    
+
     device.set_i2c_config(new_config);
     println!("✅ Updated I2C configuration with auto-fragmentation enabled");
 
