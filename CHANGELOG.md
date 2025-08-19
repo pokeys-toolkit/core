@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.0] - 2025-08-19
+
+- feat: add documentation section with Getting Started, Examples, and API links
+
 ## [0.10.0] - 2025-08-19
 
 - feat: recreate site with exact Astrolus design
