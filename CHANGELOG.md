@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2025-08-19
+
+- feat: implement Astrolus-inspired design with gradient hero and glass morphism cards
+
 ## [0.8.0] - 2025-08-19
 
 - feat: add links to latest release and crates.io on main page
