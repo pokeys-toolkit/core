@@ -238,6 +238,7 @@ name = "pokeys-lib"
 version = "0.12.3"
 dependencies = [
  "dirs",
+ "fastrand",
  "log",
  "notify",
  "serde",

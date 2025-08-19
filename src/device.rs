@@ -53,6 +53,11 @@ pub struct PoKeysDevice {
     pub ultra_fast_encoder_filter: u32,
     pub po_ext_bus_data: Vec<u8>,
 
+    // I2C configuration and metrics
+    pub i2c_config: I2cConfig,
+    pub i2c_metrics: I2cMetrics,
+    pub validation_level: ValidationLevel,
+
     // Internal state
     #[allow(dead_code)]
     request_buffer: [u8; REQUEST_BUFFER_SIZE],
@@ -90,6 +95,9 @@ impl PoKeysDevice {
             ultra_fast_encoder_options: 0,
             ultra_fast_encoder_filter: 0,
             po_ext_bus_data: Vec::new(),
+            i2c_config: I2cConfig::default(),
+            i2c_metrics: I2cMetrics::default(),
+            validation_level: ValidationLevel::None,
             request_buffer: [0; REQUEST_BUFFER_SIZE],
             response_buffer: [0; RESPONSE_BUFFER_SIZE],
             multipart_buffer: Vec::new(),
@@ -334,6 +342,178 @@ impl PoKeysDevice {
     /// Get connection type
     pub fn get_connection_type(&self) -> DeviceConnectionType {
         self.connection_type
+    }
+
+    /// Set I2C configuration
+    pub fn set_i2c_config(&mut self, config: I2cConfig) {
+        self.i2c_config = config;
+    }
+
+    /// Get I2C configuration
+    pub fn get_i2c_config(&self) -> &I2cConfig {
+        &self.i2c_config
+    }
+
+    /// Set validation level
+    pub fn set_validation_level(&mut self, level: ValidationLevel) {
+        self.validation_level = level;
+    }
+
+    /// Get I2C metrics
+    pub fn get_i2c_metrics(&self) -> &I2cMetrics {
+        &self.i2c_metrics
+    }
+
+    /// Reset I2C metrics
+    pub fn reset_i2c_metrics(&mut self) {
+        self.i2c_metrics = I2cMetrics::default();
+    }
+
+    /// Perform device health check
+    pub fn health_check(&mut self) -> HealthStatus {
+        let status = HealthStatus {
+            connectivity: self.test_connectivity(),
+            i2c_health: self.test_i2c_health(),
+            error_rate: self.calculate_error_rate(),
+            performance: self.get_performance_summary(),
+        };
+        
+        status
+    }
+
+    /// Test basic connectivity
+    fn test_connectivity(&mut self) -> ConnectivityStatus {
+        match self.get_device_data() {
+            Ok(_) => ConnectivityStatus::Healthy,
+            Err(e) => ConnectivityStatus::Degraded(e.to_string()),
+        }
+    }
+
+    /// Test I2C bus health
+    fn test_i2c_health(&mut self) -> I2cHealthStatus {
+        match self.i2c_get_status() {
+            Ok(I2cStatus::Ok) => I2cHealthStatus::Healthy,
+            Ok(status) => I2cHealthStatus::Degraded(format!("I2C status: {:?}", status)),
+            Err(e) => I2cHealthStatus::Failed(e.to_string()),
+        }
+    }
+
+    /// Calculate current error rate
+    fn calculate_error_rate(&self) -> f64 {
+        if self.i2c_metrics.total_commands == 0 {
+            0.0
+        } else {
+            self.i2c_metrics.failed_commands as f64 / self.i2c_metrics.total_commands as f64
+        }
+    }
+
+    /// Get performance summary
+    fn get_performance_summary(&self) -> PerformanceSummary {
+        let success_rate = if self.i2c_metrics.total_commands == 0 {
+            1.0
+        } else {
+            self.i2c_metrics.successful_commands as f64 / self.i2c_metrics.total_commands as f64
+        };
+
+        PerformanceSummary {
+            avg_response_time_ms: self.i2c_metrics.average_response_time.as_millis() as f64,
+            success_rate,
+            throughput_commands_per_sec: 0.0, // Would need timing data to calculate
+        }
+    }
+
+    /// Validate packet according to current validation level
+    fn validate_packet(&self, data: &[u8]) -> Result<()> {
+        match &self.validation_level {
+            ValidationLevel::None => Ok(()),
+            ValidationLevel::Basic => self.validate_basic_structure(data),
+            ValidationLevel::Strict => self.validate_strict_protocol(data),
+            ValidationLevel::Custom(config) => self.validate_custom(data, config),
+        }
+    }
+
+    /// Validate basic packet structure
+    fn validate_basic_structure(&self, data: &[u8]) -> Result<()> {
+        if data.len() < 3 {
+            return Err(PoKeysError::InvalidPacketStructure(
+                "Minimum packet size is 3 bytes".to_string()
+            ));
+        }
+        Ok(())
+    }
+
+    /// Validate strict protocol compliance
+    fn validate_strict_protocol(&self, data: &[u8]) -> Result<()> {
+        if data.len() < 3 {
+            return Err(PoKeysError::InvalidPacketStructure(
+                "Minimum packet size is 3 bytes".to_string()
+            ));
+        }
+
+        let command = data[0];
+        let device_id = data[1];
+        let checksum = data[data.len() - 1];
+
+        // Validate command ID (uSPIBridge command range)
+        if !matches!(command, 0x11..=0x42) {
+            return Err(PoKeysError::InvalidCommand(command));
+        }
+
+        // Validate device ID
+        if device_id >= 16 { // Reasonable max device count
+            return Err(PoKeysError::InvalidDeviceId(device_id));
+        }
+
+        // Validate checksum
+        let calculated_checksum = self.calculate_checksum(&data[..data.len()-1]);
+        if checksum != calculated_checksum {
+            return Err(PoKeysError::InvalidChecksumDetailed {
+                expected: calculated_checksum,
+                received: checksum,
+            });
+        }
+
+        Ok(())
+    }
+
+    /// Validate with custom configuration
+    fn validate_custom(&self, data: &[u8], config: &crate::types::ValidationConfig) -> Result<()> {
+        if config.validate_packet_structure && data.len() < 3 {
+            return Err(PoKeysError::InvalidPacketStructure(
+                "Minimum packet size is 3 bytes".to_string()
+            ));
+        }
+
+        if data.len() >= 3 {
+            let command = data[0];
+            let device_id = data[1];
+            let checksum = data[data.len() - 1];
+
+            if config.validate_command_ids && !config.valid_commands.is_empty() && !config.valid_commands.contains(&command) {
+                return Err(PoKeysError::InvalidCommand(command));
+            }
+
+            if config.validate_device_ids && device_id > config.max_device_id {
+                return Err(PoKeysError::InvalidDeviceId(device_id));
+            }
+
+            if config.validate_checksums {
+                let calculated_checksum = self.calculate_checksum(&data[..data.len()-1]);
+                if checksum != calculated_checksum {
+                    return Err(PoKeysError::InvalidChecksumDetailed {
+                        expected: calculated_checksum,
+                        received: checksum,
+                    });
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Calculate XOR checksum
+    fn calculate_checksum(&self, data: &[u8]) -> u8 {
+        data.iter().fold(0, |acc, &byte| acc ^ byte)
     }
 
     /// Check if device supports a specific capability

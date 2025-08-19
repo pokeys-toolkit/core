@@ -28,7 +28,7 @@ A pure Rust implementation of the PoKeysLib for controlling PoKeys devices. This
 
 ### Communication Protocols
 - **SPI**: Full SPI master support with multiple chip select pins
-- **I2C**: I2C master operations with device scanning
+- **I2C**: Enhanced I2C master operations with automatic packet fragmentation, intelligent retry mechanisms, and device scanning
 - **1-Wire**: 1-Wire protocol support for temperature sensors
 - **CAN Bus**: CAN message transmission and reception
 - **UART**: Serial communication support
@@ -44,10 +44,12 @@ A pure Rust implementation of the PoKeysLib for controlling PoKeys devices. This
 
 ### Safety & Reliability
 - **Device Models**: Comprehensive pin capability validation and safety checks
-- **Error Handling**: Detailed error types with context and recovery suggestions
+- **Enhanced Error Handling**: Detailed error types with context, recovery suggestions, and intelligent retry mechanisms
 - **Thread Safety**: Safe concurrent access to device resources
 - **Failsafe Settings**: Configurable failsafe behavior for critical applications
 - **SPI Pin Reservation**: Hardware constraint enforcement prevents conflicts
+- **I2C Reliability**: Automatic packet fragmentation, exponential backoff retry, and configurable validation levels
+- **Health Monitoring**: Real-time performance metrics and device health diagnostics
 
 ## 🔧 Supported Devices
 
@@ -118,40 +120,59 @@ fn main() -> Result<()> {
 }
 ```
 
-### Basic Communication
+### Enhanced I2C Communication
 ```rust
 use pokeys_lib::*;
 
 fn main() -> Result<()> {
     let mut device = connect_to_device(0)?;
 
-    // Configure I2C for sensor communication
-    device.configure_i2c(100000)?; // 100kHz I2C
-
-    // Scan for I2C devices
-    let devices = device.scan_i2c_devices()?;
-    println!("Found I2C devices: {:?}", devices);
+    // Configure I2C with enhanced features
+    device.i2c_init()?;
+    
+    // Configure retry behavior
+    let retry_config = RetryConfig {
+        max_attempts: 3,
+        base_delay_ms: 100,
+        backoff_multiplier: 2.0,
+        jitter: true,
+        ..Default::default()
+    };
+    
+    // Write large data with automatic fragmentation
+    let large_data = vec![0x42; 100]; // 100 bytes
+    device.i2c_write_fragmented(0x50, &large_data)?;
+    
+    // Write with intelligent retry on failure
+    let data = vec![0x01, 0x02, 0x03];
+    device.i2c_write_with_retry(0x50, &data, &retry_config)?;
+    
+    // Monitor device health
+    let health = device.health_check();
+    println!("I2C Success Rate: {:.1}%", health.performance.success_rate * 100.0);
 
     Ok(())
 }
 ```
 
-## 🛡️ SPI Pin Reservation & Device Model Updates
+## 🛡️ Enhanced Reliability & Hardware Support
 
-Comprehensive SPI pin reservation system with updated device models:
-
-### Hardware Constraint Enforcement
+### SPI Pin Reservation & Device Model Updates
 - ✅ **Pin 23 (MOSI)** automatically reserved when SPI is enabled
 - ✅ **Pin 25 (CLK)** automatically reserved when SPI is enabled
 - ✅ **Configuration validation** prevents hardware conflicts
 - ✅ **31-33 CS pins** available per device for SPI peripherals
-
-### Updated Device Models
 - ✅ **All device models** updated with SPI capabilities
 - ✅ **PoKeys56U/56E**: 55 pins, 31 CS-capable pins
 - ✅ **PoKeys57U/57E**: 57 pins, 33 CS-capable pins
-- ✅ **Pin validation** ensures only supported functions are used
-- ✅ **Clear error messages** when conflicts are detected
+
+### Enhanced I2C Reliability (NEW)
+- ✅ **Automatic Packet Fragmentation**: Handle data larger than 32-byte I2C limit
+- ✅ **Intelligent Retry Logic**: Exponential backoff with jitter for failed operations
+- ✅ **Configurable Validation**: Optional strict protocol validation and error detection
+- ✅ **Performance Monitoring**: Real-time metrics and health diagnostics
+- ✅ **Error Recovery**: Smart classification of recoverable vs. permanent errors
+- ✅ **Circuit Breaker Pattern**: Prevent cascading failures in unreliable conditions
 
 ## 📚 Examples
 
@@ -168,6 +189,7 @@ cargo run --example spi_example
 cargo run --example i2c_simple_test
 cargo run --example i2c_comprehensive_test
 cargo run --example i2c_common_devices
+cargo run --example i2c_enhanced_features  # NEW: Enhanced I2C features
 
 # Network device support
 cargo run --example network_device_test
@@ -181,7 +203,7 @@ This core library provides the foundation for the PoKeys ecosystem:
 - **Cross-Platform**: Works on Windows, macOS, and Linux
 - **Thread-Safe**: Concurrent device access with proper synchronization
 - **Extensible**: Plugin architecture for custom devices and protocols
-- **Performance-Optimized**: Bulk operations and caching for maximum throughput
+- **Performance-Optimized**: Bulk operations, caching, and intelligent retry mechanisms for maximum throughput and reliability
 
 ## 🤝 Contributing
 

@@ -1,6 +1,7 @@
 //! Core types and structures for PoKeys library
 
 use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
 /// Device connection type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -146,6 +147,126 @@ pub enum I2cStatus {
     Ok = 1,
     Complete = 2,
     InProgress = 0x10,
+}
+
+/// I2C configuration options
+#[derive(Debug, Clone)]
+pub struct I2cConfig {
+    pub max_packet_size: usize,
+    pub auto_fragment: bool,
+    pub fragment_delay_ms: u64,
+    pub validation_level: ValidationLevel,
+}
+
+impl Default for I2cConfig {
+    fn default() -> Self {
+        Self {
+            max_packet_size: 32,
+            auto_fragment: false,
+            fragment_delay_ms: 10,
+            validation_level: ValidationLevel::None,
+        }
+    }
+}
+
+/// Retry configuration for error recovery
+#[derive(Debug, Clone)]
+pub struct RetryConfig {
+    pub max_attempts: u32,
+    pub base_delay_ms: u64,
+    pub max_delay_ms: u64,
+    pub backoff_multiplier: f64,
+    pub jitter: bool,
+}
+
+impl Default for RetryConfig {
+    fn default() -> Self {
+        Self {
+            max_attempts: 3,
+            base_delay_ms: 100,
+            max_delay_ms: 2000,
+            backoff_multiplier: 2.0,
+            jitter: true,
+        }
+    }
+}
+
+/// Validation levels for protocol validation
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ValidationLevel {
+    None,       // Current behavior - pass everything through
+    Basic,      // Validate packet structure only
+    Strict,     // Full protocol validation
+    Custom(ValidationConfig),
+}
+
+/// Custom validation configuration
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ValidationConfig {
+    pub validate_checksums: bool,
+    pub validate_command_ids: bool,
+    pub validate_device_ids: bool,
+    pub validate_packet_structure: bool,
+    pub max_device_id: u8,
+    pub valid_commands: HashSet<u8>,
+}
+
+impl Default for ValidationConfig {
+    fn default() -> Self {
+        Self {
+            validate_checksums: true,
+            validate_command_ids: true,
+            validate_device_ids: true,
+            validate_packet_structure: true,
+            max_device_id: 255,
+            valid_commands: HashSet::new(),
+        }
+    }
+}
+
+/// I2C performance metrics
+#[derive(Debug, Clone, Default)]
+pub struct I2cMetrics {
+    pub total_commands: u64,
+    pub successful_commands: u64,
+    pub failed_commands: u64,
+    pub average_response_time: std::time::Duration,
+    pub max_response_time: std::time::Duration,
+    pub min_response_time: std::time::Duration,
+    pub error_counts: HashMap<String, u32>,
+}
+
+/// Health status for device diagnostics
+#[derive(Debug, Clone)]
+pub struct HealthStatus {
+    pub connectivity: ConnectivityStatus,
+    pub i2c_health: I2cHealthStatus,
+    pub error_rate: f64,
+    pub performance: PerformanceSummary,
+}
+
+/// Connectivity status
+#[derive(Debug, Clone)]
+pub enum ConnectivityStatus {
+    Healthy,
+    Degraded(String),
+    Failed(String),
+}
+
+/// I2C health status
+#[derive(Debug, Clone)]
+pub enum I2cHealthStatus {
+    Healthy,
+    Degraded(String),
+    Failed(String),
+}
+
+/// Performance summary
+#[derive(Debug, Clone, Default)]
+pub struct PerformanceSummary {
+    pub avg_response_time_ms: f64,
+    pub success_rate: f64,
+    pub throughput_commands_per_sec: f64,
 }
 
 /// LCD mode

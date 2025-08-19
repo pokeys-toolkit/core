@@ -108,6 +108,82 @@ pub enum PoKeysError {
 
     #[error("Invalid configuration: {0}")]
     InvalidConfiguration(String),
+
+    // Enhanced I2C errors (Priority 1)
+    #[error("I2C packet too large: {size} bytes (maximum {max_size} bytes). {suggestion}")]
+    I2cPacketTooLarge {
+        size: usize,
+        max_size: usize,
+        suggestion: String,
+    },
+
+    #[error("I2C timeout")]
+    I2cTimeout,
+
+    #[error("I2C bus error")]
+    I2cBusError,
+
+    #[error("I2C NACK received")]
+    I2cNack,
+
+    #[error("Network timeout")]
+    NetworkTimeout,
+
+    #[error("Maximum retries exceeded")]
+    MaxRetriesExceeded,
+
+    // Enhanced validation errors (Priority 3)
+    #[error("Invalid packet structure: {0}")]
+    InvalidPacketStructure(String),
+
+    #[error("Invalid command: 0x{0:02X}")]
+    InvalidCommand(u8),
+
+    #[error("Invalid device ID: {0}")]
+    InvalidDeviceId(u8),
+
+    #[error("Invalid checksum: expected 0x{expected:02X}, received 0x{received:02X}")]
+    InvalidChecksumDetailed {
+        expected: u8,
+        received: u8,
+    },
+}
+
+/// Recovery strategies for different error types
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RecoveryStrategy {
+    Fail,
+    RetryWithDelay(u64), // milliseconds
+    RetryWithBackoff,
+    ResetAndRetry,
+}
+
+impl PoKeysError {
+    /// Check if an error is recoverable through retry mechanisms
+    pub fn is_recoverable(&self) -> bool {
+        matches!(
+            self,
+            PoKeysError::I2cTimeout
+                | PoKeysError::I2cBusError
+                | PoKeysError::I2cNack
+                | PoKeysError::NetworkTimeout
+                | PoKeysError::Timeout
+                | PoKeysError::CommunicationError
+        )
+    }
+
+    /// Get the recommended recovery strategy for this error
+    pub fn recovery_strategy(&self) -> RecoveryStrategy {
+        match self {
+            PoKeysError::I2cTimeout => RecoveryStrategy::RetryWithDelay(100),
+            PoKeysError::I2cBusError => RecoveryStrategy::ResetAndRetry,
+            PoKeysError::I2cNack => RecoveryStrategy::RetryWithBackoff,
+            PoKeysError::NetworkTimeout => RecoveryStrategy::RetryWithDelay(200),
+            PoKeysError::Timeout => RecoveryStrategy::RetryWithDelay(100),
+            PoKeysError::CommunicationError => RecoveryStrategy::RetryWithBackoff,
+            _ => RecoveryStrategy::Fail,
+        }
+    }
 }
 
 impl PartialEq for PoKeysError {
@@ -154,6 +230,22 @@ impl PartialEq for PoKeysError {
                 a1 == a2 && b1 == b2
             }
             (Self::RelatedCapabilityError(a), Self::RelatedCapabilityError(b)) => a == b,
+            // Enhanced I2C errors
+            (Self::I2cPacketTooLarge { size: s1, max_size: m1, suggestion: sg1 }, 
+             Self::I2cPacketTooLarge { size: s2, max_size: m2, suggestion: sg2 }) => {
+                s1 == s2 && m1 == m2 && sg1 == sg2
+            }
+            (Self::I2cTimeout, Self::I2cTimeout) => true,
+            (Self::I2cBusError, Self::I2cBusError) => true,
+            (Self::I2cNack, Self::I2cNack) => true,
+            (Self::NetworkTimeout, Self::NetworkTimeout) => true,
+            (Self::MaxRetriesExceeded, Self::MaxRetriesExceeded) => true,
+            // Enhanced validation errors
+            (Self::InvalidPacketStructure(a), Self::InvalidPacketStructure(b)) => a == b,
+            (Self::InvalidCommand(a), Self::InvalidCommand(b)) => a == b,
+            (Self::InvalidDeviceId(a), Self::InvalidDeviceId(b)) => a == b,
+            (Self::InvalidChecksumDetailed { expected: e1, received: r1 },
+             Self::InvalidChecksumDetailed { expected: e2, received: r2 }) => e1 == e2 && r1 == r2,
             // IO errors are not compared
             (Self::Io(_), Self::Io(_)) => false,
             _ => false,
@@ -194,6 +286,14 @@ impl From<PoKeysError> for ReturnCode {
             | PoKeysError::MissingRelatedCapability(_, _, _)
             | PoKeysError::RelatedPinInactive(_, _)
             | PoKeysError::RelatedCapabilityError(_) => ReturnCode::ErrParameter,
+            // Enhanced I2C errors
+            PoKeysError::I2cPacketTooLarge { .. } => ReturnCode::ErrParameter,
+            PoKeysError::I2cTimeout | PoKeysError::I2cBusError | PoKeysError::I2cNack => ReturnCode::ErrTransfer,
+            PoKeysError::NetworkTimeout => ReturnCode::ErrTransfer,
+            PoKeysError::MaxRetriesExceeded => ReturnCode::ErrTransfer,
+            // Enhanced validation errors
+            PoKeysError::InvalidPacketStructure(_) | PoKeysError::InvalidCommand(_) 
+            | PoKeysError::InvalidDeviceId(_) | PoKeysError::InvalidChecksumDetailed { .. } => ReturnCode::ErrParameter,
             _ => ReturnCode::ErrGeneric,
         }
     }
