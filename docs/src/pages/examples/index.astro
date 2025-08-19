@@ -1,0 +1,138 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Examples - PoKeys Core Library</title>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 w-full z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="flex justify-between items-center py-4">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="hover:text-blue-400 transition-colors">Home</a>
+						<a href="/core/#features" class="hover:text-blue-400 transition-colors">Features</a>
+						<a href="/core/examples" class="text-blue-400">Examples</a>
+						<a href="https://github.com/pokeys-toolkit/core" class="hover:text-blue-400 transition-colors">GitHub</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Content -->
+		<div class="pt-20 min-h-screen bg-gray-900">
+			<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+				<!-- Header -->
+				<div class="text-center mb-16">
+					<h1 class="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						Examples
+					</h1>
+					<p class="text-xl text-gray-400 max-w-3xl mx-auto">
+						Practical examples demonstrating how to use the PoKeys Core Library for common hardware control tasks
+					</p>
+				</div>
+
+				<!-- Examples Grid -->
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+					<!-- Basic Device Control -->
+					<a href="/core/examples/basic-device-control" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-blue-500/50 transition-all duration-300 hover:transform hover:scale-105">
+						<div class="text-4xl mb-4">🔌</div>
+						<h3 class="text-xl font-semibold mb-3 text-white group-hover:text-blue-400">Basic Device Control</h3>
+						<p class="text-gray-400 mb-4">Connect to a PoKeys device and control digital outputs</p>
+						<div class="flex flex-wrap gap-2">
+							<span class="px-2 py-1 bg-blue-600/20 text-blue-300 text-xs rounded">Beginner</span>
+							<span class="px-2 py-1 bg-green-600/20 text-green-300 text-xs rounded">Digital I/O</span>
+						</div>
+					</a>
+
+					<!-- PWM Control -->
+					<a href="/core/examples/pwm-control" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:scale-105">
+						<div class="text-4xl mb-4">⚡</div>
+						<h3 class="text-xl font-semibold mb-3 text-white group-hover:text-purple-400">PWM Control</h3>
+						<p class="text-gray-400 mb-4">Generate PWM signals for motor control and LED dimming</p>
+						<div class="flex flex-wrap gap-2">
+							<span class="px-2 py-1 bg-blue-600/20 text-blue-300 text-xs rounded">Beginner</span>
+							<span class="px-2 py-1 bg-purple-600/20 text-purple-300 text-xs rounded">PWM</span>
+						</div>
+					</a>
+
+					<!-- Analog Input -->
+					<a href="/core/examples/analog-input" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-green-500/50 transition-all duration-300 hover:transform hover:scale-105">
+						<div class="text-4xl mb-4">📊</div>
+						<h3 class="text-xl font-semibold mb-3 text-white group-hover:text-green-400">Analog Input Reading</h3>
+						<p class="text-gray-400 mb-4">Read analog sensors and convert to meaningful values</p>
+						<div class="flex flex-wrap gap-2">
+							<span class="px-2 py-1 bg-blue-600/20 text-blue-300 text-xs rounded">Beginner</span>
+							<span class="px-2 py-1 bg-green-600/20 text-green-300 text-xs rounded">Analog</span>
+						</div>
+					</a>
+
+					<!-- Encoder Reading -->
+					<a href="/core/examples/encoder-reading" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-yellow-500/50 transition-all duration-300 hover:transform hover:scale-105">
+						<div class="text-4xl mb-4">🔄</div>
+						<h3 class="text-xl font-semibold mb-3 text-white group-hover:text-yellow-400">Encoder Reading</h3>
+						<p class="text-gray-400 mb-4">Read quadrature encoders for position and velocity tracking</p>
+						<div class="flex flex-wrap gap-2">
+							<span class="px-2 py-1 bg-yellow-600/20 text-yellow-300 text-xs rounded">Intermediate</span>
+							<span class="px-2 py-1 bg-orange-600/20 text-orange-300 text-xs rounded">Encoder</span>
+						</div>
+					</a>
+
+					<!-- SPI Communication -->
+					<a href="/core/examples/spi-communication" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-red-500/50 transition-all duration-300 hover:transform hover:scale-105">
+						<div class="text-4xl mb-4">🔗</div>
+						<h3 class="text-xl font-semibold mb-3 text-white group-hover:text-red-400">SPI Communication</h3>
+						<p class="text-gray-400 mb-4">Communicate with SPI devices and sensors</p>
+						<div class="flex flex-wrap gap-2">
+							<span class="px-2 py-1 bg-yellow-600/20 text-yellow-300 text-xs rounded">Intermediate</span>
+							<span class="px-2 py-1 bg-red-600/20 text-red-300 text-xs rounded">SPI</span>
+						</div>
+					</a>
+
+					<!-- Multi-Device Management -->
+					<a href="/core/examples/multi-device" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-indigo-500/50 transition-all duration-300 hover:transform hover:scale-105">
+						<div class="text-4xl mb-4">🖥️</div>
+						<h3 class="text-xl font-semibold mb-3 text-white group-hover:text-indigo-400">Multi-Device Management</h3>
+						<p class="text-gray-400 mb-4">Manage multiple PoKeys devices simultaneously</p>
+						<div class="flex flex-wrap gap-2">
+							<span class="px-2 py-1 bg-red-600/20 text-red-300 text-xs rounded">Advanced</span>
+							<span class="px-2 py-1 bg-indigo-600/20 text-indigo-300 text-xs rounded">Multi-Device</span>
+						</div>
+					</a>
+				</div>
+
+				<!-- Getting Started Section -->
+				<div class="mt-16 bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-500/30 rounded-lg p-8">
+					<h2 class="text-2xl font-bold mb-4 text-white">Getting Started with Examples</h2>
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<div>
+							<h3 class="text-lg font-semibold mb-2 text-blue-400">Prerequisites</h3>
+							<ul class="text-gray-300 space-y-1">
+								<li>• Rust 1.70 or later installed</li>
+								<li>• PoKeys device connected via USB or network</li>
+								<li>• Basic understanding of Rust programming</li>
+							</ul>
+						</div>
+						<div>
+							<h3 class="text-lg font-semibold mb-2 text-purple-400">How to Use</h3>
+							<ul class="text-gray-300 space-y-1">
+								<li>• Copy the example code to your project</li>
+								<li>• Add pokeys-lib dependency to Cargo.toml</li>
+								<li>• Modify pin numbers and settings as needed</li>
+								<li>• Run with <code class="bg-gray-700 px-2 py-1 rounded text-sm">cargo run</code></li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
