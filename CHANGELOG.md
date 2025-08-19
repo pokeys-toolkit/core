@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.3] - 2025-08-19
+
+- fix: exclude documentation changes from triggering library releases
+
 ## [0.12.2] - 2025-08-19
 
 - fix: escape curly braces in git dependency example
