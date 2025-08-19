@@ -13,6 +13,10 @@ pub fn i2c_write_simple(device: &mut PoKeysDevice, address: u8, data: &[u8]) -> 
         I2cStatus::InProgress => Err(PoKeysError::Protocol(
             "I2C operation in progress".to_string(),
         )),
+        I2cStatus::Timeout => Err(PoKeysError::Protocol("I2C write timeout".to_string())),
+        I2cStatus::ChecksumError => Err(PoKeysError::Protocol("I2C checksum error".to_string())),
+        I2cStatus::DeviceNotFound => Err(PoKeysError::Protocol("I2C device not found".to_string())),
+        I2cStatus::PacketTooLarge => Err(PoKeysError::Protocol("I2C packet too large".to_string())),
     }
 }
 
@@ -25,6 +29,10 @@ pub fn i2c_read_simple(device: &mut PoKeysDevice, address: u8, length: u8) -> Re
         I2cStatus::InProgress => Err(PoKeysError::Protocol(
             "I2C operation in progress".to_string(),
         )),
+        I2cStatus::Timeout => Err(PoKeysError::Protocol("I2C read timeout".to_string())),
+        I2cStatus::ChecksumError => Err(PoKeysError::Protocol("I2C checksum error".to_string())),
+        I2cStatus::DeviceNotFound => Err(PoKeysError::Protocol("I2C device not found".to_string())),
+        I2cStatus::PacketTooLarge => Err(PoKeysError::Protocol("I2C packet too large".to_string())),
     }
 }
 

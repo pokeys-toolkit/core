@@ -253,9 +253,12 @@ fn demonstrate_health_monitoring(device: &mut PoKeysDevice) -> Result<()> {
     // Show how to modify I2C configuration
     let new_config = I2cConfig {
         max_packet_size: 32,
+        timeout_ms: 1000,
+        retry_attempts: 3,
         auto_fragment: true,
         fragment_delay_ms: 5,
         validation_level: ValidationLevel::Basic,
+        performance_monitoring: false,
     };
 
     device.set_i2c_config(new_config);

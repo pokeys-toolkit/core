@@ -140,31 +140,44 @@ pub enum PulseEngineAxisState {
     Limit = 30,
 }
 
-/// I2C status codes
+/// I2C status codes - unified across PoKeys ecosystem
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum I2cStatus {
     Error = 0,
     Ok = 1,
     Complete = 2,
     InProgress = 0x10,
+    Timeout = 0x20,
+    ChecksumError = 0x30,    // For protocol validation
+    DeviceNotFound = 0x40,   // Device scan specific
+    PacketTooLarge = 0x50,   // Fragmentation needed
 }
 
-/// I2C configuration options
+/// I2C configuration options - standardized interface
 #[derive(Debug, Clone)]
 pub struct I2cConfig {
+    // Common fields
     pub max_packet_size: usize,
+    pub timeout_ms: u64,
+    pub retry_attempts: u32,
+    
+    // PoKeys specific features
     pub auto_fragment: bool,
     pub fragment_delay_ms: u64,
     pub validation_level: ValidationLevel,
+    pub performance_monitoring: bool,
 }
 
 impl Default for I2cConfig {
     fn default() -> Self {
         Self {
             max_packet_size: 32,
+            timeout_ms: 1000,
+            retry_attempts: 3,
             auto_fragment: false,
             fragment_delay_ms: 10,
             validation_level: ValidationLevel::None,
+            performance_monitoring: false,
         }
     }
 }

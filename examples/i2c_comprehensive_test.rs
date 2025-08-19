@@ -98,6 +98,10 @@ fn main() -> Result<()> {
                 I2cStatus::Complete => println!("✅ Write operation complete"),
                 I2cStatus::InProgress => println!("⏳ Write operation in progress"),
                 I2cStatus::Error => println!("❌ Write operation failed"),
+                I2cStatus::Timeout => println!("⏰ Write operation timed out"),
+                I2cStatus::ChecksumError => println!("🔍 Write checksum error"),
+                I2cStatus::DeviceNotFound => println!("📭 Device not found for write"),
+                I2cStatus::PacketTooLarge => println!("📦 Write packet too large"),
             }
         }
         Err(e) => println!("❌ Write operation error: {}", e),
@@ -121,6 +125,10 @@ fn main() -> Result<()> {
                 }
                 I2cStatus::InProgress => println!("⏳ Read operation in progress"),
                 I2cStatus::Error => println!("❌ Read operation failed"),
+                I2cStatus::Timeout => println!("⏰ Read operation timed out"),
+                I2cStatus::ChecksumError => println!("🔍 Read checksum error"),
+                I2cStatus::DeviceNotFound => println!("📭 Device not found for read"),
+                I2cStatus::PacketTooLarge => println!("📦 Read packet too large"),
             }
         }
         Err(e) => println!("❌ Read operation error: {}", e),
