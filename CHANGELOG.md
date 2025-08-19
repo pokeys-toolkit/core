@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0] - 2025-08-19
+
+- feat: add links to latest release and crates.io on main page
+
 ## [0.7.0] - 2025-08-18
 
 - feat: update main page to highlight Rust language support
