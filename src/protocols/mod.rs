@@ -16,9 +16,7 @@ pub mod uspibridge;
 pub use convenience::*;
 
 // Re-export uSPIBridge types for easier access
-pub use uspibridge::{
-    SegmentMapping, SegmentMappingType, USPIBridgeCommand, USPIBridgeConfig,
-};
+pub use uspibridge::{SegmentMapping, SegmentMappingType, USPIBridgeCommand, USPIBridgeConfig};
 
 #[cfg(test)]
 mod tests {

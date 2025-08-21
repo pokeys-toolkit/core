@@ -1,8 +1,6 @@
 //! Integration tests for uSPIBridge functionality
 
-use pokeys_lib::{
-    SegmentMapping, SegmentMappingType, USPIBridgeCommand, USPIBridgeConfig,
-};
+use pokeys_lib::{SegmentMapping, SegmentMappingType, USPIBridgeCommand, USPIBridgeConfig};
 
 #[test]
 fn test_segment_mapping_creation() {
@@ -46,7 +44,7 @@ fn test_uspibridge_config() {
     assert_eq!(custom_config.default_brightness, 10);
     assert_eq!(custom_config.max_virtual_devices, 8);
     assert_eq!(custom_config.segment_mappings.len(), 3);
-    
+
     // All devices should have CommonCathode mapping (set last)
     for mapping in &custom_config.segment_mappings {
         assert_eq!(mapping.mapping_type, SegmentMappingType::CommonCathode);
@@ -121,12 +119,12 @@ mod integration_tests {
         /*
         let mut device = connect_to_device_with_serial(32223).unwrap();
         let slave_address = 0x42;
-        
+
         // Set custom segment mapping
         let custom_mapping = [7, 6, 5, 4, 3, 2, 1, 0]; // Reversed
         let result = device.uspibridge_set_segment_mapping(slave_address, 0, &custom_mapping);
         assert!(result.is_ok());
-        
+
         // Test the mapping
         let result = device.uspibridge_test_segment_mapping(slave_address, 0, 0xFF);
         assert!(result.is_ok());
@@ -141,15 +139,15 @@ mod integration_tests {
         /*
         let mut device = connect_to_device_with_serial(32223).unwrap();
         let slave_address = 0x42;
-        
+
         // Display text on virtual device
         let result = device.uspibridge_virtual_text(slave_address, 0, "HELLO");
         assert!(result.is_ok());
-        
+
         // Start scrolling effect
         let result = device.uspibridge_virtual_scroll(slave_address, 0, "SCROLLING TEXT", 500, true);
         assert!(result.is_ok());
-        
+
         // Stop effect
         let result = device.uspibridge_virtual_stop(slave_address, 0);
         assert!(result.is_ok());
