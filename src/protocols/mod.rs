@@ -10,9 +10,15 @@ pub mod i2c;
 pub mod onewire;
 pub mod spi;
 pub mod uart;
+pub mod uspibridge;
 
 // Re-export convenience functions for easier access
 pub use convenience::*;
+
+// Re-export uSPIBridge types for easier access
+pub use uspibridge::{
+    SegmentMapping, SegmentMappingType, USPIBridgeCommand, USPIBridgeConfig,
+};
 
 #[cfg(test)]
 mod tests {
