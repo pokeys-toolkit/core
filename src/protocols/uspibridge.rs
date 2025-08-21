@@ -9,13 +9,11 @@ use crate::types::I2cStatus;
 
 /// uSPIBridge-specific I2C commands for display control and virtual devices
 /// 
-/// Note: Segment mapping commands (0x26-0x29) are currently only available
-/// via serial interface, not I2C. This implementation includes them for
-/// future compatibility when they are added to the I2C interface.
+/// All commands are now available via I2C interface after firmware implementation.
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(u8)]
 pub enum USPIBridgeCommand {
-    // Device Commands (0x10-0x2F) - Currently implemented in I2C
+    // Device Commands (0x10-0x2F) - All implemented in I2C
     SetBrightness = 0x11,           // Set device brightness ✅
     DisplayText = 0x20,             // Display text on device ✅
     DisplayNumber = 0x21,           // Display number on device ✅
@@ -24,25 +22,25 @@ pub enum USPIBridgeCommand {
     SetDecimal = 0x24,              // Set decimal point ✅
     ClearDevice = 0x25,             // Clear device ✅
     
-    // Segment Mapping Commands (0x26-0x2F) - Serial only (not yet in I2C)
-    SetSegmentMapping = 0x26,       // Set custom segment mapping array (Serial only)
-    SetSegmentMappingType = 0x27,   // Set predefined segment mapping type (Serial only)
-    GetSegmentMapping = 0x28,       // Get current segment mapping (Serial only)
-    TestSegmentMapping = 0x29,      // Test segment mapping with pattern (Serial only)
+    // Segment Mapping Commands (0x26-0x2F) - Now implemented in I2C
+    SetSegmentMapping = 0x26,       // Set custom segment mapping array ✅
+    SetSegmentMappingType = 0x27,   // Set predefined segment mapping type ✅
+    GetSegmentMapping = 0x28,       // Get current segment mapping ✅
+    TestSegmentMapping = 0x29,      // Test segment mapping with pattern ✅
     
-    // Virtual Display Commands (0x40-0x4F) - Currently implemented in I2C
-    CreateVirtualDevice = 0x40,     // Create virtual device (Serial only)
-    DeleteVirtualDevice = 0x41,     // Delete virtual device (Serial only)
-    ListVirtualDevices = 0x42,      // List virtual devices (Serial only)
+    // Virtual Display Commands (0x40-0x4F) - All implemented in I2C
+    CreateVirtualDevice = 0x40,     // Create virtual device ✅
+    DeleteVirtualDevice = 0x41,     // Delete virtual device ✅
+    ListVirtualDevices = 0x42,      // List virtual devices ✅
     VirtualText = 0x43,             // Virtual display text ✅
-    VirtualBrightness = 0x44,       // Virtual device brightness (Serial only)
+    VirtualBrightness = 0x44,       // Virtual device brightness ✅
     VirtualClear = 0x45,            // Clear virtual display ✅
     VirtualScrollLeft = 0x46,       // Virtual scroll left ✅
     VirtualScrollRight = 0x47,      // Virtual scroll right ✅
     VirtualFlash = 0x48,            // Virtual flash ✅
     VirtualStop = 0x49,             // Stop virtual effect ✅
     
-    // System Commands (0x50-0x5F) - Currently implemented in I2C
+    // System Commands (0x50-0x5F) - Implemented in I2C
     SystemReset = 0x50,             // Reset system/devices ✅
     SystemStatus = 0x51,            // Get system status ✅
     SystemConfig = 0x52,            // System configuration (Serial only)
@@ -227,16 +225,13 @@ impl PoKeysDevice {
 
     /// Set custom segment mapping for a specific device
     ///
-    /// **Note**: This command is currently only available via serial interface.
-    /// The I2C implementation is planned for future firmware versions.
-    ///
     /// # Arguments
     /// * `slave_address` - I2C slave address of the uSPIBridge device
     /// * `device_id` - Target MAX7219 device ID (0-based)
     /// * `mapping` - Array of 8 values mapping standard bits to custom bits
     ///
     /// # Returns
-    /// I2C operation status (will return error until I2C implementation is added)
+    /// I2C operation status
     pub fn uspibridge_set_segment_mapping(
         &mut self,
         slave_address: u8,
@@ -253,16 +248,13 @@ impl PoKeysDevice {
 
     /// Set predefined segment mapping type for a specific device
     ///
-    /// **Note**: This command is currently only available via serial interface.
-    /// The I2C implementation is planned for future firmware versions.
-    ///
     /// # Arguments
     /// * `slave_address` - I2C slave address of the uSPIBridge device
     /// * `device_id` - Target MAX7219 device ID (0-based)
     /// * `mapping_type` - Predefined mapping type to use (0-4 supported)
     ///
     /// # Returns
-    /// I2C operation status (will return error until I2C implementation is added)
+    /// I2C operation status
     pub fn uspibridge_set_segment_mapping_type(
         &mut self,
         slave_address: u8,
@@ -279,9 +271,6 @@ impl PoKeysDevice {
     }
 
     /// Get current segment mapping for a specific device
-    ///
-    /// **Note**: This command is currently only available via serial interface.
-    /// The I2C implementation is planned for future firmware versions.
     ///
     /// # Arguments
     /// * `slave_address` - I2C slave address of the uSPIBridge device
@@ -323,9 +312,6 @@ impl PoKeysDevice {
 
     /// Test segment mapping with a specific pattern
     ///
-    /// **Note**: This command is currently only available via serial interface.
-    /// The I2C implementation is planned for future firmware versions.
-    ///
     /// This command displays a test pattern on the specified device to verify
     /// that the segment mapping is working correctly.
     ///
@@ -335,7 +321,7 @@ impl PoKeysDevice {
     /// * `test_pattern` - 8-bit pattern to display for testing
     ///
     /// # Returns
-    /// I2C operation status (will return error until I2C implementation is added)
+    /// I2C operation status
     pub fn uspibridge_test_segment_mapping(
         &mut self,
         slave_address: u8,
@@ -541,6 +527,104 @@ impl PoKeysDevice {
             USPIBridgeCommand::VirtualText,
             virtual_id,
             text.as_bytes(),
+        )
+    }
+
+    /// Create a new virtual device
+    ///
+    /// # Arguments
+    /// * `slave_address` - I2C slave address of the uSPIBridge device
+    /// * `virtual_id` - Virtual device ID to create (0-based)
+    /// * `physical_devices` - Array of physical device IDs to map to this virtual device
+    ///
+    /// # Returns
+    /// I2C operation status
+    pub fn uspibridge_create_virtual_device(
+        &mut self,
+        slave_address: u8,
+        virtual_id: u8,
+        physical_devices: &[u8],
+    ) -> Result<I2cStatus> {
+        self.uspibridge_write_command(
+            slave_address,
+            USPIBridgeCommand::CreateVirtualDevice,
+            virtual_id,
+            physical_devices,
+        )
+    }
+
+    /// Delete a virtual device
+    ///
+    /// # Arguments
+    /// * `slave_address` - I2C slave address of the uSPIBridge device
+    /// * `virtual_id` - Virtual device ID to delete (0-based)
+    ///
+    /// # Returns
+    /// I2C operation status
+    pub fn uspibridge_delete_virtual_device(
+        &mut self,
+        slave_address: u8,
+        virtual_id: u8,
+    ) -> Result<I2cStatus> {
+        self.uspibridge_write_command(
+            slave_address,
+            USPIBridgeCommand::DeleteVirtualDevice,
+            virtual_id,
+            &[],
+        )
+    }
+
+    /// List all virtual devices
+    ///
+    /// # Arguments
+    /// * `slave_address` - I2C slave address of the uSPIBridge device
+    ///
+    /// # Returns
+    /// Tuple of (I2C status, optional virtual device list data)
+    pub fn uspibridge_list_virtual_devices(
+        &mut self,
+        slave_address: u8,
+    ) -> Result<(I2cStatus, Option<Vec<u8>>)> {
+        let status = self.uspibridge_write_command(
+            slave_address,
+            USPIBridgeCommand::ListVirtualDevices,
+            0, // Device ID not used for this command
+            &[],
+        )?;
+        
+        if status != I2cStatus::Ok {
+            return Ok((status, None));
+        }
+        
+        // Wait for response processing
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        
+        // Read response
+        let (read_status, response_data) = self.i2c_read(slave_address, 32)?;
+        Ok((read_status, Some(response_data)))
+    }
+
+    /// Set brightness for a virtual device
+    ///
+    /// # Arguments
+    /// * `slave_address` - I2C slave address of the uSPIBridge device
+    /// * `virtual_id` - Virtual device ID (0-based)
+    /// * `brightness` - Brightness level (0-15)
+    ///
+    /// # Returns
+    /// I2C operation status
+    pub fn uspibridge_virtual_brightness(
+        &mut self,
+        slave_address: u8,
+        virtual_id: u8,
+        brightness: u8,
+    ) -> Result<I2cStatus> {
+        let data = vec![brightness.min(15)];
+        self.uspibridge_write_command(
+            slave_address,
+            USPIBridgeCommand::VirtualBrightness,
+            virtual_id,
+            &data,
         )
     }
 
