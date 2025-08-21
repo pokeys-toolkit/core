@@ -7,44 +7,53 @@ use crate::device::PoKeysDevice;
 use crate::error::Result;
 use crate::types::I2cStatus;
 
-/// uSPIBridge-specific I2C commands for segment mapping and display control
+/// uSPIBridge-specific I2C commands for display control and virtual devices
+/// 
+/// Note: Segment mapping commands (0x26-0x29) are currently only available
+/// via serial interface, not I2C. This implementation includes them for
+/// future compatibility when they are added to the I2C interface.
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(u8)]
 pub enum USPIBridgeCommand {
-    // Device Commands (0x10-0x2F)
-    SetBrightness = 0x11,           // Set device brightness
-    DisplayText = 0x20,             // Display text on device
-    DisplayNumber = 0x21,           // Display number on device
-    SetCharacter = 0x22,            // Set character at position
-    SetPattern = 0x23,              // Set raw segment pattern
-    SetDecimal = 0x24,              // Set decimal point
-    ClearDevice = 0x25,             // Clear device
+    // Device Commands (0x10-0x2F) - Currently implemented in I2C
+    SetBrightness = 0x11,           // Set device brightness ✅
+    DisplayText = 0x20,             // Display text on device ✅
+    DisplayNumber = 0x21,           // Display number on device ✅
+    SetCharacter = 0x22,            // Set character at position ✅
+    SetPattern = 0x23,              // Set raw segment pattern ✅
+    SetDecimal = 0x24,              // Set decimal point ✅
+    ClearDevice = 0x25,             // Clear device ✅
     
-    // Segment Mapping Commands (0x26-0x2F) - Custom Pinout Feature
-    SetSegmentMapping = 0x26,       // Set custom segment mapping array
-    SetSegmentMappingType = 0x27,   // Set predefined segment mapping type
-    GetSegmentMapping = 0x28,       // Get current segment mapping
-    TestSegmentMapping = 0x29,      // Test segment mapping with pattern
+    // Segment Mapping Commands (0x26-0x2F) - Serial only (not yet in I2C)
+    SetSegmentMapping = 0x26,       // Set custom segment mapping array (Serial only)
+    SetSegmentMappingType = 0x27,   // Set predefined segment mapping type (Serial only)
+    GetSegmentMapping = 0x28,       // Get current segment mapping (Serial only)
+    TestSegmentMapping = 0x29,      // Test segment mapping with pattern (Serial only)
     
-    // Virtual Display Commands (0x40-0x4F)
-    CreateVirtualDevice = 0x40,     // Create virtual device
-    DeleteVirtualDevice = 0x41,     // Delete virtual device
-    ListVirtualDevices = 0x42,      // List virtual devices
-    VirtualText = 0x43,             // Virtual display text
-    VirtualBrightness = 0x44,       // Virtual device brightness
-    VirtualClear = 0x45,            // Clear virtual display
-    VirtualScrollLeft = 0x46,       // Virtual scroll left
-    VirtualScrollRight = 0x47,      // Virtual scroll right
-    VirtualFlash = 0x48,            // Virtual flash
-    VirtualStop = 0x49,             // Stop virtual effect
+    // Virtual Display Commands (0x40-0x4F) - Currently implemented in I2C
+    CreateVirtualDevice = 0x40,     // Create virtual device (Serial only)
+    DeleteVirtualDevice = 0x41,     // Delete virtual device (Serial only)
+    ListVirtualDevices = 0x42,      // List virtual devices (Serial only)
+    VirtualText = 0x43,             // Virtual display text ✅
+    VirtualBrightness = 0x44,       // Virtual device brightness (Serial only)
+    VirtualClear = 0x45,            // Clear virtual display ✅
+    VirtualScrollLeft = 0x46,       // Virtual scroll left ✅
+    VirtualScrollRight = 0x47,      // Virtual scroll right ✅
+    VirtualFlash = 0x48,            // Virtual flash ✅
+    VirtualStop = 0x49,             // Stop virtual effect ✅
     
-    // System Commands (0x50-0x5F)
-    SystemReset = 0x50,             // Reset system/devices
-    SystemStatus = 0x51,            // Get system status
-    SystemConfig = 0x52,            // System configuration
+    // System Commands (0x50-0x5F) - Currently implemented in I2C
+    SystemReset = 0x50,             // Reset system/devices ✅
+    SystemStatus = 0x51,            // Get system status ✅
+    SystemConfig = 0x52,            // System configuration (Serial only)
 }
 
 /// Predefined segment mapping types for different display manufacturers
+/// 
+/// Values match the uSPIBridge firmware SegmentMappingType enum:
+/// - C++ enum class values are implicitly 0, 1, 2, 3, 4, 5
+/// - I2C interface currently only accepts 0-4 for setSegmentMappingType
+/// - Value 5 (Custom) is used internally when custom arrays are provided
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum SegmentMappingType {
@@ -58,8 +67,8 @@ pub enum SegmentMappingType {
     SparkfunSerial = 3,
     /// Adafruit LED Backpack mapping
     AdafruitBackpack = 4,
-    /// User-defined custom mapping
-    Custom = 255,
+    /// User-defined custom mapping (used internally)
+    Custom = 5,
 }
 
 impl Default for SegmentMappingType {
@@ -218,13 +227,16 @@ impl PoKeysDevice {
 
     /// Set custom segment mapping for a specific device
     ///
+    /// **Note**: This command is currently only available via serial interface.
+    /// The I2C implementation is planned for future firmware versions.
+    ///
     /// # Arguments
     /// * `slave_address` - I2C slave address of the uSPIBridge device
     /// * `device_id` - Target MAX7219 device ID (0-based)
     /// * `mapping` - Array of 8 values mapping standard bits to custom bits
     ///
     /// # Returns
-    /// I2C operation status
+    /// I2C operation status (will return error until I2C implementation is added)
     pub fn uspibridge_set_segment_mapping(
         &mut self,
         slave_address: u8,
@@ -241,13 +253,16 @@ impl PoKeysDevice {
 
     /// Set predefined segment mapping type for a specific device
     ///
+    /// **Note**: This command is currently only available via serial interface.
+    /// The I2C implementation is planned for future firmware versions.
+    ///
     /// # Arguments
     /// * `slave_address` - I2C slave address of the uSPIBridge device
     /// * `device_id` - Target MAX7219 device ID (0-based)
-    /// * `mapping_type` - Predefined mapping type to use
+    /// * `mapping_type` - Predefined mapping type to use (0-4 supported)
     ///
     /// # Returns
-    /// I2C operation status
+    /// I2C operation status (will return error until I2C implementation is added)
     pub fn uspibridge_set_segment_mapping_type(
         &mut self,
         slave_address: u8,
@@ -264,6 +279,9 @@ impl PoKeysDevice {
     }
 
     /// Get current segment mapping for a specific device
+    ///
+    /// **Note**: This command is currently only available via serial interface.
+    /// The I2C implementation is planned for future firmware versions.
     ///
     /// # Arguments
     /// * `slave_address` - I2C slave address of the uSPIBridge device
@@ -305,6 +323,9 @@ impl PoKeysDevice {
 
     /// Test segment mapping with a specific pattern
     ///
+    /// **Note**: This command is currently only available via serial interface.
+    /// The I2C implementation is planned for future firmware versions.
+    ///
     /// This command displays a test pattern on the specified device to verify
     /// that the segment mapping is working correctly.
     ///
@@ -314,7 +335,7 @@ impl PoKeysDevice {
     /// * `test_pattern` - 8-bit pattern to display for testing
     ///
     /// # Returns
-    /// I2C operation status
+    /// I2C operation status (will return error until I2C implementation is added)
     pub fn uspibridge_test_segment_mapping(
         &mut self,
         slave_address: u8,
@@ -350,6 +371,108 @@ impl PoKeysDevice {
             USPIBridgeCommand::DisplayText,
             device_id,
             text.as_bytes(),
+        )
+    }
+
+    /// Display a number on a specific MAX7219 device
+    ///
+    /// # Arguments
+    /// * `slave_address` - I2C slave address of the uSPIBridge device
+    /// * `device_id` - Target MAX7219 device ID (0-based)
+    /// * `number` - 32-bit number to display
+    ///
+    /// # Returns
+    /// I2C operation status
+    pub fn uspibridge_display_number(
+        &mut self,
+        slave_address: u8,
+        device_id: u8,
+        number: u32,
+    ) -> Result<I2cStatus> {
+        let data = number.to_le_bytes();
+        self.uspibridge_write_command(
+            slave_address,
+            USPIBridgeCommand::DisplayNumber,
+            device_id,
+            &data,
+        )
+    }
+
+    /// Set a character at a specific position on a MAX7219 device
+    ///
+    /// # Arguments
+    /// * `slave_address` - I2C slave address of the uSPIBridge device
+    /// * `device_id` - Target MAX7219 device ID (0-based)
+    /// * `position` - Position on the display (0-7)
+    /// * `character` - Character to display
+    ///
+    /// # Returns
+    /// I2C operation status
+    pub fn uspibridge_set_character(
+        &mut self,
+        slave_address: u8,
+        device_id: u8,
+        position: u8,
+        character: u8,
+    ) -> Result<I2cStatus> {
+        let data = vec![position, character];
+        self.uspibridge_write_command(
+            slave_address,
+            USPIBridgeCommand::SetCharacter,
+            device_id,
+            &data,
+        )
+    }
+
+    /// Set a raw segment pattern at a specific position on a MAX7219 device
+    ///
+    /// # Arguments
+    /// * `slave_address` - I2C slave address of the uSPIBridge device
+    /// * `device_id` - Target MAX7219 device ID (0-based)
+    /// * `position` - Position on the display (0-7)
+    /// * `pattern` - 8-bit segment pattern
+    ///
+    /// # Returns
+    /// I2C operation status
+    pub fn uspibridge_set_pattern(
+        &mut self,
+        slave_address: u8,
+        device_id: u8,
+        position: u8,
+        pattern: u8,
+    ) -> Result<I2cStatus> {
+        let data = vec![position, pattern];
+        self.uspibridge_write_command(
+            slave_address,
+            USPIBridgeCommand::SetPattern,
+            device_id,
+            &data,
+        )
+    }
+
+    /// Set decimal point at a specific position on a MAX7219 device
+    ///
+    /// # Arguments
+    /// * `slave_address` - I2C slave address of the uSPIBridge device
+    /// * `device_id` - Target MAX7219 device ID (0-based)
+    /// * `position` - Position on the display (0-7)
+    /// * `state` - Decimal point state (0=off, 1=on)
+    ///
+    /// # Returns
+    /// I2C operation status
+    pub fn uspibridge_set_decimal(
+        &mut self,
+        slave_address: u8,
+        device_id: u8,
+        position: u8,
+        state: bool,
+    ) -> Result<I2cStatus> {
+        let data = vec![position, if state { 1 } else { 0 }];
+        self.uspibridge_write_command(
+            slave_address,
+            USPIBridgeCommand::SetDecimal,
+            device_id,
+            &data,
         )
     }
 

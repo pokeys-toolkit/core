@@ -63,12 +63,13 @@ fn test_segment_mapping_types() {
     let adafruit = SegmentMappingType::AdafruitBackpack;
     let custom = SegmentMappingType::Custom;
 
-    // Test that they have different values
-    assert_ne!(standard as u8, reversed as u8);
-    assert_ne!(standard as u8, common_cathode as u8);
-    assert_ne!(standard as u8, sparkfun as u8);
-    assert_ne!(standard as u8, adafruit as u8);
-    assert_ne!(standard as u8, custom as u8);
+    // Test that they have the correct values to match uSPIBridge firmware
+    assert_eq!(standard as u8, 0);
+    assert_eq!(reversed as u8, 1);
+    assert_eq!(common_cathode as u8, 2);
+    assert_eq!(sparkfun as u8, 3);
+    assert_eq!(adafruit as u8, 4);
+    assert_eq!(custom as u8, 5);
 
     // Test default
     assert_eq!(SegmentMappingType::default(), SegmentMappingType::Standard);
