@@ -148,9 +148,9 @@ pub enum I2cStatus {
     Complete = 2,
     InProgress = 0x10,
     Timeout = 0x20,
-    ChecksumError = 0x30,    // For protocol validation
-    DeviceNotFound = 0x40,   // Device scan specific
-    PacketTooLarge = 0x50,   // Fragmentation needed
+    ChecksumError = 0x30,  // For protocol validation
+    DeviceNotFound = 0x40, // Device scan specific
+    PacketTooLarge = 0x50, // Fragmentation needed
 }
 
 /// I2C configuration options - standardized interface
@@ -160,7 +160,7 @@ pub struct I2cConfig {
     pub max_packet_size: usize,
     pub timeout_ms: u64,
     pub retry_attempts: u32,
-    
+
     // PoKeys specific features
     pub auto_fragment: bool,
     pub fragment_delay_ms: u64,

@@ -121,6 +121,9 @@ pub use protocols::{
     spi_write_simple,
 };
 
+// Re-export uSPIBridge functionality
+pub use protocols::{SegmentMapping, SegmentMappingType, USPIBridgeCommand, USPIBridgeConfig};
+
 /// Library version information
 pub const VERSION_MAJOR: u8 = 0;
 pub const VERSION_MINOR: u8 = 3;

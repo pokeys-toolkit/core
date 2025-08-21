@@ -144,6 +144,25 @@ pub enum PoKeysError {
 
     #[error("Invalid checksum: expected 0x{expected:02X}, received 0x{received:02X}")]
     InvalidChecksumDetailed { expected: u8, received: u8 },
+
+    // uSPIBridge-specific errors
+    #[error("Invalid segment mapping: {0}")]
+    InvalidSegmentMapping(String),
+
+    #[error("Segment mapping not supported by device")]
+    SegmentMappingNotSupported,
+
+    #[error("Custom pinout configuration error: {0}")]
+    CustomPinoutError(String),
+
+    #[error("uSPIBridge command failed: {0}")]
+    USPIBridgeCommandFailed(String),
+
+    #[error("Virtual device error: {0}")]
+    VirtualDeviceError(String),
+
+    #[error("Invalid virtual device ID: {id} (maximum: {max})")]
+    InvalidVirtualDeviceId { id: u8, max: u8 },
 }
 
 /// Recovery strategies for different error types
@@ -166,6 +185,7 @@ impl PoKeysError {
                 | PoKeysError::NetworkTimeout
                 | PoKeysError::Timeout
                 | PoKeysError::CommunicationError
+                | PoKeysError::USPIBridgeCommandFailed(_)
         )
     }
 
@@ -259,6 +279,16 @@ impl PartialEq for PoKeysError {
                     received: r2,
                 },
             ) => e1 == e2 && r1 == r2,
+            // uSPIBridge-specific errors
+            (Self::InvalidSegmentMapping(a), Self::InvalidSegmentMapping(b)) => a == b,
+            (Self::SegmentMappingNotSupported, Self::SegmentMappingNotSupported) => true,
+            (Self::CustomPinoutError(a), Self::CustomPinoutError(b)) => a == b,
+            (Self::USPIBridgeCommandFailed(a), Self::USPIBridgeCommandFailed(b)) => a == b,
+            (Self::VirtualDeviceError(a), Self::VirtualDeviceError(b)) => a == b,
+            (
+                Self::InvalidVirtualDeviceId { id: i1, max: m1 },
+                Self::InvalidVirtualDeviceId { id: i2, max: m2 },
+            ) => i1 == i2 && m1 == m2,
             // IO errors are not compared
             (Self::Io(_), Self::Io(_)) => false,
             _ => false,
@@ -311,6 +341,13 @@ impl From<PoKeysError> for ReturnCode {
             | PoKeysError::InvalidCommand(_)
             | PoKeysError::InvalidDeviceId(_)
             | PoKeysError::InvalidChecksumDetailed { .. } => ReturnCode::ErrParameter,
+            // uSPIBridge-specific errors
+            PoKeysError::InvalidSegmentMapping(_)
+            | PoKeysError::SegmentMappingNotSupported
+            | PoKeysError::CustomPinoutError(_)
+            | PoKeysError::VirtualDeviceError(_)
+            | PoKeysError::InvalidVirtualDeviceId { .. } => ReturnCode::ErrParameter,
+            PoKeysError::USPIBridgeCommandFailed(_) => ReturnCode::ErrTransfer,
             _ => ReturnCode::ErrGeneric,
         }
     }
