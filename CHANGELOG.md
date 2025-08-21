@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.14.0] - 2025-08-21
+
+- Merge pull request #1 from pokeys-toolkit/feature/uspibridge-custom-pinout
+- fix: apply cargo fmt formatting fixes
+- feat: complete uSPIBridge I2C integration with all commands
+- fix: align uSPIBridge implementation with actual firmware
+- feat: implement uSPIBridge custom pinout support
+
 ## [0.13.1] - 2025-08-19
 
 
