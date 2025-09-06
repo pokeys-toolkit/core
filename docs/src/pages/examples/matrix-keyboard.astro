@@ -39,7 +39,7 @@
 						Matrix Keyboard
 					</h1>
 					<p class="text-xl text-gray-400">
-						Configure and monitor matrix keyboards with real-time key detection using the official PoKeys protocol
+						Configure and monitor matrix keyboards with real-time key detection
 					</p>
 				</div>
 
@@ -48,84 +48,38 @@
 					<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
 					<div class="bg-gray-800 rounded-lg p-6">
 						<p class="text-gray-300 mb-4">
-							This example demonstrates how to configure and monitor a matrix keyboard using the PoKeys Core Library.
-							Matrix keyboards allow you to scan multiple keys using fewer pins by organizing them in a row/column grid.
+							This example demonstrates the fundamental operations of the PoKeys Core Library:
 						</p>
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-							<div>
-								<h3 class="text-lg font-semibold mb-2 text-yellow-400">Features Demonstrated</h3>
-								<ul class="text-gray-300 space-y-1">
-									<li>• Protocol-compliant configuration (0xCA)</li>
-									<li>• Real-time key state monitoring</li>
-									<li>• 4x4 matrix keyboard setup</li>
-									<li>• Visual keyboard layout display</li>
-									<li>• Key press/release detection</li>
-								</ul>
-							</div>
-							<div>
-								<h3 class="text-lg font-semibold mb-2 text-yellow-400">Hardware Requirements</h3>
-								<ul class="text-gray-300 space-y-1">
-									<li>• PoKeys device (USB or Network)</li>
-									<li>• 4x4 matrix keyboard or switches</li>
-									<li>• 8 digital pins (4 rows + 4 columns)</li>
-									<li>• Pull-up resistors (if needed)</li>
-								</ul>
-							</div>
-						</div>
+						<ul class="text-gray-300 space-y-2">
+							<li>• <strong>Device enumeration</strong> - Finding connected PoKeys devices</li>
+							<li>• <strong>Device connection</strong> - Establishing communication</li>
+							<li>• <strong>Pin configuration</strong> - Setting up pins as digital outputs</li>
+							<li>• <strong>Digital output control</strong> - Turning pins on and off</li>
+						</ul>
 					</div>
 				</section>
 
-				<!-- Wiring Diagram -->
+				<!-- Hardware Setup -->
 				<section class="mb-12">
-					<h2 class="text-2xl font-bold mb-4 text-white">Wiring Configuration</h2>
+					<h2 class="text-2xl font-bold mb-4 text-white">Hardware Setup</h2>
 					<div class="bg-gray-800 rounded-lg p-6">
-						<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 							<div>
-								<h3 class="text-lg font-semibold mb-3 text-yellow-400">Pin Assignments</h3>
-								<div class="bg-gray-900 rounded p-4">
-									<div class="mb-4">
-										<h4 class="font-semibold text-white mb-2">Row Pins (Outputs)</h4>
-										<ul class="text-gray-300 space-y-1 font-mono text-sm">
-											<li>• Pin 1 → Row 0</li>
-											<li>• Pin 2 → Row 1</li>
-											<li>• Pin 3 → Row 2</li>
-											<li>• Pin 4 → Row 3</li>
-										</ul>
-									</div>
-									<div>
-										<h4 class="font-semibold text-white mb-2">Column Pins (Inputs)</h4>
-										<ul class="text-gray-300 space-y-1 font-mono text-sm">
-											<li>• Pin 5 → Column 0</li>
-											<li>• Pin 6 → Column 1</li>
-											<li>• Pin 7 → Column 2</li>
-											<li>• Pin 8 → Column 3</li>
-										</ul>
-									</div>
-								</div>
+								<h3 class="text-lg font-semibold mb-3 text-blue-400">Required Hardware</h3>
+								<ul class="text-gray-300 space-y-1">
+									<li>• PoKeys device (any model)</li>
+									<li>• LED with current-limiting resistor</li>
+									<li>• Breadboard and jumper wires</li>
+									<li>• USB cable for connection</li>
+								</ul>
 							</div>
 							<div>
-								<h3 class="text-lg font-semibold mb-3 text-yellow-400">Matrix Layout</h3>
-								<div class="bg-gray-900 rounded p-4">
-									<div class="grid grid-cols-4 gap-2 text-center font-mono text-sm">
-										<div class="bg-gray-700 p-2 rounded">(0,0)</div>
-										<div class="bg-gray-700 p-2 rounded">(0,1)</div>
-										<div class="bg-gray-700 p-2 rounded">(0,2)</div>
-										<div class="bg-gray-700 p-2 rounded">(0,3)</div>
-										<div class="bg-gray-700 p-2 rounded">(1,0)</div>
-										<div class="bg-gray-700 p-2 rounded">(1,1)</div>
-										<div class="bg-gray-700 p-2 rounded">(1,2)</div>
-										<div class="bg-gray-700 p-2 rounded">(1,3)</div>
-										<div class="bg-gray-700 p-2 rounded">(2,0)</div>
-										<div class="bg-gray-700 p-2 rounded">(2,1)</div>
-										<div class="bg-gray-700 p-2 rounded">(2,2)</div>
-										<div class="bg-gray-700 p-2 rounded">(2,3)</div>
-										<div class="bg-gray-700 p-2 rounded">(3,0)</div>
-										<div class="bg-gray-700 p-2 rounded">(3,1)</div>
-										<div class="bg-gray-700 p-2 rounded">(3,2)</div>
-										<div class="bg-gray-700 p-2 rounded">(3,3)</div>
-									</div>
-									<p class="text-gray-400 text-xs mt-2">Format: (row, column)</p>
-								</div>
+								<h3 class="text-lg font-semibold mb-3 text-green-400">Connections</h3>
+								<ul class="text-gray-300 space-y-1">
+									<li>• LED anode → Pin 1</li>
+									<li>• LED cathode → 220Ω resistor → GND</li>
+									<li>• PoKeys device → USB port</li>
+								</ul>
 							</div>
 						</div>
 					</div>
@@ -134,223 +88,174 @@
 				<!-- Code Example -->
 				<section class="mb-12">
 					<h2 class="text-2xl font-bold mb-4 text-white">Complete Example</h2>
-					<div class="bg-gray-800 rounded-lg overflow-hidden">
-						<div class="bg-gray-700 px-4 py-2 flex justify-between items-center">
-							<span class="text-sm text-gray-300">main.rs</span>
-							<button class="text-xs bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded transition-colors" onclick="navigator.clipboard.writeText(document.getElementById('code-example').textContent)">
-								Copy Code
-							</button>
-						</div>
-						<pre class="p-4 overflow-x-auto"><code id="code-example" class="text-sm">use pokeys_lib::*;
-use std::thread;
-use std::time::Duration;
-
-fn main() -> Result<()> {
-    println!("🎹 PoKeys Matrix Keyboard Example");
-    println!("=================================");
-
-    // Connect to first available device
-    let mut device = match connect_to_first_available_device() {
-        Ok(device) => device,
-        Err(e) => {
-            println!("❌ No PoKeys device found: {}", e);
-            return Ok(());
-        }
-    };
-
-    println!("✅ Connected to device (Serial: {})", device.device_data.serial_number);
-
-    // Configure 4x4 matrix keyboard
-    let width = 4;
-    let height = 4;
-    let column_pins = [5, 6, 7, 8];  // Pins 5-8 for columns
-    let row_pins = [1, 2, 3, 4];    // Pins 1-4 for rows
-
-    println!("🔧 Configuring {}x{} matrix keyboard...", width, height);
-    device.configure_matrix_keyboard(width, height, &column_pins, &row_pins)?;
-    println!("✅ Matrix keyboard configured successfully!");
-
-    // Display keyboard layout
-    display_keyboard_layout(width, height);
-
-    // Monitor keyboard for key presses
-    println!("🔍 Monitoring keyboard (press Ctrl+C to exit)...");
-    let mut previous_states = vec![vec![false; width as usize]; height as usize];
-    let mut key_press_count = 0;
-
-    loop {
-        // Read current keyboard state
-        device.read_matrix_keyboard()?;
-
-        // Check for state changes
-        let mut state_changed = false;
-        for row in 0..height as usize {
-            for col in 0..width as usize {
-                let current_state = device.matrix_keyboard.get_key_state(row, col);
-                let previous_state = previous_states[row][col];
-
-                if current_state != previous_state {
-                    state_changed = true;
-                    if current_state {
-                        key_press_count += 1;
-                        println!("🔴 Key PRESSED  at ({}, {}) - Key #{}", row, col, key_press_count);
-                    } else {
-                        println!("🔵 Key RELEASED at ({}, {})", row, col);
-                    }
-                    previous_states[row][col] = current_state;
-                }
-            }
-        }
-
-        // Display current state if changed
-        if state_changed {
-            display_current_state(&device, width, height);
-        }
-
-        thread::sleep(Duration::from_millis(50));
-    }
-}
-
-fn connect_to_first_available_device() -> Result<PoKeysDevice> {
-    // Try network devices first
-    match enumerate_network_devices(2000) {
-        Ok(devices) if !devices.is_empty() => {
-            return connect_to_network_device(&devices[0]);
-        }
-        _ => {}
-    }
-
-    // Try USB devices
-    match enumerate_usb_devices() {
-        Ok(count) if count > 0 => connect_to_device(0),
-        _ => Err(PoKeysError::DeviceNotFound),
-    }
-}
-
-fn display_keyboard_layout(width: u8, height: u8) {
-    println!("\n📋 Keyboard Layout ({}x{}):", width, height);
-    println!("   ┌─────┬─────┬─────┬─────┐");
-    
-    for row in 0..height {
-        print!("   │");
-        for col in 0..width {
-            print!(" {:>2},{} │", row, col);
-        }
-        println!();
-        
-        if row < height - 1 {
-            println!("   ├─────┼─────┼─────┼─────┤");
-        }
-    }
-    
-    println!("   └─────┴─────┴─────┴─────┘");
-}
-
-fn display_current_state(device: &PoKeysDevice, width: u8, height: u8) {
-    println!("\n📊 Current Keyboard State:");
-    println!("   ┌─────┬─────┬─────┬─────┐");
-    
-    for row in 0..height {
-        print!("   │");
-        for col in 0..width {
-            let pressed = device.matrix_keyboard.get_key_state(row as usize, col as usize);
-            let symbol = if pressed { " ███ " } else { "     " };
-            print!("{}│", symbol);
-        }
-        println!();
-        
-        if row < height - 1 {
-            println!("   ├─────┼─────┼─────┼─────┤");
-        }
-    }
-    
-    println!("   └─────┴─────┴─────┴─────┘");
-    println!("   ███ = pressed, blank = released");
-}</code></pre>
-					</div>
-				</section>
-
-				<!-- Key Concepts -->
-				<section class="mb-12">
-					<h2 class="text-2xl font-bold mb-4 text-white">Key Concepts</h2>
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-						<div class="bg-gray-800 rounded-lg p-6">
-							<h3 class="text-lg font-semibold mb-3 text-yellow-400">Protocol Implementation</h3>
-							<ul class="text-gray-300 space-y-2">
-								<li>• Uses official PoKeys command 0xCA</li>
-								<li>• Option 16 for configuration</li>
-								<li>• Option 20 for reading state</li>
-								<li>• Supports up to 16x8 matrices</li>
-							</ul>
-						</div>
-						<div class="bg-gray-800 rounded-lg p-6">
-							<h3 class="text-lg font-semibold mb-3 text-yellow-400">Key Indexing</h3>
-							<ul class="text-gray-300 space-y-2">
-								<li>• Uses 8-column internal layout</li>
-								<li>• Index = row × 8 + column</li>
-								<li>• Row 0: keys 0-7, Row 1: keys 8-15</li>
-								<li>• Proper bounds checking included</li>
-							</ul>
-						</div>
-					</div>
-				</section>
-
-				<!-- Expected Output -->
-				<section class="mb-12">
-					<h2 class="text-2xl font-bold mb-4 text-white">Expected Output</h2>
 					<div class="bg-gray-800 rounded-lg p-6">
-						<pre class="text-sm text-gray-300 overflow-x-auto">🎹 PoKeys Matrix Keyboard Example
-=================================
-🔍 Searching for network devices...
-✅ Found 1 network device(s)
-✅ Connected to device (Serial: 32223)
+						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">use pokeys_lib::*;
+use std::&#123;thread, time::Duration&#125;;
 
-🔧 Configuring 4x4 matrix keyboard...
-   Column pins: [5, 6, 7, 8]
-   Row pins: [1, 2, 3, 4]
-✅ Matrix keyboard configured successfully!
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#123;
+    println!("🚀 PoKeys Basic Device Control Example");
+    println!("=====================================");
 
-📋 Keyboard Layout (4x4):
-   ┌─────┬─────┬─────┬─────┐
-   │  0,0 │  0,1 │  0,2 │  0,3 │
-   ├─────┼─────┼─────┼─────┤
-   │  1,0 │  1,1 │  1,2 │  1,3 │
-   ├─────┼─────┼─────┼─────┤
-   │  2,0 │  2,1 │  2,2 │  2,3 │
-   ├─────┼─────┼─────┼─────┤
-   │  3,0 │  3,1 │  3,2 │  3,3 │
-   └─────┴─────┴─────┴─────┘
+    // Step 1: Enumerate connected devices
+    println!("📡 Scanning for PoKeys devices...");
+    let device_count = enumerate_usb_devices()?;
+    println!("✅ Found &#123;&#125; device(s)", device_count);
 
-🔍 Monitoring keyboard (press Ctrl+C to exit)...
-🔴 Key PRESSED  at (0, 0) - Key #1
-🔵 Key RELEASED at (0, 0)
-🔴 Key PRESSED  at (1, 2) - Key #2</pre>
+    if device_count == 0 &#123;
+        println!("❌ No PoKeys devices found!");
+        println!("💡 Please check:");
+        println!("   - Device is connected via USB");
+        println!("   - USB drivers are installed");
+        println!("   - Device has power");
+        return Ok(());
+    &#125;
+
+    // Step 2: Connect to the first device
+    println!("🔌 Connecting to device...");
+    let mut device = connect_to_device(0)?;
+
+    // Get device information
+    let device_name = device.get_device_name()?;
+    println!("✅ Connected to: &#123;&#125;", device_name);
+
+    // Step 3: Configure pin 1 as digital output
+    println!("⚙️  Configuring pin 1 as digital output...");
+    device.set_pin_function(1, PinFunction::DigitalOutput)?;
+    println!("✅ Pin 1 configured successfully");
+
+    // Step 4: Blink the LED 10 times
+    println!("💡 Starting LED blink sequence...");
+    for i in 1..=10 &#123;
+        println!("   Blink &#123;&#125;/10 - LED ON", i);
+        device.set_digital_output(1, true)?;
+        thread::sleep(Duration::from_millis(500));
+
+        println!("   Blink &#123;&#125;/10 - LED OFF", i);
+        device.set_digital_output(1, false)?;
+        thread::sleep(Duration::from_millis(500));
+    &#125;
+
+    println!("🎉 Example completed successfully!");
+    println!("💡 The LED should have blinked 10 times");
+
+    Ok(())
+&#125;</code></pre>
+					</div>
+				</section>
+
+				<!-- Code Explanation -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Code Explanation</h2>
+					<div class="space-y-6">
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-lg font-semibold mb-3 text-blue-400">1. Device Enumeration</h3>
+							<pre class="bg-gray-900 p-3 rounded mb-3"><code class="text-green-400">let device_count = enumerate_usb_devices()?;</code></pre>
+							<p class="text-gray-300">
+								This function scans all USB ports for connected PoKeys devices. It returns the number of devices found.
+								Always check this count before attempting to connect.
+							</p>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-lg font-semibold mb-3 text-blue-400">2. Device Connection</h3>
+							<pre class="bg-gray-900 p-3 rounded mb-3"><code class="text-green-400">let mut device = connect_to_device(0)?;</code></pre>
+							<p class="text-gray-300">
+								Connects to the device at index 0 (the first device found). The device object provides all control functions.
+								The <code class="bg-gray-700 px-2 py-1 rounded">mut</code> keyword is required because we'll be modifying device state.
+							</p>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-lg font-semibold mb-3 text-blue-400">3. Pin Configuration</h3>
+							<pre class="bg-gray-900 p-3 rounded mb-3"><code class="text-green-400">device.set_pin_function(1, PinFunction::DigitalOutput)?;</code></pre>
+							<p class="text-gray-300">
+								Configures pin 1 as a digital output. PoKeys pins are versatile and can serve different functions.
+								Always configure the pin function before using it.
+							</p>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-lg font-semibold mb-3 text-blue-400">4. Digital Output Control</h3>
+							<pre class="bg-gray-900 p-3 rounded mb-3"><code class="text-green-400">device.set_digital_output(1, true)?;  // Turn ON (HIGH)
+device.set_digital_output(1, false)?; // Turn OFF (LOW)</code></pre>
+							<p class="text-gray-300">
+								Controls the digital output state. <code class="bg-gray-700 px-2 py-1 rounded">true</code> sets the pin to HIGH (typically 3.3V),
+								<code class="bg-gray-700 px-2 py-1 rounded">false</code> sets it to LOW (0V).
+							</p>
+						</div>
+					</div>
+				</section>
+
+				<!-- Error Handling -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Error Handling</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<p class="text-gray-300 mb-4">
+							The example uses Rust's <code class="bg-gray-700 px-2 py-1 rounded">?</code> operator for error handling.
+							Here's how to handle specific errors:
+						</p>
+						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">// More detailed error handling
+match enumerate_usb_devices() &#123;
+    Ok(count) if count == 0 =&gt; &#123;
+        eprintln!("No devices found. Check connections.");
+        return Ok(());
+    &#125;,
+    Ok(count) =&gt; println!("Found &#123;&#125; devices", count),
+    Err(e) =&gt; &#123;
+        eprintln!("Failed to enumerate devices: &#123;&#125;", e);
+        return Err(e.into());
+    &#125;
+&#125;</code></pre>
+					</div>
+				</section>
+
+				<!-- Troubleshooting -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Troubleshooting</h2>
+					<div class="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
+						<h3 class="text-lg font-semibold mb-3 text-red-400">Common Issues</h3>
+						<div class="space-y-4">
+							<div>
+								<h4 class="font-semibold text-white">No devices found</h4>
+								<ul class="text-gray-300 mt-1 space-y-1">
+									<li>• Check USB cable connection</li>
+									<li>• Verify device has power (LED indicators)</li>
+									<li>• Install PoKeys USB drivers</li>
+									<li>• Try a different USB port</li>
+								</ul>
+							</div>
+							<div>
+								<h4 class="font-semibold text-white">Connection failed</h4>
+								<ul class="text-gray-300 mt-1 space-y-1">
+									<li>• Device may be in use by another application</li>
+									<li>• Try unplugging and reconnecting the device</li>
+									<li>• Check device permissions on Linux</li>
+								</ul>
+							</div>
+							<div>
+								<h4 class="font-semibold text-white">LED doesn't blink</h4>
+								<ul class="text-gray-300 mt-1 space-y-1">
+									<li>• Verify LED polarity (anode to pin, cathode to GND)</li>
+									<li>• Check resistor value (220Ω recommended)</li>
+									<li>• Ensure pin 1 is available on your device model</li>
+								</ul>
+							</div>
+						</div>
 					</div>
 				</section>
 
 				<!-- Next Steps -->
 				<section class="mb-12">
 					<h2 class="text-2xl font-bold mb-4 text-white">Next Steps</h2>
-					<div class="bg-gradient-to-r from-yellow-900/20 to-orange-900/20 border border-yellow-500/30 rounded-lg p-6">
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-							<div>
-								<h3 class="text-lg font-semibold mb-2 text-yellow-400">Enhancements</h3>
-								<ul class="text-gray-300 space-y-1">
-									<li>• Add key mapping for specific functions</li>
-									<li>• Implement key repeat functionality</li>
-									<li>• Add debouncing for mechanical switches</li>
-									<li>• Create custom key layouts</li>
-								</ul>
-							</div>
-							<div>
-								<h3 class="text-lg font-semibold mb-2 text-yellow-400">Related Examples</h3>
-								<ul class="text-gray-300 space-y-1">
-									<li>• <a href="/core/examples/basic-device-control" class="text-blue-400 hover:underline">Basic Device Control</a></li>
-									<li>• <a href="/core/examples/multi-device" class="text-blue-400 hover:underline">Multi-Device Management</a></li>
-									<li>• <a href="https://github.com/pokeys-toolkit/core/tree/main/examples" class="text-blue-400 hover:underline">More Examples on GitHub</a></li>
-								</ul>
-							</div>
-						</div>
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<a href="/core/examples/pwm-control" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-purple-500/50 transition-all duration-300">
+							<h3 class="text-lg font-semibold mb-2 text-white group-hover:text-purple-400">PWM Control →</h3>
+							<p class="text-gray-400 text-sm">Learn to generate PWM signals for motor control and LED dimming</p>
+						</a>
+						<a href="/core/examples/analog-input" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-green-500/50 transition-all duration-300">
+							<h3 class="text-lg font-semibold mb-2 text-white group-hover:text-green-400">Analog Input →</h3>
+							<p class="text-gray-400 text-sm">Read analog sensors and convert values to meaningful data</p>
+						</a>
 					</div>
 				</section>
 			</div>
