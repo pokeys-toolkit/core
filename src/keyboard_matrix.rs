@@ -21,16 +21,20 @@
 //! ```rust,no_run
 //! use pokeys_lib::*;
 //!
-//! let mut device = connect_to_device(0)?;
+//! fn main() -> Result<()> {
+//!     let mut device = connect_to_device(0)?;
 //!
-//! // Configure 4x4 matrix keyboard
-//! let column_pins = [21, 22, 23, 24];
-//! let row_pins = [13, 14, 15, 16];
-//! device.configure_matrix_keyboard(4, 4, &column_pins, &row_pins)?;
+//!     // Configure 4x4 matrix keyboard
+//!     let column_pins = [21, 22, 23, 24];
+//!     let row_pins = [13, 14, 15, 16];
+//!     device.configure_matrix_keyboard(4, 4, &column_pins, &row_pins)?;
 //!
-//! // Read keyboard state
-//! device.read_matrix_keyboard()?;
-//! let key_pressed = device.matrix_keyboard.get_key_state(0, 0);
+//!     // Read keyboard state
+//!     device.read_matrix_keyboard()?;
+//!     let key_pressed = device.matrix_keyboard.get_key_state(0, 0);
+//!     
+//!     Ok(())
+//! }
 //! ```
 
 use serde::{Deserialize, Serialize};
