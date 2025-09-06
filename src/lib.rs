@@ -88,6 +88,7 @@ pub mod device;
 pub mod encoders;
 pub mod error;
 pub mod io;
+pub mod keyboard_matrix;
 pub mod lcd;
 pub mod matrix;
 pub mod model_manager;
@@ -106,6 +107,7 @@ pub use types::*;
 // Re-export main functionality
 pub use device::{connect_to_device, connect_to_device_with_serial, enumerate_usb_devices};
 pub use io::{PinCapability, PinFunction};
+pub use keyboard_matrix::MatrixKeyboard;
 pub use model_manager::ModelManager;
 pub use models::{DeviceModel, PinModel};
 

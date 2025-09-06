@@ -1,68 +1,8 @@
-//! Matrix keyboard and LED support
+//! Matrix LED support
 
 use crate::device::PoKeysDevice;
 use crate::error::{PoKeysError, Result};
 use serde::{Deserialize, Serialize};
-
-/// Matrix keyboard configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MatrixKeyboard {
-    pub configuration: u8,
-    pub width: u8,
-    pub height: u8,
-    pub scanning_decimation: u8,
-    pub column_pins: [u8; 8],
-    pub row_pins: [u8; 16],
-    pub macro_mapping_options: Vec<u8>,
-    pub key_mapping_key_code: Vec<u8>,
-    pub key_mapping_key_modifier: Vec<u8>,
-    pub key_mapping_triggered_key: Vec<u8>,
-    pub key_mapping_key_code_up: Vec<u8>,
-    pub key_mapping_key_modifier_up: Vec<u8>,
-    pub key_values: Vec<u8>,
-}
-
-impl MatrixKeyboard {
-    pub fn new() -> Self {
-        Self {
-            configuration: 0,
-            width: 0,
-            height: 0,
-            scanning_decimation: 0,
-            column_pins: [0; 8],
-            row_pins: [0; 16],
-            macro_mapping_options: vec![0; 128],
-            key_mapping_key_code: vec![0; 128],
-            key_mapping_key_modifier: vec![0; 128],
-            key_mapping_triggered_key: vec![0; 128],
-            key_mapping_key_code_up: vec![0; 128],
-            key_mapping_key_modifier_up: vec![0; 128],
-            key_values: vec![0; 128],
-        }
-    }
-
-    pub fn is_enabled(&self) -> bool {
-        self.configuration != 0
-    }
-
-    pub fn get_key_state(&self, row: usize, col: usize) -> bool {
-        if row >= self.height as usize || col >= self.width as usize {
-            return false;
-        }
-        let key_index = row * self.width as usize + col;
-        if key_index < self.key_values.len() {
-            self.key_values[key_index] != 0
-        } else {
-            false
-        }
-    }
-}
-
-impl Default for MatrixKeyboard {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 /// Matrix LED configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -315,53 +255,6 @@ impl SevenSegmentDisplay {
 }
 
 impl PoKeysDevice {
-    /// Configure matrix keyboard
-    pub fn configure_matrix_keyboard(
-        &mut self,
-        width: u8,
-        height: u8,
-        column_pins: &[u8],
-        row_pins: &[u8],
-    ) -> Result<()> {
-        if width > 8 || height > 16 {
-            return Err(PoKeysError::Parameter("Matrix size too large".to_string()));
-        }
-
-        self.matrix_keyboard.configuration = 1;
-        self.matrix_keyboard.width = width;
-        self.matrix_keyboard.height = height;
-
-        // Copy pin assignments
-        for (i, &pin) in column_pins.iter().enumerate().take(8) {
-            self.matrix_keyboard.column_pins[i] = pin;
-        }
-
-        for (i, &pin) in row_pins.iter().enumerate().take(16) {
-            self.matrix_keyboard.row_pins[i] = pin;
-        }
-
-        // Send configuration to device
-        self.send_request(0x60, width, height, 0, 0)?;
-        Ok(())
-    }
-
-    /// Read matrix keyboard state
-    pub fn read_matrix_keyboard(&mut self) -> Result<()> {
-        let response = self.send_request(0x61, 0, 0, 0, 0)?;
-
-        // Parse keyboard state from response
-        let data_start = 8;
-        let data_len =
-            (self.matrix_keyboard.width as usize * self.matrix_keyboard.height as usize).min(128);
-
-        if response.len() >= data_start + data_len {
-            self.matrix_keyboard.key_values[..data_len]
-                .copy_from_slice(&response[data_start..data_start + data_len]);
-        }
-
-        Ok(())
-    }
-
     /// Configure matrix LED display
     pub fn configure_matrix_led(&mut self, led_index: usize, rows: u8, columns: u8) -> Result<()> {
         if led_index >= self.matrix_led.len() {
@@ -477,14 +370,6 @@ impl PoKeysDevice {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_matrix_keyboard_creation() {
-        let kb = MatrixKeyboard::new();
-        assert!(!kb.is_enabled());
-        assert_eq!(kb.width, 0);
-        assert_eq!(kb.height, 0);
-    }
 
     #[test]
     fn test_matrix_led_creation() {

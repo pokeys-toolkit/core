@@ -9,8 +9,8 @@
 
 use pokeys_lib::encoders::{EncoderData, EncoderOptions};
 use pokeys_lib::io::{PinCapability, PinData, PinFunction};
+use pokeys_lib::keyboard_matrix::MatrixKeyboard;
 use pokeys_lib::lcd::LcdData;
-use pokeys_lib::matrix::MatrixKeyboard;
 use pokeys_lib::pulse_engine::PulseEngineV2;
 use pokeys_lib::pwm::PwmData;
 use pokeys_lib::sensors::EasySensor;

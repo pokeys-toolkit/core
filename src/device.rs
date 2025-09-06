@@ -4,8 +4,9 @@ use crate::communication::{CommunicationManager, NetworkInterface, UsbHidInterfa
 use crate::encoders::EncoderData;
 use crate::error::{PoKeysError, Result};
 use crate::io::PinData;
+use crate::keyboard_matrix::MatrixKeyboard;
 use crate::lcd::LcdData;
-use crate::matrix::{MatrixKeyboard, MatrixLed};
+use crate::matrix::MatrixLed;
 use crate::pulse_engine::PulseEngineV2;
 use crate::pwm::PwmData;
 use crate::sensors::EasySensor;
