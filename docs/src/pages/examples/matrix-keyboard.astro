@@ -1,0 +1,359 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Matrix Keyboard - PoKeys Examples</title>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 w-full z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="flex justify-between items-center py-4">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="hover:text-blue-400 transition-colors">Home</a>
+						<a href="/core/examples" class="hover:text-blue-400 transition-colors">← Back to Examples</a>
+						<a href="https://github.com/pokeys-toolkit/core" class="hover:text-blue-400 transition-colors">GitHub</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Content -->
+		<div class="pt-20 min-h-screen bg-gray-900">
+			<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+				<!-- Header -->
+				<div class="mb-8">
+					<div class="flex items-center gap-2 mb-4">
+						<span class="px-3 py-1 bg-yellow-600/20 text-yellow-300 text-sm rounded-full">Intermediate</span>
+						<span class="px-3 py-1 bg-yellow-600/20 text-yellow-300 text-sm rounded-full">Matrix</span>
+					</div>
+					<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						Matrix Keyboard
+					</h1>
+					<p class="text-xl text-gray-400">
+						Configure and monitor matrix keyboards with real-time key detection using the official PoKeys protocol
+					</p>
+				</div>
+
+				<!-- Overview -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<p class="text-gray-300 mb-4">
+							This example demonstrates how to configure and monitor a matrix keyboard using the PoKeys Core Library.
+							Matrix keyboards allow you to scan multiple keys using fewer pins by organizing them in a row/column grid.
+						</p>
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<div>
+								<h3 class="text-lg font-semibold mb-2 text-yellow-400">Features Demonstrated</h3>
+								<ul class="text-gray-300 space-y-1">
+									<li>• Protocol-compliant configuration (0xCA)</li>
+									<li>• Real-time key state monitoring</li>
+									<li>• 4x4 matrix keyboard setup</li>
+									<li>• Visual keyboard layout display</li>
+									<li>• Key press/release detection</li>
+								</ul>
+							</div>
+							<div>
+								<h3 class="text-lg font-semibold mb-2 text-yellow-400">Hardware Requirements</h3>
+								<ul class="text-gray-300 space-y-1">
+									<li>• PoKeys device (USB or Network)</li>
+									<li>• 4x4 matrix keyboard or switches</li>
+									<li>• 8 digital pins (4 rows + 4 columns)</li>
+									<li>• Pull-up resistors (if needed)</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Wiring Diagram -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Wiring Configuration</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-yellow-400">Pin Assignments</h3>
+								<div class="bg-gray-900 rounded p-4">
+									<div class="mb-4">
+										<h4 class="font-semibold text-white mb-2">Row Pins (Outputs)</h4>
+										<ul class="text-gray-300 space-y-1 font-mono text-sm">
+											<li>• Pin 1 → Row 0</li>
+											<li>• Pin 2 → Row 1</li>
+											<li>• Pin 3 → Row 2</li>
+											<li>• Pin 4 → Row 3</li>
+										</ul>
+									</div>
+									<div>
+										<h4 class="font-semibold text-white mb-2">Column Pins (Inputs)</h4>
+										<ul class="text-gray-300 space-y-1 font-mono text-sm">
+											<li>• Pin 5 → Column 0</li>
+											<li>• Pin 6 → Column 1</li>
+											<li>• Pin 7 → Column 2</li>
+											<li>• Pin 8 → Column 3</li>
+										</ul>
+									</div>
+								</div>
+							</div>
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-yellow-400">Matrix Layout</h3>
+								<div class="bg-gray-900 rounded p-4">
+									<div class="grid grid-cols-4 gap-2 text-center font-mono text-sm">
+										<div class="bg-gray-700 p-2 rounded">(0,0)</div>
+										<div class="bg-gray-700 p-2 rounded">(0,1)</div>
+										<div class="bg-gray-700 p-2 rounded">(0,2)</div>
+										<div class="bg-gray-700 p-2 rounded">(0,3)</div>
+										<div class="bg-gray-700 p-2 rounded">(1,0)</div>
+										<div class="bg-gray-700 p-2 rounded">(1,1)</div>
+										<div class="bg-gray-700 p-2 rounded">(1,2)</div>
+										<div class="bg-gray-700 p-2 rounded">(1,3)</div>
+										<div class="bg-gray-700 p-2 rounded">(2,0)</div>
+										<div class="bg-gray-700 p-2 rounded">(2,1)</div>
+										<div class="bg-gray-700 p-2 rounded">(2,2)</div>
+										<div class="bg-gray-700 p-2 rounded">(2,3)</div>
+										<div class="bg-gray-700 p-2 rounded">(3,0)</div>
+										<div class="bg-gray-700 p-2 rounded">(3,1)</div>
+										<div class="bg-gray-700 p-2 rounded">(3,2)</div>
+										<div class="bg-gray-700 p-2 rounded">(3,3)</div>
+									</div>
+									<p class="text-gray-400 text-xs mt-2">Format: (row, column)</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Code Example -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Complete Example</h2>
+					<div class="bg-gray-800 rounded-lg overflow-hidden">
+						<div class="bg-gray-700 px-4 py-2 flex justify-between items-center">
+							<span class="text-sm text-gray-300">main.rs</span>
+							<button class="text-xs bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded transition-colors" onclick="navigator.clipboard.writeText(document.getElementById('code-example').textContent)">
+								Copy Code
+							</button>
+						</div>
+						<pre class="p-4 overflow-x-auto"><code id="code-example" class="text-sm">use pokeys_lib::*;
+use std::thread;
+use std::time::Duration;
+
+fn main() -> Result<()> {
+    println!("🎹 PoKeys Matrix Keyboard Example");
+    println!("=================================");
+
+    // Connect to first available device
+    let mut device = match connect_to_first_available_device() {
+        Ok(device) => device,
+        Err(e) => {
+            println!("❌ No PoKeys device found: {}", e);
+            return Ok(());
+        }
+    };
+
+    println!("✅ Connected to device (Serial: {})", device.device_data.serial_number);
+
+    // Configure 4x4 matrix keyboard
+    let width = 4;
+    let height = 4;
+    let column_pins = [5, 6, 7, 8];  // Pins 5-8 for columns
+    let row_pins = [1, 2, 3, 4];    // Pins 1-4 for rows
+
+    println!("🔧 Configuring {}x{} matrix keyboard...", width, height);
+    device.configure_matrix_keyboard(width, height, &column_pins, &row_pins)?;
+    println!("✅ Matrix keyboard configured successfully!");
+
+    // Display keyboard layout
+    display_keyboard_layout(width, height);
+
+    // Monitor keyboard for key presses
+    println!("🔍 Monitoring keyboard (press Ctrl+C to exit)...");
+    let mut previous_states = vec![vec![false; width as usize]; height as usize];
+    let mut key_press_count = 0;
+
+    loop {
+        // Read current keyboard state
+        device.read_matrix_keyboard()?;
+
+        // Check for state changes
+        let mut state_changed = false;
+        for row in 0..height as usize {
+            for col in 0..width as usize {
+                let current_state = device.matrix_keyboard.get_key_state(row, col);
+                let previous_state = previous_states[row][col];
+
+                if current_state != previous_state {
+                    state_changed = true;
+                    if current_state {
+                        key_press_count += 1;
+                        println!("🔴 Key PRESSED  at ({}, {}) - Key #{}", row, col, key_press_count);
+                    } else {
+                        println!("🔵 Key RELEASED at ({}, {})", row, col);
+                    }
+                    previous_states[row][col] = current_state;
+                }
+            }
+        }
+
+        // Display current state if changed
+        if state_changed {
+            display_current_state(&device, width, height);
+        }
+
+        thread::sleep(Duration::from_millis(50));
+    }
+}
+
+fn connect_to_first_available_device() -> Result<PoKeysDevice> {
+    // Try network devices first
+    match enumerate_network_devices(2000) {
+        Ok(devices) if !devices.is_empty() => {
+            return connect_to_network_device(&devices[0]);
+        }
+        _ => {}
+    }
+
+    // Try USB devices
+    match enumerate_usb_devices() {
+        Ok(count) if count > 0 => connect_to_device(0),
+        _ => Err(PoKeysError::DeviceNotFound),
+    }
+}
+
+fn display_keyboard_layout(width: u8, height: u8) {
+    println!("\n📋 Keyboard Layout ({}x{}):", width, height);
+    println!("   ┌─────┬─────┬─────┬─────┐");
+    
+    for row in 0..height {
+        print!("   │");
+        for col in 0..width {
+            print!(" {:>2},{} │", row, col);
+        }
+        println!();
+        
+        if row < height - 1 {
+            println!("   ├─────┼─────┼─────┼─────┤");
+        }
+    }
+    
+    println!("   └─────┴─────┴─────┴─────┘");
+}
+
+fn display_current_state(device: &PoKeysDevice, width: u8, height: u8) {
+    println!("\n📊 Current Keyboard State:");
+    println!("   ┌─────┬─────┬─────┬─────┐");
+    
+    for row in 0..height {
+        print!("   │");
+        for col in 0..width {
+            let pressed = device.matrix_keyboard.get_key_state(row as usize, col as usize);
+            let symbol = if pressed { " ███ " } else { "     " };
+            print!("{}│", symbol);
+        }
+        println!();
+        
+        if row < height - 1 {
+            println!("   ├─────┼─────┼─────┼─────┤");
+        }
+    }
+    
+    println!("   └─────┴─────┴─────┴─────┘");
+    println!("   ███ = pressed, blank = released");
+}</code></pre>
+					</div>
+				</section>
+
+				<!-- Key Concepts -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Key Concepts</h2>
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-lg font-semibold mb-3 text-yellow-400">Protocol Implementation</h3>
+							<ul class="text-gray-300 space-y-2">
+								<li>• Uses official PoKeys command 0xCA</li>
+								<li>• Option 16 for configuration</li>
+								<li>• Option 20 for reading state</li>
+								<li>• Supports up to 16x8 matrices</li>
+							</ul>
+						</div>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-lg font-semibold mb-3 text-yellow-400">Key Indexing</h3>
+							<ul class="text-gray-300 space-y-2">
+								<li>• Uses 8-column internal layout</li>
+								<li>• Index = row × 8 + column</li>
+								<li>• Row 0: keys 0-7, Row 1: keys 8-15</li>
+								<li>• Proper bounds checking included</li>
+							</ul>
+						</div>
+					</div>
+				</section>
+
+				<!-- Expected Output -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Expected Output</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<pre class="text-sm text-gray-300 overflow-x-auto">🎹 PoKeys Matrix Keyboard Example
+=================================
+🔍 Searching for network devices...
+✅ Found 1 network device(s)
+✅ Connected to device (Serial: 32223)
+
+🔧 Configuring 4x4 matrix keyboard...
+   Column pins: [5, 6, 7, 8]
+   Row pins: [1, 2, 3, 4]
+✅ Matrix keyboard configured successfully!
+
+📋 Keyboard Layout (4x4):
+   ┌─────┬─────┬─────┬─────┐
+   │  0,0 │  0,1 │  0,2 │  0,3 │
+   ├─────┼─────┼─────┼─────┤
+   │  1,0 │  1,1 │  1,2 │  1,3 │
+   ├─────┼─────┼─────┼─────┤
+   │  2,0 │  2,1 │  2,2 │  2,3 │
+   ├─────┼─────┼─────┼─────┤
+   │  3,0 │  3,1 │  3,2 │  3,3 │
+   └─────┴─────┴─────┴─────┘
+
+🔍 Monitoring keyboard (press Ctrl+C to exit)...
+🔴 Key PRESSED  at (0, 0) - Key #1
+🔵 Key RELEASED at (0, 0)
+🔴 Key PRESSED  at (1, 2) - Key #2</pre>
+					</div>
+				</section>
+
+				<!-- Next Steps -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Next Steps</h2>
+					<div class="bg-gradient-to-r from-yellow-900/20 to-orange-900/20 border border-yellow-500/30 rounded-lg p-6">
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<div>
+								<h3 class="text-lg font-semibold mb-2 text-yellow-400">Enhancements</h3>
+								<ul class="text-gray-300 space-y-1">
+									<li>• Add key mapping for specific functions</li>
+									<li>• Implement key repeat functionality</li>
+									<li>• Add debouncing for mechanical switches</li>
+									<li>• Create custom key layouts</li>
+								</ul>
+							</div>
+							<div>
+								<h3 class="text-lg font-semibold mb-2 text-yellow-400">Related Examples</h3>
+								<ul class="text-gray-300 space-y-1">
+									<li>• <a href="/core/examples/basic-device-control" class="text-blue-400 hover:underline">Basic Device Control</a></li>
+									<li>• <a href="/core/examples/multi-device" class="text-blue-400 hover:underline">Multi-Device Management</a></li>
+									<li>• <a href="https://github.com/pokeys-toolkit/core/tree/main/examples" class="text-blue-400 hover:underline">More Examples on GitHub</a></li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</section>
+			</div>
+		</div>
+	</body>
+</html>
