@@ -961,16 +961,16 @@ impl PoKeysDevice {
     }
 
     /// Command 0xCA: Configure Matrix Keyboard
-    /// 
+    ///
     /// Configures a matrix keyboard using the official PoKeys protocol.
     /// Uses command 0xCA with option 16 for configuration.
-    /// 
+    ///
     /// # Arguments
     /// * `width` - Number of columns (1-8)
-    /// * `height` - Number of rows (1-16) 
+    /// * `height` - Number of rows (1-16)
     /// * `column_pins` - Pin numbers for columns (1-based)
     /// * `row_pins` - Pin numbers for rows (1-based)
-    /// 
+    ///
     /// # Protocol Details
     /// - Pins are converted to 0-based indexing for the device
     /// - Matrix uses 8-column internal layout regardless of configured width
@@ -988,7 +988,7 @@ impl PoKeysDevice {
 
         // Prepare configuration data
         let mut data = [0u8; 55];
-        data[0] = 1;    // Enable matrix keyboard (bit 0)
+        data[0] = 1; // Enable matrix keyboard (bit 0)
         data[1] = ((width - 1) << 4) | (height - 1); // Size: width-1 in upper 4 bits, height-1 in lower 4 bits
 
         // Row pins (bytes 2-9, 0-based indexing)
@@ -996,7 +996,7 @@ impl PoKeysDevice {
             data[2 + i] = if pin > 0 { pin - 1 } else { 0 };
         }
 
-        // Column pins (bytes 10-17, 0-based indexing)  
+        // Column pins (bytes 10-17, 0-based indexing)
         for (i, &pin) in column_pins.iter().enumerate().take(8) {
             data[10 + i] = if pin > 0 { pin - 1 } else { 0 };
         }
@@ -1010,7 +1010,7 @@ impl PoKeysDevice {
 
         // Send configuration
         self.send_request_with_data(0xCA, 16, 0, 0, 0, &data)?;
-        
+
         // Update local state
         self.matrix_keyboard.configuration = 1;
         self.matrix_keyboard.width = width;
@@ -1028,10 +1028,10 @@ impl PoKeysDevice {
     }
 
     /// Command 0xCA: Read Matrix Keyboard State
-    /// 
+    ///
     /// Reads the current state of all keys in the matrix keyboard.
     /// Uses command 0xCA with option 20 to read the 16x8 matrix status.
-    /// 
+    ///
     /// # Protocol Details
     /// - Returns 16 bytes representing the full 16x8 matrix
     /// - Each byte represents 8 keys in a row (bit 0 = column 0, bit 7 = column 7)
@@ -1046,14 +1046,15 @@ impl PoKeysDevice {
         if response.len() >= data_start + 16 {
             // Clear existing state
             self.matrix_keyboard.key_values.fill(0);
-            
+
             // Copy matrix state (16 bytes for 16x8 matrix)
             // Each byte represents 8 keys in a row
             for (row, &byte_val) in response[data_start..data_start + 16].iter().enumerate() {
                 for col in 0..8 {
                     let key_index = row * 8 + col;
                     if key_index < 128 {
-                        self.matrix_keyboard.key_values[key_index] = if (byte_val & (1 << col)) != 0 { 1 } else { 0 };
+                        self.matrix_keyboard.key_values[key_index] =
+                            if (byte_val & (1 << col)) != 0 { 1 } else { 0 };
                     }
                 }
             }

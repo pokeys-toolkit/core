@@ -34,12 +34,12 @@ fn main() -> Result<()> {
     // Configure a 4x4 matrix keyboard
     let width = 4;
     let height = 4;
-    
+
     // Define pin assignments for the matrix
     // Columns: pins 21, 22, 23, 24 (first 4 pins)
-    let column_pins = [21, 22, 23, 24];
+    let column_pins = [5, 6, 7, 8];
     // Rows: pins 13, 14, 15, 16 (first 4 pins)
-    let row_pins = [13, 14, 15, 16];
+    let row_pins = [1, 2, 3, 4];
 
     println!("\n🔧 Configuring {}x{} matrix keyboard...", width, height);
     println!("   Column pins: {:?}", &column_pins[..width as usize]);
@@ -80,7 +80,10 @@ fn main() -> Result<()> {
                     state_changed = true;
                     if current_state {
                         key_press_count += 1;
-                        println!("🔴 Key PRESSED  at ({}, {}) - Key #{}", row, col, key_press_count);
+                        println!(
+                            "🔴 Key PRESSED  at ({}, {}) - Key #{}",
+                            row, col, key_press_count
+                        );
                     } else {
                         println!("🔵 Key RELEASED at ({}, {})", row, col);
                     }
@@ -102,10 +105,10 @@ fn main() -> Result<()> {
 fn connect_to_first_available_device() -> Result<PoKeysDevice> {
     // Try network devices first
     println!("🔍 Searching for network devices...");
-    match enumerate_network_devices(2000) {
+    match enumerate_network_devices(4000) {
         Ok(devices) if !devices.is_empty() => {
             println!("✅ Found {} network device(s)", devices.len());
-            return connect_to_device(0);
+            return connect_to_network_device(&devices[0]);
         }
         Ok(_) => println!("ℹ️  No network devices found"),
         Err(e) => println!("⚠️  Network enumeration failed: {}", e),
@@ -126,19 +129,19 @@ fn connect_to_first_available_device() -> Result<PoKeysDevice> {
 fn display_keyboard_layout(width: u8, height: u8) {
     println!("\n📋 Keyboard Layout ({}x{}):", width, height);
     println!("   ┌─────┬─────┬─────┬─────┐");
-    
+
     for row in 0..height {
         print!("   │");
         for col in 0..width {
             print!(" {:>2},{} │", row, col);
         }
         println!();
-        
+
         if row < height - 1 {
             println!("   ├─────┼─────┼─────┼─────┤");
         }
     }
-    
+
     println!("   └─────┴─────┴─────┴─────┘");
     println!("   Format: (row,col) - e.g., (0,0) is top-left");
 }
@@ -146,21 +149,23 @@ fn display_keyboard_layout(width: u8, height: u8) {
 fn display_current_state(device: &PoKeysDevice, width: u8, height: u8) {
     println!("\n📊 Current Keyboard State:");
     println!("   ┌─────┬─────┬─────┬─────┐");
-    
+
     for row in 0..height {
         print!("   │");
         for col in 0..width {
-            let pressed = device.matrix_keyboard.get_key_state(row as usize, col as usize);
+            let pressed = device
+                .matrix_keyboard
+                .get_key_state(row as usize, col as usize);
             let symbol = if pressed { " ███ " } else { "     " };
             print!("{}│", symbol);
         }
         println!();
-        
+
         if row < height - 1 {
             println!("   ├─────┼─────┼─────┼─────┤");
         }
     }
-    
+
     println!("   └─────┴─────┴─────┴─────┘");
     println!("   ███ = pressed, blank = released");
 }
@@ -173,7 +178,7 @@ mod tests {
     fn test_example_functions() {
         // Test that our helper functions don't panic
         display_keyboard_layout(4, 4);
-        
+
         // Create a mock device for testing display_current_state
         // This would require more setup in a real test, but demonstrates the concept
     }

@@ -10,7 +10,7 @@ use std::time::Duration;
 fn main() -> Result<()> {
     println!("Simple Matrix Keyboard Example");
     println!("==============================");
-    
+
     // Connect to first available device
     let mut device = match connect_to_first_available_device() {
         Ok(device) => device,
@@ -20,29 +20,29 @@ fn main() -> Result<()> {
             return Ok(());
         }
     };
-    
+
     println!("Connected to PoKeys device");
-    
+
     // Configure 4x4 matrix keyboard
-    let column_pins = [5, 6, 7, 8];  // Column pins 5-8
-    let row_pins = [1, 2, 3, 4];     // Row pins 1-4
-    
+    let column_pins = [5, 6, 7, 8]; // Column pins 5-8
+    let row_pins = [1, 2, 3, 4]; // Row pins 1-4
+
     device.configure_matrix_keyboard(4, 4, &column_pins, &row_pins)?;
     println!("Matrix keyboard configured successfully!");
-    
+
     // Monitor for key presses
     let mut previous_states = vec![vec![false; 4]; 4];
     println!("Monitoring keyboard - press keys to see output...");
-    
+
     loop {
         // Read current keyboard state
         device.read_matrix_keyboard()?;
-        
+
         // Check each key position for changes
         for row in 0..4 {
             for col in 0..4 {
                 let current_state = device.matrix_keyboard.get_key_state(row, col);
-                
+
                 // Detect state changes
                 if current_state != previous_states[row][col] {
                     if current_state {
@@ -54,7 +54,7 @@ fn main() -> Result<()> {
                 }
             }
         }
-        
+
         // Small delay to avoid overwhelming output
         thread::sleep(Duration::from_millis(50));
     }
