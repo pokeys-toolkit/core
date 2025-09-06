@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.15.0] - 2025-09-06
+
+- fix: resolve doctest compilation error in keyboard_matrix.rs
+- fix: resolve GitHub release action issues
+- fix: resolve CI clippy warnings in examples
+- fix: resolve CI failures - formatting and matrix keyboard tests
+- fix: add proper device connection to simple matrix keyboard example
+- feat: add simple matrix keyboard example
+- fix: resolve Astro syntax error in matrix keyboard documentation
+- fix: implement correct PoKeys matrix keyboard protocol (0xCA)
+- feat: separate keyboard matrix functionality from general matrix module
+
 ## [0.14.0] - 2025-08-21
 
 - Merge pull request #1 from pokeys-toolkit/feature/uspibridge-custom-pinout
