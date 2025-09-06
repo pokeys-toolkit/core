@@ -7,6 +7,8 @@
 //!
 //! Usage: cargo run --example i2c_common_devices
 
+#![allow(clippy::uninlined_format_args)]
+
 use pokeys_lib::*;
 use std::thread;
 use std::time::Duration;

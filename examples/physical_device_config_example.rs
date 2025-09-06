@@ -3,6 +3,9 @@
 //! This example demonstrates basic device configuration and control
 //! without external dependencies.
 
+#![allow(clippy::uninlined_format_args)]
+#![allow(clippy::let_unit_value)]
+
 use pokeys_lib::*;
 use std::thread;
 use std::time::Duration;

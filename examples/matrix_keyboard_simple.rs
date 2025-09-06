@@ -3,6 +3,9 @@
 //! This is a minimal example showing matrix keyboard configuration and monitoring.
 //! Run with: cargo run --example matrix_keyboard_simple
 
+#![allow(clippy::uninlined_format_args)]
+#![allow(clippy::needless_range_loop)]
+
 use pokeys_lib::*;
 use std::thread;
 use std::time::Duration;
@@ -15,7 +18,7 @@ fn main() -> Result<()> {
     let mut device = match connect_to_first_available_device() {
         Ok(device) => device,
         Err(e) => {
-            println!("No PoKeys device found: {}", e);
+            println!("No PoKeys device found: {e}");
             println!("Please connect a PoKeys device and try again");
             return Ok(());
         }
@@ -39,18 +42,18 @@ fn main() -> Result<()> {
         device.read_matrix_keyboard()?;
 
         // Check each key position for changes
-        for row in 0..4 {
+        for (row, row_states) in previous_states.iter_mut().enumerate().take(4) {
             for col in 0..4 {
                 let current_state = device.matrix_keyboard.get_key_state(row, col);
 
                 // Detect state changes
-                if current_state != previous_states[row][col] {
+                if current_state != row_states[col] {
                     if current_state {
-                        println!("Key PRESSED at position ({}, {})", row, col);
+                        println!("Key PRESSED at position ({row}, {col})");
                     } else {
-                        println!("Key RELEASED at position ({}, {})", row, col);
+                        println!("Key RELEASED at position ({row}, {col})");
                     }
-                    previous_states[row][col] = current_state;
+                    row_states[col] = current_state;
                 }
             }
         }

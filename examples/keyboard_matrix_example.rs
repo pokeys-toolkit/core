@@ -8,6 +8,9 @@
 //!
 //! Run with: cargo run --example keyboard_matrix_example
 
+#![allow(clippy::uninlined_format_args)]
+#![allow(clippy::needless_range_loop)]
+
 use pokeys_lib::*;
 use std::thread;
 use std::time::Duration;
@@ -20,7 +23,7 @@ fn main() -> Result<()> {
     let mut device = match connect_to_first_available_device() {
         Ok(device) => device,
         Err(e) => {
-            println!("❌ No PoKeys device found: {}", e);
+            println!("❌ No PoKeys device found: {e}");
             println!("💡 Please connect a PoKeys device to run this example");
             return Ok(());
         }
@@ -41,7 +44,7 @@ fn main() -> Result<()> {
     // Rows: pins 13, 14, 15, 16 (first 4 pins)
     let row_pins = [1, 2, 3, 4];
 
-    println!("\n🔧 Configuring {}x{} matrix keyboard...", width, height);
+    println!("\n🔧 Configuring {width}x{height} matrix keyboard...");
     println!("   Column pins: {:?}", &column_pins[..width as usize]);
     println!("   Row pins: {:?}", &row_pins[..height as usize]);
 
@@ -71,23 +74,20 @@ fn main() -> Result<()> {
 
         // Check for state changes
         let mut state_changed = false;
-        for row in 0..height as usize {
+        for (row, row_states) in previous_states.iter_mut().enumerate().take(height as usize) {
             for col in 0..width as usize {
                 let current_state = device.matrix_keyboard.get_key_state(row, col);
-                let previous_state = previous_states[row][col];
+                let previous_state = row_states[col];
 
                 if current_state != previous_state {
                     state_changed = true;
                     if current_state {
                         key_press_count += 1;
-                        println!(
-                            "🔴 Key PRESSED  at ({}, {}) - Key #{}",
-                            row, col, key_press_count
-                        );
+                        println!("🔴 Key PRESSED  at ({row}, {col}) - Key #{key_press_count}");
                     } else {
-                        println!("🔵 Key RELEASED at ({}, {})", row, col);
+                        println!("🔵 Key RELEASED at ({row}, {col})");
                     }
-                    previous_states[row][col] = current_state;
+                    row_states[col] = current_state;
                 }
             }
         }
@@ -111,14 +111,14 @@ fn connect_to_first_available_device() -> Result<PoKeysDevice> {
             return connect_to_network_device(&devices[0]);
         }
         Ok(_) => println!("ℹ️  No network devices found"),
-        Err(e) => println!("⚠️  Network enumeration failed: {}", e),
+        Err(e) => println!("⚠️  Network enumeration failed: {e}"),
     }
 
     // Try USB devices
     println!("🔍 Searching for USB devices...");
     match enumerate_usb_devices() {
         Ok(count) if count > 0 => {
-            println!("✅ Found {} USB device(s)", count);
+            println!("✅ Found {count} USB device(s)");
             connect_to_device(0)
         }
         Ok(_) => Err(PoKeysError::DeviceNotFound),
@@ -127,13 +127,13 @@ fn connect_to_first_available_device() -> Result<PoKeysDevice> {
 }
 
 fn display_keyboard_layout(width: u8, height: u8) {
-    println!("\n📋 Keyboard Layout ({}x{}):", width, height);
+    println!("\n📋 Keyboard Layout ({width}x{height}):");
     println!("   ┌─────┬─────┬─────┬─────┐");
 
     for row in 0..height {
         print!("   │");
         for col in 0..width {
-            print!(" {:>2},{} │", row, col);
+            print!(" {row:>2},{col} │");
         }
         println!();
 
@@ -157,7 +157,7 @@ fn display_current_state(device: &PoKeysDevice, width: u8, height: u8) {
                 .matrix_keyboard
                 .get_key_state(row as usize, col as usize);
             let symbol = if pressed { " ███ " } else { "     " };
-            print!("{}│", symbol);
+            print!("{symbol}│");
         }
         println!();
 

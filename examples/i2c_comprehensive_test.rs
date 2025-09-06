@@ -9,6 +9,9 @@
 //!
 //! Usage: cargo run --example i2c_comprehensive_test
 
+#![allow(clippy::uninlined_format_args)]
+#![allow(clippy::useless_vec)]
+
 use pokeys_lib::*;
 use std::thread;
 use std::time::Duration;

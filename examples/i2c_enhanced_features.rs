@@ -8,6 +8,8 @@
 //!
 //! Run with: cargo run --example i2c_enhanced_features
 
+#![allow(clippy::uninlined_format_args)]
+
 use pokeys_lib::*;
 use std::collections::HashSet;
 

@@ -7,6 +7,8 @@
 //!
 //! Usage: cargo run --example i2c_simple_test
 
+#![allow(clippy::uninlined_format_args)]
+
 use pokeys_lib::*;
 
 fn main() -> Result<()> {
