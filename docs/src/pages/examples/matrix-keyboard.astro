@@ -48,6 +48,23 @@ fn main() -> Result<()> {
         thread::sleep(Duration::from_millis(50));
     }
 }`;
+
+const connectionCode = `let mut device = connect_to_device(0)?;`;
+
+const configCode = `let column_pins = [5, 6, 7, 8];  // Column pins
+let row_pins = [1, 2, 3, 4];     // Row pins
+device.configure_matrix_keyboard(4, 4, &column_pins, &row_pins)?;`;
+
+const readCode = `device.read_matrix_keyboard()?;
+let current_state = device.matrix_keyboard.get_key_state(row, col);`;
+
+const changeCode = `if current_state != previous_states[row][col] {
+    if current_state {
+        println!("Key PRESSED at position ({}, {})", row, col);
+    } else {
+        println!("Key RELEASED at position ({}, {})", row, col);
+    }
+}`;
 ---
 
 <html lang="en">
@@ -151,39 +168,46 @@ fn main() -> Result<()> {
 					<h2 class="text-2xl font-bold mb-4 text-white">Code Explanation</h2>
 					<div class="space-y-6">
 						<div class="bg-gray-800 rounded-lg p-6">
-							<h3 class="text-lg font-semibold mb-3 text-blue-400">1. Device Enumeration</h3>
-							<pre class="bg-gray-900 p-3 rounded mb-3"><code class="text-green-400">let device_count = enumerate_usb_devices()?;</code></pre>
+							<h3 class="text-lg font-semibold mb-3 text-yellow-400">1. Device Connection</h3>
+							<div class="mb-3">
+								<Code code={connectionCode} lang="rust" />
+							</div>
 							<p class="text-gray-300">
-								This function scans all USB ports for connected PoKeys devices. It returns the number of devices found.
-								Always check this count before attempting to connect.
+								Connects to the first available PoKeys device. The device object provides access to all matrix keyboard functions.
+								The <code class="bg-gray-700 px-2 py-1 rounded">mut</code> keyword is required for modifying device state.
 							</p>
 						</div>
 
 						<div class="bg-gray-800 rounded-lg p-6">
-							<h3 class="text-lg font-semibold mb-3 text-blue-400">2. Device Connection</h3>
-							<pre class="bg-gray-900 p-3 rounded mb-3"><code class="text-green-400">let mut device = connect_to_device(0)?;</code></pre>
+							<h3 class="text-lg font-semibold mb-3 text-yellow-400">2. Matrix Configuration</h3>
+							<div class="mb-3">
+								<Code code={configCode} lang="rust" />
+							</div>
 							<p class="text-gray-300">
-								Connects to the device at index 0 (the first device found). The device object provides all control functions.
-								The <code class="bg-gray-700 px-2 py-1 rounded">mut</code> keyword is required because we'll be modifying device state.
+								Configures a 4x4 matrix keyboard by specifying which pins control rows and columns.
+								Rows are outputs (driven by the device), columns are inputs (read by the device).
 							</p>
 						</div>
 
 						<div class="bg-gray-800 rounded-lg p-6">
-							<h3 class="text-lg font-semibold mb-3 text-blue-400">3. Pin Configuration</h3>
-							<pre class="bg-gray-900 p-3 rounded mb-3"><code class="text-green-400">device.set_pin_function(1, PinFunction::DigitalOutput)?;</code></pre>
+							<h3 class="text-lg font-semibold mb-3 text-yellow-400">3. State Monitoring</h3>
+							<div class="mb-3">
+								<Code code={readCode} lang="rust" />
+							</div>
 							<p class="text-gray-300">
-								Configures pin 1 as a digital output. PoKeys pins are versatile and can serve different functions.
-								Always configure the pin function before using it.
+								Reads the current state of all keys in the matrix. Each key position (row, col) returns
+								<code class="bg-gray-700 px-2 py-1 rounded">true</code> when pressed, <code class="bg-gray-700 px-2 py-1 rounded">false</code> when released.
 							</p>
 						</div>
 
 						<div class="bg-gray-800 rounded-lg p-6">
-							<h3 class="text-lg font-semibold mb-3 text-blue-400">4. Digital Output Control</h3>
-							<pre class="bg-gray-900 p-3 rounded mb-3"><code class="text-green-400">device.set_digital_output(1, true)?;  // Turn ON (HIGH)
-device.set_digital_output(1, false)?; // Turn OFF (LOW)</code></pre>
+							<h3 class="text-lg font-semibold mb-3 text-yellow-400">4. Change Detection</h3>
+							<div class="mb-3">
+								<Code code={changeCode} lang="rust" />
+							</div>
 							<p class="text-gray-300">
-								Controls the digital output state. <code class="bg-gray-700 px-2 py-1 rounded">true</code> sets the pin to HIGH (typically 3.3V),
-								<code class="bg-gray-700 px-2 py-1 rounded">false</code> sets it to LOW (0V).
+								Compares current key states with previous states to detect press and release events.
+								Only prints when a key state actually changes to avoid spam.
 							</p>
 						</div>
 					</div>
