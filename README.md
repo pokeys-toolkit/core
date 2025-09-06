@@ -25,6 +25,7 @@ A pure Rust implementation of the PoKeysLib for controlling PoKeys devices. This
 - **Encoder Support**: Quadrature encoder reading with 4x/2x sampling modes, position and velocity tracking
 - **Pulse Engine v2**: Stepper motor control with advanced pulse generation
 - **Matrix Operations**: Matrix keyboard scanning and LED matrix control
+- **Matrix Keyboard**: 4x4 to 16x8 matrix keyboard support with real-time key detection
 
 ### Communication Protocols
 - **SPI**: Full SPI master support with multiple chip select pins
@@ -120,6 +121,41 @@ fn main() -> Result<()> {
 }
 ```
 
+### Matrix Keyboard
+```rust
+use pokeys_lib::*;
+
+fn main() -> Result<()> {
+    let mut device = connect_to_device(0)?;
+
+    // Configure 4x4 matrix keyboard
+    let column_pins = [5, 6, 7, 8];  // Column pins
+    let row_pins = [1, 2, 3, 4];     // Row pins
+    device.configure_matrix_keyboard(4, 4, &column_pins, &row_pins)?;
+
+    // Monitor for key presses
+    let mut previous_states = vec![vec![false; 4]; 4];
+    
+    loop {
+        device.read_matrix_keyboard()?;
+        
+        for row in 0..4 {
+            for col in 0..4 {
+                let current_state = device.matrix_keyboard.get_key_state(row, col);
+                if current_state != previous_states[row][col] {
+                    if current_state {
+                        println!("Key PRESSED at ({}, {})", row, col);
+                    }
+                    previous_states[row][col] = current_state;
+                }
+            }
+        }
+        
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    }
+}
+```
+
 ### Enhanced I2C Communication
 ```rust
 use pokeys_lib::*;
@@ -190,6 +226,10 @@ cargo run --example i2c_simple_test
 cargo run --example i2c_comprehensive_test
 cargo run --example i2c_common_devices
 cargo run --example i2c_enhanced_features  # NEW: Enhanced I2C features
+
+# Matrix keyboard support
+cargo run --example matrix_keyboard_simple      # NEW: Simple matrix keyboard
+cargo run --example keyboard_matrix_example     # NEW: Full matrix keyboard
 
 # Network device support
 cargo run --example network_device_test
