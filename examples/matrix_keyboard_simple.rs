@@ -12,7 +12,15 @@ fn main() -> Result<()> {
     println!("==============================");
     
     // Connect to first available device
-    let mut device = connect_to_device(0)?;
+    let mut device = match connect_to_first_available_device() {
+        Ok(device) => device,
+        Err(e) => {
+            println!("No PoKeys device found: {}", e);
+            println!("Please connect a PoKeys device and try again");
+            return Ok(());
+        }
+    };
+    
     println!("Connected to PoKeys device");
     
     // Configure 4x4 matrix keyboard
@@ -49,5 +57,21 @@ fn main() -> Result<()> {
         
         // Small delay to avoid overwhelming output
         thread::sleep(Duration::from_millis(50));
+    }
+}
+
+fn connect_to_first_available_device() -> Result<PoKeysDevice> {
+    // Try network devices first
+    match enumerate_network_devices(2000) {
+        Ok(devices) if !devices.is_empty() => {
+            return connect_to_network_device(&devices[0]);
+        }
+        _ => {}
+    }
+
+    // Try USB devices
+    match enumerate_usb_devices() {
+        Ok(count) if count > 0 => connect_to_device(0),
+        _ => Err(PoKeysError::DeviceNotFound),
     }
 }
