@@ -1,4 +1,53 @@
 ---
+import { Code } from 'astro:components';
+
+const matrixKeyboardCode = `use pokeys_lib::*;
+use std::thread;
+use std::time::Duration;
+
+fn main() -> Result<()> {
+    println!("Matrix Keyboard Example");
+    
+    // Connect to first available device
+    let mut device = connect_to_device(0)?;
+    println!("Connected to PoKeys device");
+    
+    // Configure 4x4 matrix keyboard
+    let column_pins = [5, 6, 7, 8];  // Column pins 5-8
+    let row_pins = [1, 2, 3, 4];     // Row pins 1-4
+    
+    device.configure_matrix_keyboard(4, 4, &column_pins, &row_pins)?;
+    println!("Matrix keyboard configured successfully!");
+    
+    // Monitor for key presses
+    let mut previous_states = vec![vec![false; 4]; 4];
+    println!("Monitoring keyboard - press keys to see output...");
+    
+    loop {
+        // Read current keyboard state
+        device.read_matrix_keyboard()?;
+        
+        // Check each key position for changes
+        for row in 0..4 {
+            for col in 0..4 {
+                let current_state = device.matrix_keyboard.get_key_state(row, col);
+                
+                // Detect state changes
+                if current_state != previous_states[row][col] {
+                    if current_state {
+                        println!("Key PRESSED at position ({}, {})", row, col);
+                    } else {
+                        println!("Key RELEASED at position ({}, {})", row, col);
+                    }
+                    previous_states[row][col] = current_state;
+                }
+            }
+        }
+        
+        // Small delay to avoid overwhelming output
+        thread::sleep(Duration::from_millis(50));
+    }
+}`;
 ---
 
 <html lang="en">
@@ -48,13 +97,14 @@
 					<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
 					<div class="bg-gray-800 rounded-lg p-6">
 						<p class="text-gray-300 mb-4">
-							This example demonstrates the fundamental operations of the PoKeys Core Library:
+							This example demonstrates matrix keyboard configuration and monitoring using the PoKeys Core Library.
+							Matrix keyboards allow scanning multiple keys using fewer pins by organizing them in a row/column grid.
 						</p>
 						<ul class="text-gray-300 space-y-2">
-							<li>• <strong>Device enumeration</strong> - Finding connected PoKeys devices</li>
-							<li>• <strong>Device connection</strong> - Establishing communication</li>
-							<li>• <strong>Pin configuration</strong> - Setting up pins as digital outputs</li>
-							<li>• <strong>Digital output control</strong> - Turning pins on and off</li>
+							<li>• <strong>Matrix configuration</strong> - Setting up 4x4 keyboard layout</li>
+							<li>• <strong>Pin assignment</strong> - Configuring row and column pins</li>
+							<li>• <strong>Real-time monitoring</strong> - Detecting key press/release events</li>
+							<li>• <strong>State tracking</strong> - Monitoring key state changes</li>
 						</ul>
 					</div>
 				</section>
@@ -89,57 +139,10 @@
 				<section class="mb-12">
 					<h2 class="text-2xl font-bold mb-4 text-white">Complete Example</h2>
 					<div class="bg-gray-800 rounded-lg p-6">
-						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">use pokeys_lib::*;
-use std::&#123;thread, time::Duration&#125;;
-
-fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#123;
-    println!("🚀 PoKeys Basic Device Control Example");
-    println!("=====================================");
-
-    // Step 1: Enumerate connected devices
-    println!("📡 Scanning for PoKeys devices...");
-    let device_count = enumerate_usb_devices()?;
-    println!("✅ Found &#123;&#125; device(s)", device_count);
-
-    if device_count == 0 &#123;
-        println!("❌ No PoKeys devices found!");
-        println!("💡 Please check:");
-        println!("   - Device is connected via USB");
-        println!("   - USB drivers are installed");
-        println!("   - Device has power");
-        return Ok(());
-    &#125;
-
-    // Step 2: Connect to the first device
-    println!("🔌 Connecting to device...");
-    let mut device = connect_to_device(0)?;
-
-    // Get device information
-    let device_name = device.get_device_name()?;
-    println!("✅ Connected to: &#123;&#125;", device_name);
-
-    // Step 3: Configure pin 1 as digital output
-    println!("⚙️  Configuring pin 1 as digital output...");
-    device.set_pin_function(1, PinFunction::DigitalOutput)?;
-    println!("✅ Pin 1 configured successfully");
-
-    // Step 4: Blink the LED 10 times
-    println!("💡 Starting LED blink sequence...");
-    for i in 1..=10 &#123;
-        println!("   Blink &#123;&#125;/10 - LED ON", i);
-        device.set_digital_output(1, true)?;
-        thread::sleep(Duration::from_millis(500));
-
-        println!("   Blink &#123;&#125;/10 - LED OFF", i);
-        device.set_digital_output(1, false)?;
-        thread::sleep(Duration::from_millis(500));
-    &#125;
-
-    println!("🎉 Example completed successfully!");
-    println!("💡 The LED should have blinked 10 times");
-
-    Ok(())
-&#125;</code></pre>
+						<div class="bg-gray-700 px-4 py-2 mb-4 rounded-t">
+							<span class="text-sm text-gray-300">matrix_keyboard.rs</span>
+						</div>
+						<Code code={matrixKeyboardCode} lang="rust" />
 					</div>
 				</section>
 
