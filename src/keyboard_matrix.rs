@@ -1,7 +1,38 @@
 //! Matrix keyboard support
+//!
+//! This module provides matrix keyboard functionality for PoKeys devices using the official
+//! protocol specification (command 0xCA). The implementation supports up to 16x8 matrix
+//! keyboards with proper key indexing according to the PoKeys protocol.
+//!
+//! ## Key Features
+//! - Supports matrix keyboards up to 16 rows x 8 columns
+//! - Protocol-compliant implementation using command 0xCA
+//! - Proper key indexing with 8-column internal layout
+//! - Real-time key state monitoring
+//! - Configurable pin assignments for rows and columns
+//!
+//! ## Key Indexing
+//! The PoKeys protocol uses a fixed 8-column internal layout regardless of configured width:
+//! - Row 0: keys 0-7 (only 0-width used)
+//! - Row 1: keys 8-15 (only 8-(8+width) used)  
+//! - Row 2: keys 16-23, etc.
+//!
+//! ## Example Usage
+//! ```rust,no_run
+//! use pokeys_lib::*;
+//!
+//! let mut device = connect_to_device(0)?;
+//! 
+//! // Configure 4x4 matrix keyboard
+//! let column_pins = [21, 22, 23, 24];
+//! let row_pins = [13, 14, 15, 16];
+//! device.configure_matrix_keyboard(4, 4, &column_pins, &row_pins)?;
+//!
+//! // Read keyboard state
+//! device.read_matrix_keyboard()?;
+//! let key_pressed = device.matrix_keyboard.get_key_state(0, 0);
+//! ```
 
-use crate::device::PoKeysDevice;
-use crate::error::{PoKeysError, Result};
 use serde::{Deserialize, Serialize};
 
 /// Matrix keyboard configuration
@@ -49,7 +80,8 @@ impl MatrixKeyboard {
         if row >= self.height as usize || col >= self.width as usize {
             return false;
         }
-        let key_index = row * self.width as usize + col;
+        // Protocol uses 8-column layout internally: key_index = row * 8 + col
+        let key_index = row * 8 + col;
         if key_index < self.key_values.len() {
             self.key_values[key_index] != 0
         } else {
@@ -61,55 +93,6 @@ impl MatrixKeyboard {
 impl Default for MatrixKeyboard {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-impl PoKeysDevice {
-    /// Configure matrix keyboard
-    pub fn configure_matrix_keyboard(
-        &mut self,
-        width: u8,
-        height: u8,
-        column_pins: &[u8],
-        row_pins: &[u8],
-    ) -> Result<()> {
-        if width > 8 || height > 16 {
-            return Err(PoKeysError::Parameter("Matrix size too large".to_string()));
-        }
-
-        self.matrix_keyboard.configuration = 1;
-        self.matrix_keyboard.width = width;
-        self.matrix_keyboard.height = height;
-
-        // Copy pin assignments
-        for (i, &pin) in column_pins.iter().enumerate().take(8) {
-            self.matrix_keyboard.column_pins[i] = pin;
-        }
-
-        for (i, &pin) in row_pins.iter().enumerate().take(16) {
-            self.matrix_keyboard.row_pins[i] = pin;
-        }
-
-        // Send configuration to device
-        self.send_request(0x60, width, height, 0, 0)?;
-        Ok(())
-    }
-
-    /// Read matrix keyboard state
-    pub fn read_matrix_keyboard(&mut self) -> Result<()> {
-        let response = self.send_request(0x61, 0, 0, 0, 0)?;
-
-        // Parse keyboard state from response
-        let data_start = 8;
-        let data_len =
-            (self.matrix_keyboard.width as usize * self.matrix_keyboard.height as usize).min(128);
-
-        if response.len() >= data_start + data_len {
-            self.matrix_keyboard.key_values[..data_len]
-                .copy_from_slice(&response[data_start..data_start + data_len]);
-        }
-
-        Ok(())
     }
 }
 
