@@ -19,6 +19,12 @@ pub struct PwmData {
     pub enabled_channels: u8,
 }
 
+impl Default for PwmData {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PwmData {
     pub fn new() -> Self {
         Self {
