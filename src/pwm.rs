@@ -43,14 +43,20 @@ impl PwmData {
             19 => Ok(3), // PWM4
             18 => Ok(4), // PWM5
             17 => Ok(5), // PWM6
-            _ => Err(PoKeysError::Parameter(format!("Pin {} does not support PWM. PWM is only supported on pins 17-22", pin))),
+            _ => Err(PoKeysError::Parameter(format!(
+                "Pin {} does not support PWM. PWM is only supported on pins 17-22",
+                pin
+            ))),
         }
     }
 
     /// Get pin number from PWM channel index
     pub fn channel_to_pin(channel: usize) -> Result<u8> {
         if channel >= 6 {
-            return Err(PoKeysError::Parameter(format!("Invalid PWM channel {}. Valid channels are 0-5", channel)));
+            return Err(PoKeysError::Parameter(format!(
+                "Invalid PWM channel {}. Valid channels are 0-5",
+                channel
+            )));
         }
         Ok(PWM_PIN_MAP[channel])
     }
@@ -58,7 +64,10 @@ impl PwmData {
     /// Enable or disable a PWM channel
     pub fn set_channel_enabled(&mut self, channel: usize, enabled: bool) -> Result<()> {
         if channel >= 6 {
-            return Err(PoKeysError::Parameter(format!("Invalid PWM channel {}. Valid channels are 0-5", channel)));
+            return Err(PoKeysError::Parameter(format!(
+                "Invalid PWM channel {}. Valid channels are 0-5",
+                channel
+            )));
         }
 
         if enabled {
@@ -80,7 +89,10 @@ impl PwmData {
     /// Set PWM duty cycle for a channel
     pub fn set_duty_cycle(&mut self, channel: usize, duty: u32) -> Result<()> {
         if channel >= 6 {
-            return Err(PoKeysError::Parameter(format!("Invalid PWM channel {}. Valid channels are 0-5", channel)));
+            return Err(PoKeysError::Parameter(format!(
+                "Invalid PWM channel {}. Valid channels are 0-5",
+                channel
+            )));
         }
         self.pwm_values[channel] = duty;
         Ok(())
@@ -89,7 +101,10 @@ impl PwmData {
     /// Get PWM duty cycle for a channel
     pub fn get_duty_cycle(&self, channel: usize) -> Result<u32> {
         if channel >= 6 {
-            return Err(PoKeysError::Parameter(format!("Invalid PWM channel {}. Valid channels are 0-5", channel)));
+            return Err(PoKeysError::Parameter(format!(
+                "Invalid PWM channel {}. Valid channels are 0-5",
+                channel
+            )));
         }
         Ok(self.pwm_values[channel])
     }
@@ -99,10 +114,10 @@ impl PoKeysDevice {
     /// Set PWM configuration using command 0xCB
     pub fn set_pwm_configuration(&mut self) -> Result<()> {
         let mut data = [0u8; 32];
-        
+
         // PWM enabled channels bitmask
         data[0] = self.pwm.enabled_channels;
-        
+
         // PWM values (LSB first)
         for i in 0..6 {
             let value = self.pwm.pwm_values[i];
@@ -112,14 +127,14 @@ impl PoKeysDevice {
             data[base_idx + 2] = ((value >> 16) & 0xFF) as u8;
             data[base_idx + 3] = ((value >> 24) & 0xFF) as u8;
         }
-        
+
         // PWM period (LSB first)
         let period = self.pwm.pwm_period;
         data[25] = (period & 0xFF) as u8;
         data[26] = ((period >> 8) & 0xFF) as u8;
         data[27] = ((period >> 16) & 0xFF) as u8;
         data[28] = ((period >> 24) & 0xFF) as u8;
-        
+
         self.send_request_with_data(0xCB, 1, 0, 0, 0, &data)?;
         Ok(())
     }
@@ -127,10 +142,10 @@ impl PoKeysDevice {
     /// Update only PWM duty values using command 0xCB
     pub fn update_pwm_duty_values(&mut self) -> Result<()> {
         let mut data = [0u8; 32];
-        
+
         // PWM enabled channels bitmask
         data[0] = self.pwm.enabled_channels;
-        
+
         // PWM values (LSB first)
         for i in 0..6 {
             let value = self.pwm.pwm_values[i];
@@ -140,7 +155,7 @@ impl PoKeysDevice {
             data[base_idx + 2] = ((value >> 16) & 0xFF) as u8;
             data[base_idx + 3] = ((value >> 24) & 0xFF) as u8;
         }
-        
+
         self.send_request_with_data(0xCB, 1, 1, 0, 0, &data)?;
         Ok(())
     }
@@ -148,43 +163,43 @@ impl PoKeysDevice {
     /// Get PWM configuration using command 0xCB
     pub fn get_pwm_configuration(&mut self) -> Result<()> {
         let response = self.send_request(0xCB, 0, 0, 0, 0)?;
-        
+
         // Parse response according to specification
         if response.len() >= 38 {
             // PWM enabled channels
             self.pwm.enabled_channels = response[9];
-            
+
             // PWM values (LSB first)
             for i in 0..6 {
                 let base_idx = 10 + (i * 4);
                 if base_idx + 3 < response.len() {
-                    self.pwm.pwm_values[i] = 
-                        response[base_idx] as u32 |
-                        ((response[base_idx + 1] as u32) << 8) |
-                        ((response[base_idx + 2] as u32) << 16) |
-                        ((response[base_idx + 3] as u32) << 24);
+                    self.pwm.pwm_values[i] = response[base_idx] as u32
+                        | ((response[base_idx + 1] as u32) << 8)
+                        | ((response[base_idx + 2] as u32) << 16)
+                        | ((response[base_idx + 3] as u32) << 24);
                 }
             }
-            
+
             // PWM period (LSB first)
             if response.len() >= 38 {
-                self.pwm.pwm_period = 
-                    response[34] as u32 |
-                    ((response[35] as u32) << 8) |
-                    ((response[36] as u32) << 16) |
-                    ((response[37] as u32) << 24);
+                self.pwm.pwm_period = response[34] as u32
+                    | ((response[35] as u32) << 8)
+                    | ((response[36] as u32) << 16)
+                    | ((response[37] as u32) << 24);
             }
         }
-        
+
         Ok(())
     }
 
     /// Set PWM period (shared among all channels)
     pub fn set_pwm_period(&mut self, period: u32) -> Result<()> {
         if period == 0 {
-            return Err(PoKeysError::Parameter("PWM period cannot be zero".to_string()));
+            return Err(PoKeysError::Parameter(
+                "PWM period cannot be zero".to_string(),
+            ));
         }
-        
+
         self.pwm.pwm_period = period;
         self.set_pwm_configuration()
     }
@@ -223,9 +238,11 @@ impl PoKeysDevice {
     /// Set PWM duty cycle as percentage (0.0 to 100.0) for a pin
     pub fn set_pwm_duty_cycle_percent_for_pin(&mut self, pin: u8, percent: f32) -> Result<()> {
         if !(0.0..=100.0).contains(&percent) {
-            return Err(PoKeysError::Parameter("PWM duty cycle percentage must be between 0.0 and 100.0".to_string()));
+            return Err(PoKeysError::Parameter(
+                "PWM duty cycle percentage must be between 0.0 and 100.0".to_string(),
+            ));
         }
-        
+
         let duty = ((percent / 100.0) * self.pwm.pwm_period as f32) as u32;
         self.set_pwm_duty_cycle_for_pin(pin, duty)
     }
@@ -241,24 +258,31 @@ impl PoKeysDevice {
 }
 
 /// Simple PWM function for easy servo control
-pub fn simple_pwm(device: &mut PoKeysDevice, pin: u8, frequency_hz: u32, duty_percent: f32) -> Result<()> {
+pub fn simple_pwm(
+    device: &mut PoKeysDevice,
+    pin: u8,
+    frequency_hz: u32,
+    duty_percent: f32,
+) -> Result<()> {
     // Validate pin
     PwmData::pin_to_channel(pin)?;
-    
+
     // PoKeys PWM operates at 25MHz clock frequency
     // Calculate period in clock cycles: period_seconds × 25,000,000
     let period = if frequency_hz > 0 {
         25_000_000 / frequency_hz // 25MHz clock cycles for the given frequency
     } else {
-        return Err(PoKeysError::Parameter("Frequency must be greater than 0".to_string()));
+        return Err(PoKeysError::Parameter(
+            "Frequency must be greater than 0".to_string(),
+        ));
     };
-    
+
     // Set period
     device.set_pwm_period(period)?;
-    
+
     // Enable PWM for the pin
     device.enable_pwm_for_pin(pin, true)?;
-    
+
     // Set duty cycle
     device.set_pwm_duty_cycle_percent_for_pin(pin, duty_percent)
 }
