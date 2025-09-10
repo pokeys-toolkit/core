@@ -160,9 +160,68 @@ mod unit_tests {
 
         // Test initial state - use actual field names and types
         assert_eq!(pwm_data.pwm_period, 0);
-        assert_eq!(pwm_data.pwm_duty.len(), 0); // Empty vector initially
-        assert_eq!(pwm_data.pwm_enabled_channels.len(), 0); // Empty vector initially
-        assert_eq!(pwm_data.pwm_pin_ids.len(), 0); // Empty vector initially
+        assert_eq!(pwm_data.pwm_values.len(), 6); // Fixed array of 6 channels
+        assert_eq!(pwm_data.enabled_channels, 0); // No channels enabled initially
+        
+        // Test all channels are initially disabled
+        for i in 0..6 {
+            assert!(!pwm_data.is_channel_enabled(i));
+            assert_eq!(pwm_data.get_duty_cycle(i).unwrap(), 0);
+        }
+    }
+
+    #[test]
+    fn test_pwm_pin_mapping() {
+        // Test pin to channel mapping
+        assert_eq!(PwmData::pin_to_channel(22).unwrap(), 0); // PWM1
+        assert_eq!(PwmData::pin_to_channel(21).unwrap(), 1); // PWM2
+        assert_eq!(PwmData::pin_to_channel(20).unwrap(), 2); // PWM3
+        assert_eq!(PwmData::pin_to_channel(19).unwrap(), 3); // PWM4
+        assert_eq!(PwmData::pin_to_channel(18).unwrap(), 4); // PWM5
+        assert_eq!(PwmData::pin_to_channel(17).unwrap(), 5); // PWM6
+        
+        // Test invalid pins
+        assert!(PwmData::pin_to_channel(16).is_err());
+        assert!(PwmData::pin_to_channel(23).is_err());
+        
+        // Test channel to pin mapping
+        assert_eq!(PwmData::channel_to_pin(0).unwrap(), 22);
+        assert_eq!(PwmData::channel_to_pin(1).unwrap(), 21);
+        assert_eq!(PwmData::channel_to_pin(2).unwrap(), 20);
+        assert_eq!(PwmData::channel_to_pin(3).unwrap(), 19);
+        assert_eq!(PwmData::channel_to_pin(4).unwrap(), 18);
+        assert_eq!(PwmData::channel_to_pin(5).unwrap(), 17);
+        
+        // Test invalid channels
+        assert!(PwmData::channel_to_pin(6).is_err());
+    }
+
+    #[test]
+    fn test_pwm_channel_operations() {
+        let mut pwm_data = PwmData::new();
+        
+        // Test enabling channels
+        pwm_data.set_channel_enabled(0, true).unwrap();
+        pwm_data.set_channel_enabled(2, true).unwrap();
+        
+        assert!(pwm_data.is_channel_enabled(0));
+        assert!(!pwm_data.is_channel_enabled(1));
+        assert!(pwm_data.is_channel_enabled(2));
+        assert_eq!(pwm_data.enabled_channels, 0b00000101); // Bits 0 and 2 set
+        
+        // Test disabling channels
+        pwm_data.set_channel_enabled(0, false).unwrap();
+        assert!(!pwm_data.is_channel_enabled(0));
+        assert_eq!(pwm_data.enabled_channels, 0b00000100); // Only bit 2 set
+        
+        // Test duty cycle operations
+        pwm_data.set_duty_cycle(1, 1500).unwrap();
+        assert_eq!(pwm_data.get_duty_cycle(1).unwrap(), 1500);
+        
+        // Test invalid channel operations
+        assert!(pwm_data.set_channel_enabled(6, true).is_err());
+        assert!(pwm_data.set_duty_cycle(6, 1000).is_err());
+        assert!(pwm_data.get_duty_cycle(6).is_err());
     }
 
     #[test]

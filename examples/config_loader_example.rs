@@ -53,7 +53,10 @@ fn apply_basic_configuration(
     device.set_digital_output(4, false)?;
 
     // Configure PWM
-    device.configure_pwm_channel(0, 5, 0.0, true)?; // Channel 0, pin 5, 0% duty, enabled
+    // Configure PWM on pin 22 (PWM1 - only pins 17-22 support PWM)
+    device.set_pwm_period(20000)?; // 20ms period
+    device.enable_pwm_for_pin(22, true)?; // Enable PWM on pin 22
+    println!("   Pin 22: PWM Output (Servo Control)");
 
     // Additional configuration can be added here as needed
 
@@ -76,7 +79,7 @@ fn test_device_functions(
 
         // Vary PWM
         let duty = (i * 10) % 100;
-        device.set_pwm_duty_cycle(0, duty as u32)?;
+        device.set_pwm_duty_cycle_for_pin(22, duty as u32)?;
 
         if button {
             println!("   Button pressed! LEDs responding...");
@@ -96,7 +99,7 @@ fn cleanup_device(
     // Turn off all outputs
     device.set_digital_output(3, false)?;
     device.set_digital_output(4, false)?;
-    device.set_pwm_duty_cycle(0, 0)?;
+    device.set_pwm_duty_cycle_for_pin(22, 0)?;
 
     println!("✅ Cleanup complete");
     Ok(())

@@ -837,7 +837,7 @@ impl PoKeysDevice {
         // Initialize pin array
         self.pins = vec![PinData::new(); self.info.pin_count as usize];
         self.encoders = vec![EncoderData::new(); self.info.encoders_count as usize];
-        self.pwm.initialize(self.info.pwm_count as usize);
+        // PWM data is already initialized in new()
         self.po_ext_bus_data = vec![0; 10]; // PoKeys57CNC has 10 PoExtBus outputs
 
         Ok(())
