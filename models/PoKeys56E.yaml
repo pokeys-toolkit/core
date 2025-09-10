@@ -33,17 +33,17 @@ pins:
   16:
     capabilities: ["DigitalInput", "DigitalOutput", "Encoder_8B", "MatrixKeyboard_Row4"]
   17:
-    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Row5"]
+    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Row5", "PwmOutput"]  # PWM6
   18:
-    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Row6"]
+    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Row6", "PwmOutput"]  # PWM5
   19:
-    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Row7"]
+    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Row7", "PwmOutput"]  # PWM4
   20:
-    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Row8"]
+    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Row8", "PwmOutput"]  # PWM3
   21:
-    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Col1"]
+    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Col1", "PwmOutput"]  # PWM2
   22:
-    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Col2"]
+    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Col2", "PwmOutput"]  # PWM1
   23:
     capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Col3", "SpiMosi"]
   24:

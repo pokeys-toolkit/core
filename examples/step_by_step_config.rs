@@ -63,8 +63,10 @@ fn configure_pwm(device: &mut PoKeysDevice) -> Result<()> {
     println!("Press Enter to continue...");
     wait_for_enter();
 
-    device.configure_pwm_channel(0, 5, 0.0, true)?; // Channel 0, pin 5
-    device.configure_pwm_channel(1, 6, 0.0, true)?; // Channel 1, pin 6
+    // Configure PWM (only pins 17-22 support PWM)
+    device.set_pwm_period(20000)?; // 20ms period
+    device.enable_pwm_for_pin(22, true)?; // PWM1 on pin 22
+    device.enable_pwm_for_pin(21, true)?; // PWM2 on pin 21
 
     println!("   ✅ PWM Channel 0: Pin 5 (Motor Control)");
     println!("   ✅ PWM Channel 1: Pin 6 (Fan Control)");
@@ -139,8 +141,8 @@ fn run_interactive_demo(device: &mut PoKeysDevice) -> Result<()> {
         let pwm1_duty = ((i * 2) % 100) as u32;
         let pwm2_duty = if button { 80 } else { 20 };
 
-        device.set_pwm_duty_cycle(0, pwm1_duty)?;
-        device.set_pwm_duty_cycle(1, pwm2_duty)?;
+        device.set_pwm_duty_cycle_for_pin(22, pwm1_duty)?;
+        device.set_pwm_duty_cycle_for_pin(21, pwm2_duty)?;
 
         // Status every 2 seconds
         if i % 8 == 0 {
@@ -160,8 +162,8 @@ fn run_interactive_demo(device: &mut PoKeysDevice) -> Result<()> {
     // Cleanup
     device.set_digital_output(3, false)?;
     device.set_digital_output(4, false)?;
-    device.set_pwm_duty_cycle(0, 0)?;
-    device.set_pwm_duty_cycle(1, 0)?;
+    device.set_pwm_duty_cycle_for_pin(22, 0)?;
+    device.set_pwm_duty_cycle_for_pin(21, 0)?;
 
     println!("✅ Demonstration complete!");
     Ok(())

@@ -39,7 +39,7 @@
 						PWM Control
 					</h1>
 					<p class="text-xl text-gray-400">
-						Generate PWM signals for motor control, LED dimming, and servo positioning
+						High-precision PWM control with 25MHz clock for servo positioning and motor control
 					</p>
 				</div>
 
@@ -48,297 +48,322 @@
 					<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
 					<div class="bg-gray-800 rounded-lg p-6">
 						<p class="text-gray-300 mb-4">
-							Pulse Width Modulation (PWM) is a technique for controlling power delivery by rapidly switching a signal on and off.
-							This example demonstrates:
+							PoKeys devices feature a built-in PWM module operating at 25MHz clock frequency, providing
+							high-precision timing control for servo motors, LED dimming, and motor speed control.
 						</p>
-						<ul class="text-gray-300 space-y-2">
-							<li>• <strong>PWM configuration</strong> - Setting up pins for PWM output</li>
-							<li>• <strong>Duty cycle control</strong> - Adjusting the power level (0-100%)</li>
-							<li>• <strong>Frequency setting</strong> - Controlling the PWM frequency</li>
-							<li>• <strong>Smooth transitions</strong> - Creating fade effects</li>
-						</ul>
-					</div>
-				</section>
-
-				<!-- Hardware Setup -->
-				<section class="mb-12">
-					<h2 class="text-2xl font-bold mb-4 text-white">Hardware Setup</h2>
-					<div class="bg-gray-800 rounded-lg p-6">
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<div class="grid md:grid-cols-2 gap-6">
 							<div>
-								<h3 class="text-lg font-semibold mb-3 text-purple-400">For LED Dimming</h3>
+								<h3 class="text-lg font-semibold mb-2 text-blue-400">Hardware Specifications</h3>
 								<ul class="text-gray-300 space-y-1">
-									<li>• High-brightness LED</li>
-									<li>• 220Ω current-limiting resistor</li>
-									<li>• Breadboard and jumper wires</li>
+									<li>• 6 PWM channels (pins 17-22)</li>
+									<li>• 25MHz clock frequency</li>
+									<li>• 40ns timing resolution</li>
+									<li>• Shared period, individual duty cycles</li>
 								</ul>
-								<div class="mt-3 text-sm text-gray-400">
-									<strong>Connections:</strong><br/>
-									Pin 4 → LED anode → 220Ω resistor → GND
-								</div>
 							</div>
 							<div>
-								<h3 class="text-lg font-semibold mb-3 text-pink-400">For Motor Control</h3>
+								<h3 class="text-lg font-semibold mb-2 text-purple-400">Common Applications</h3>
 								<ul class="text-gray-300 space-y-1">
-									<li>• DC motor (3-12V)</li>
-									<li>• MOSFET or motor driver</li>
-									<li>• External power supply</li>
-									<li>• Flyback diode</li>
+									<li>• Servo motor positioning</li>
+									<li>• LED brightness control</li>
+									<li>• Motor speed control</li>
+									<li>• Signal generation</li>
 								</ul>
-								<div class="mt-3 text-sm text-gray-400">
-									<strong>Note:</strong> Never connect motors directly to PoKeys pins
-								</div>
 							</div>
 						</div>
 					</div>
 				</section>
 
-				<!-- Code Example -->
+				<!-- Pin Mapping -->
 				<section class="mb-12">
-					<h2 class="text-2xl font-bold mb-4 text-white">LED Dimming Example</h2>
+					<h2 class="text-2xl font-bold mb-4 text-white">Pin Mapping</h2>
 					<div class="bg-gray-800 rounded-lg p-6">
-						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">use pokeys_lib::*;
-use std::&#123;thread, time::Duration&#125;;
-
-fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#123;
-    println!("⚡ PoKeys PWM Control Example");
-    println!("============================");
-
-    // Connect to device
-    let device_count = enumerate_usb_devices()?;
-    if device_count == 0 &#123;
-        println!("❌ No PoKeys devices found!");
-        return Ok(());
-    &#125;
-
-    let mut device = connect_to_device(0)?;
-    println!("✅ Connected to: &#123;&#125;", device.get_device_name()?);
-
-    // Configure pin 4 for PWM output
-    println!("⚙️  Configuring pin 4 for PWM...");
-    device.set_pin_function(4, PinFunction::PWMOutput)?;
-
-    // Set PWM frequency to 1kHz (good for LEDs)
-    device.set_pwm_frequency(4, 1000.0)?;
-    println!("✅ PWM configured at 1kHz");
-
-    // Demonstrate different PWM techniques
-    fade_in_out(&mut device)?;
-    breathing_effect(&mut device)?;
-    step_control(&mut device)?;
-
-    // Turn off PWM
-    device.set_pwm_duty_cycle(4, 0.0)?;
-    println!("🎉 PWM example completed!");
-
-    Ok(())
-&#125;
-
-/// Smooth fade in and fade out effect
-fn fade_in_out(device: &mut Device) -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#123;
-    println!("💡 Demonstrating fade in/out...");
-
-    // Fade in (0% to 100%)
-    for duty in (0..=100).step_by(2) &#123;
-        device.set_pwm_duty_cycle(4, duty as f32)?;
-        thread::sleep(Duration::from_millis(50));
-    &#125;
-
-    thread::sleep(Duration::from_millis(500));
-
-    // Fade out (100% to 0%)
-    for duty in (0..=100).rev().step_by(2) &#123;
-        device.set_pwm_duty_cycle(4, duty as f32)?;
-        thread::sleep(Duration::from_millis(50));
-    &#125;
-
-    thread::sleep(Duration::from_millis(500));
-    Ok(())
-&#125;
-
-/// Breathing effect using sine wave
-fn breathing_effect(device: &mut Device) -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#123;
-    println!("🫁 Demonstrating breathing effect...");
-
-    for i in 0..200 &#123;
-        let angle = (i as f32) * 0.1;
-        let duty = 50.0 + 45.0 * angle.sin(); // 5% to 95%
-        device.set_pwm_duty_cycle(4, duty)?;
-        thread::sleep(Duration::from_millis(25));
-    &#125;
-
-    Ok(())
-&#125;
-
-/// Step-wise control demonstration
-fn step_control(device: &mut Device) -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#123;
-    println!("📊 Demonstrating step control...");
-
-    let steps = [10.0, 25.0, 50.0, 75.0, 100.0, 75.0, 50.0, 25.0];
-
-    for &duty in &steps &#123;
-        println!("   Setting duty cycle to &#123;&#125;%", duty);
-        device.set_pwm_duty_cycle(4, duty)?;
-        thread::sleep(Duration::from_millis(800));
-    &#125;
-
-    Ok(())
-&#125;</code></pre>
-					</div>
-				</section>
-
-				<!-- Motor Control Example -->
-				<section class="mb-12">
-					<h2 class="text-2xl font-bold mb-4 text-white">Motor Speed Control</h2>
-					<div class="bg-gray-800 rounded-lg p-6">
-						<div class="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4 mb-4">
-							<p class="text-yellow-300 text-sm">
-								⚠️ <strong>Warning:</strong> Never connect motors directly to PoKeys pins. Always use appropriate motor drivers or MOSFETs.
-							</p>
+						<div class="overflow-x-auto">
+							<table class="w-full text-left">
+								<thead>
+									<tr class="border-b border-gray-700">
+										<th class="pb-2 text-blue-400">Pin</th>
+										<th class="pb-2 text-blue-400">Channel</th>
+										<th class="pb-2 text-blue-400">Name</th>
+										<th class="pb-2 text-blue-400">Description</th>
+									</tr>
+								</thead>
+								<tbody class="text-gray-300">
+									<tr class="border-b border-gray-700/50">
+										<td class="py-2 font-mono">22</td>
+										<td class="py-2">0</td>
+										<td class="py-2 font-mono">PWM1</td>
+										<td class="py-2">Primary PWM output</td>
+									</tr>
+									<tr class="border-b border-gray-700/50">
+										<td class="py-2 font-mono">21</td>
+										<td class="py-2">1</td>
+										<td class="py-2 font-mono">PWM2</td>
+										<td class="py-2">Secondary PWM output</td>
+									</tr>
+									<tr class="border-b border-gray-700/50">
+										<td class="py-2 font-mono">20</td>
+										<td class="py-2">2</td>
+										<td class="py-2 font-mono">PWM3</td>
+										<td class="py-2">Third PWM output</td>
+									</tr>
+									<tr class="border-b border-gray-700/50">
+										<td class="py-2 font-mono">19</td>
+										<td class="py-2">3</td>
+										<td class="py-2 font-mono">PWM4</td>
+										<td class="py-2">Fourth PWM output</td>
+									</tr>
+									<tr class="border-b border-gray-700/50">
+										<td class="py-2 font-mono">18</td>
+										<td class="py-2">4</td>
+										<td class="py-2 font-mono">PWM5</td>
+										<td class="py-2">Fifth PWM output</td>
+									</tr>
+									<tr>
+										<td class="py-2 font-mono">17</td>
+										<td class="py-2">5</td>
+										<td class="py-2 font-mono">PWM6</td>
+										<td class="py-2">Sixth PWM output</td>
+									</tr>
+								</tbody>
+							</table>
 						</div>
-						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">use pokeys_lib::*;
-use std::&#123;thread, time::Duration&#125;;
-
-fn motor_speed_control() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#123;
-    let mut device = connect_to_device(0)?;
-
-    // Configure pin for motor PWM (connected to motor driver)
-    device.set_pin_function(5, PinFunction::PWMOutput)?;
-
-    // Set higher frequency for motors (10kHz reduces audible noise)
-    device.set_pwm_frequency(5, 10000.0)?;
-
-    println!("🏃 Motor speed control demo");
-
-    // Gradual acceleration
-    println!("⬆️  Accelerating...");
-    for speed in (0..=80).step_by(5) &#123;
-        device.set_pwm_duty_cycle(5, speed as f32)?;
-        println!("   Speed: &#123;&#125;%", speed);
-        thread::sleep(Duration::from_millis(300));
-    &#125;
-
-    // Hold at 80% for 2 seconds
-    thread::sleep(Duration::from_secs(2));
-
-    // Gradual deceleration
-    println!("⬇️  Decelerating...");
-    for speed in (0..=80).rev().step_by(5) &#123;
-        device.set_pwm_duty_cycle(5, speed as f32)?;
-        println!("   Speed: &#123;&#125;%", speed);
-        thread::sleep(Duration::from_millis(200));
-    &#125;
-
-    println!("🛑 Motor stopped");
-    Ok(())
-&#125;</code></pre>
 					</div>
 				</section>
 
-				<!-- PWM Theory -->
+				<!-- Timing Calculations -->
 				<section class="mb-12">
-					<h2 class="text-2xl font-bold mb-4 text-white">PWM Theory</h2>
+					<h2 class="text-2xl font-bold mb-4 text-white">Timing Calculations</h2>
 					<div class="bg-gray-800 rounded-lg p-6">
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<p class="text-gray-300 mb-4">
+							All PWM timing values must be expressed as clock cycles at 25MHz frequency:
+						</p>
+						<div class="bg-gray-900 rounded p-4 mb-4">
+							<code class="text-green-400">
+								Clock Cycles = Time (seconds) × 25,000,000
+							</code>
+						</div>
+						<div class="grid md:grid-cols-2 gap-6">
 							<div>
-								<h3 class="text-lg font-semibold mb-3 text-blue-400">Duty Cycle</h3>
-								<p class="text-gray-300 text-sm mb-2">
-									The percentage of time the signal is HIGH during each cycle:
-								</p>
-								<ul class="text-gray-300 text-sm space-y-1">
-									<li>• 0% = Always OFF (0V)</li>
-									<li>• 50% = Half power</li>
-									<li>• 100% = Always ON (3.3V)</li>
+								<h3 class="text-lg font-semibold mb-2 text-blue-400">Common Servo Timing</h3>
+								<ul class="text-gray-300 space-y-1 font-mono text-sm">
+									<li>• 20ms period = 500,000 cycles</li>
+									<li>• 1ms pulse = 25,000 cycles</li>
+									<li>• 1.5ms pulse = 37,500 cycles</li>
+									<li>• 2ms pulse = 50,000 cycles</li>
 								</ul>
 							</div>
 							<div>
-								<h3 class="text-lg font-semibold mb-3 text-purple-400">Frequency</h3>
-								<p class="text-gray-300 text-sm mb-2">
-									How fast the signal switches on/off:
-								</p>
-								<ul class="text-gray-300 text-sm space-y-1">
-									<li>• LEDs: 100Hz - 2kHz</li>
-									<li>• Motors: 1kHz - 20kHz</li>
-									<li>• Servos: 50Hz (20ms period)</li>
+								<h3 class="text-lg font-semibold mb-2 text-purple-400">LED Dimming (1kHz)</h3>
+								<ul class="text-gray-300 space-y-1 font-mono text-sm">
+									<li>• 1ms period = 25,000 cycles</li>
+									<li>• 10% duty = 2,500 cycles</li>
+									<li>• 50% duty = 12,500 cycles</li>
+									<li>• 90% duty = 22,500 cycles</li>
 								</ul>
 							</div>
 						</div>
 					</div>
 				</section>
 
-				<!-- Advanced Features -->
+				<!-- Basic Example -->
 				<section class="mb-12">
-					<h2 class="text-2xl font-bold mb-4 text-white">Advanced PWM Features</h2>
+					<h2 class="text-2xl font-bold mb-4 text-white">Basic PWM Control</h2>
 					<div class="bg-gray-800 rounded-lg p-6">
-						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">// Multiple PWM channels
-device.set_pin_function(4, PinFunction::PWMOutput)?;
-device.set_pin_function(5, PinFunction::PWMOutput)?;
-device.set_pin_function(6, PinFunction::PWMOutput)?;
+						<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">use pokeys_lib::*;
 
-// RGB LED control
-device.set_pwm_duty_cycle(4, 100.0)?; // Red channel
-device.set_pwm_duty_cycle(5, 50.0)?;  // Green channel
-device.set_pwm_duty_cycle(6, 25.0)?;  // Blue channel
+fn main() -> Result<()> {
+    let mut device = connect_to_device(0)?;
+    
+    // Configure PWM with 25MHz clock cycles
+    // 20ms period = 0.020 × 25,000,000 = 500,000 cycles
+    device.set_pwm_period(500000)?;
+    
+    // Enable PWM on pin 22 (PWM1)
+    device.enable_pwm_for_pin(22, true)?;
+    
+    // Set duty cycle (1.5ms = 37,500 cycles for servo center)
+    device.set_pwm_duty_cycle_for_pin(22, 37500)?;
+    
+    println!("PWM active on pin 22");
+    
+    // Disable PWM
+    device.enable_pwm_for_pin(22, false)?;
+    
+    Ok(())
+}</code></pre>
+					</div>
+				</section>
 
-// Synchronized PWM for 3-phase motor control
-device.set_pwm_frequency(4, 20000.0)?;
-device.set_pwm_frequency(5, 20000.0)?;
-device.set_pwm_frequency(6, 20000.0)?;
+				<!-- Servo Control Example -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Servo Control Example</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<p class="text-gray-300 mb-4">
+							Complete servo positioning example with calibrated positions:
+						</p>
+						<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">use pokeys_lib::*;
+use std::thread;
+use std::time::Duration;
 
-// Phase-shifted PWM (120° apart for 3-phase)
-device.set_pwm_duty_cycle(4, 50.0)?;
-device.set_pwm_duty_cycle(5, 50.0)?;
-device.set_pwm_duty_cycle(6, 50.0)?;</code></pre>
+fn main() -> Result<()> {
+    let mut device = connect_to_device(0)?;
+    
+    // Configure for servo control (20ms period)
+    device.set_pwm_period(500000)?;
+    device.enable_pwm_for_pin(22, true)?;
+    
+    // Servo positions (calibrated for specific servo)
+    let positions = [
+        (60000, "0°"),   // Custom calibrated 0° position
+        (36000, "90°"),  // Custom calibrated 90° position  
+        (12000, "180°"), // Custom calibrated 180° position
+    ];
+    
+    for (duty_cycles, angle) in positions.iter() {
+        println!("Moving to {}", angle);
+        device.set_pwm_duty_cycle_for_pin(22, *duty_cycles)?;
+        thread::sleep(Duration::from_secs(1));
+    }
+    
+    // Return to center and disable
+    device.set_pwm_duty_cycle_for_pin(22, 36000)?;
+    thread::sleep(Duration::from_millis(500));
+    device.enable_pwm_for_pin(22, false)?;
+    
+    Ok(())
+}</code></pre>
+					</div>
+				</section>
+
+				<!-- Percentage-Based Control -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Percentage-Based Control</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<p class="text-gray-300 mb-4">
+							For easier control, use percentage-based duty cycle functions:
+						</p>
+						<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">use pokeys_lib::*;
+
+fn main() -> Result<()> {
+    let mut device = connect_to_device(0)?;
+    
+    // Set up PWM
+    device.set_pwm_period(25000)?; // 1kHz for LED dimming
+    device.enable_pwm_for_pin(22, true)?;
+    
+    // Fade LED from 0% to 100%
+    for brightness in (0..=100).step_by(10) {
+        device.set_pwm_duty_cycle_percent_for_pin(22, brightness as f32)?;
+        println!("Brightness: {}%", brightness);
+        std::thread::sleep(std::time::Duration::from_millis(200));
+    }
+    
+    // Turn off
+    device.enable_pwm_for_pin(22, false)?;
+    
+    Ok(())
+}</code></pre>
+					</div>
+				</section>
+
+				<!-- Multi-Channel Example -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Multi-Channel Control</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<p class="text-gray-300 mb-4">
+							Control multiple PWM channels simultaneously:
+						</p>
+						<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">use pokeys_lib::*;
+
+fn main() -> Result<()> {
+    let mut device = connect_to_device(0)?;
+    
+    // Configure PWM period (shared by all channels)
+    device.set_pwm_period(500000)?; // 20ms for servo control
+    
+    // Enable multiple PWM channels
+    let servo_pins = [22, 21, 20]; // PWM1, PWM2, PWM3
+    for pin in servo_pins.iter() {
+        device.enable_pwm_for_pin(*pin, true)?;
+    }
+    
+    // Set different positions for each servo
+    device.set_pwm_duty_cycle_for_pin(22, 60000)?; // Servo 1 to 0°
+    device.set_pwm_duty_cycle_for_pin(21, 36000)?; // Servo 2 to 90°
+    device.set_pwm_duty_cycle_for_pin(20, 12000)?; // Servo 3 to 180°
+    
+    println!("All servos positioned");
+    
+    // Disable all channels
+    for pin in servo_pins.iter() {
+        device.enable_pwm_for_pin(*pin, false)?;
+    }
+    
+    Ok(())
+}</code></pre>
+					</div>
+				</section>
+
+				<!-- Best Practices -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Best Practices</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<div class="grid md:grid-cols-2 gap-6">
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-green-400">✅ Do</h3>
+								<ul class="text-gray-300 space-y-2">
+									<li>• Calibrate servo positions for your hardware</li>
+									<li>• Use 20ms period (500,000 cycles) for servos</li>
+									<li>• Disable PWM when not in use</li>
+									<li>• Validate duty cycle values</li>
+									<li>• Use percentage functions for simple dimming</li>
+								</ul>
+							</div>
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-red-400">❌ Don't</h3>
+								<ul class="text-gray-300 space-y-2">
+									<li>• Set duty cycle higher than period</li>
+									<li>• Use zero period values</li>
+									<li>• Assume standard servo timing works for all servos</li>
+									<li>• Change period frequently during operation</li>
+									<li>• Forget to enable PWM before setting duty cycle</li>
+								</ul>
+							</div>
+						</div>
 					</div>
 				</section>
 
 				<!-- Troubleshooting -->
 				<section class="mb-12">
 					<h2 class="text-2xl font-bold mb-4 text-white">Troubleshooting</h2>
-					<div class="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
+					<div class="bg-gray-800 rounded-lg p-6">
 						<div class="space-y-4">
 							<div>
-								<h4 class="font-semibold text-white">LED doesn't dim smoothly</h4>
-								<ul class="text-gray-300 mt-1 space-y-1">
-									<li>• Increase PWM frequency (try 1-2kHz)</li>
-									<li>• Use smaller duty cycle steps</li>
-									<li>• Add delay between changes</li>
-								</ul>
+								<h3 class="text-lg font-semibold mb-2 text-yellow-400">Servo Not Moving</h3>
+								<p class="text-gray-300">Check that PWM is enabled and period is set to 500,000 cycles (20ms). Verify duty cycle values are appropriate for your servo (typically 25,000-50,000 cycles).</p>
 							</div>
 							<div>
-								<h4 class="font-semibold text-white">Motor makes noise</h4>
-								<ul class="text-gray-300 mt-1 space-y-1">
-									<li>• Increase PWM frequency above 10kHz</li>
-									<li>• Check motor driver specifications</li>
-									<li>• Ensure proper grounding</li>
-								</ul>
+								<h3 class="text-lg font-semibold mb-2 text-yellow-400">Incorrect Servo Positions</h3>
+								<p class="text-gray-300">Servo timing varies by manufacturer. Use the calibration tool to find correct duty cycle values for 0°, 90°, and 180° positions.</p>
 							</div>
 							<div>
-								<h4 class="font-semibold text-white">PWM not working</h4>
-								<ul class="text-gray-300 mt-1 space-y-1">
-									<li>• Verify pin supports PWM (check device documentation)</li>
-									<li>• Ensure pin is configured as PWMOutput</li>
-									<li>• Check duty cycle is between 0-100</li>
-								</ul>
+								<h3 class="text-lg font-semibold mb-2 text-yellow-400">PWM Not Working</h3>
+								<p class="text-gray-300">Ensure you're using pins 17-22 only. Other pins don't support PWM. Check that the pin isn't configured for another function.</p>
 							</div>
 						</div>
 					</div>
 				</section>
 
-				<!-- Next Steps -->
-				<section class="mb-12">
-					<h2 class="text-2xl font-bold mb-4 text-white">Next Steps</h2>
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-						<a href="/core/examples/analog-input" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-green-500/50 transition-all duration-300">
-							<h3 class="text-lg font-semibold mb-2 text-white group-hover:text-green-400">Analog Input →</h3>
-							<p class="text-gray-400 text-sm">Read analog sensors to control PWM duty cycle</p>
-						</a>
-						<a href="/core/examples/encoder-reading" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-yellow-500/50 transition-all duration-300">
-							<h3 class="text-lg font-semibold mb-2 text-white group-hover:text-yellow-400">Encoder Reading →</h3>
-							<p class="text-gray-400 text-sm">Use encoders for precise motor position control</p>
-						</a>
-					</div>
-				</section>
+				<!-- Navigation -->
+				<div class="flex justify-between items-center pt-8 border-t border-gray-800">
+					<a href="/core/examples" class="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors">
+						← Back to Examples
+					</a>
+					<a href="https://github.com/pokeys-toolkit/core/blob/main/examples/servo_pwm_example.rs" class="flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors">
+						View Source Code →
+					</a>
+				</div>
 			</div>
 		</div>
 	</body>

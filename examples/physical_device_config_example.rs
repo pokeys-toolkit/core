@@ -39,9 +39,10 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     device.set_pin_function(2, PinFunction::DigitalInput)?;
     println!("   Pin 2: Digital Input (Button)");
 
-    // Configure PWM on pin 5
-    device.configure_pwm_channel(0, 5, 0.0, true)?; // Channel 0, pin 5, 0% duty, enabled
-    println!("   Pin 5: PWM Output (Fan Control)");
+    // Configure PWM on pin 22 (PWM1 - only pins 17-22 support PWM)
+    device.set_pwm_period(20000)?; // 20ms period for servo control
+    device.enable_pwm_for_pin(22, true)?; // Enable PWM on pin 22
+    println!("   Pin 22: PWM Output (Servo Control)");
 
     // Additional configuration can be added here as needed
 
@@ -60,7 +61,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
         // Vary PWM duty cycle
         let duty = (i * 5) % 100;
-        device.set_pwm_duty_cycle(0, duty as u32)?;
+        device.set_pwm_duty_cycle_for_pin(22, duty as u32)?;
 
         thread::sleep(Duration::from_millis(500));
     }
@@ -68,7 +69,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     // Cleanup
     println!("\n🧹 Cleaning up...");
     device.set_digital_output(1, false)?;
-    device.set_pwm_duty_cycle(0, 0)?;
+    device.set_pwm_duty_cycle_for_pin(22, 0)?;
 
     println!("✅ Example completed successfully!");
     Ok(())

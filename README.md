@@ -17,11 +17,11 @@ A pure Rust implementation of the PoKeysLib for controlling PoKeys devices. This
 ### Digital & Analog I/O
 - **Digital I/O**: Pin configuration and digital input/output operations
 - **Analog I/O**: Multi-channel analog input with configurable reference voltage
-- **Pin Functions**: Digital input/output, analog input, PWM, encoder, counter, keyboard matrix
+- **Pin Functions**: Digital input/output, analog input, PWM (pins 17-22), encoder, counter, keyboard matrix
 - **Bulk Operations**: Optimized bulk pin configuration and state reading
 
 ### Advanced Control Systems
-- **PWM Control**: Multiple PWM channels with configurable frequency and duty cycle
+- **PWM Control**: 6 hardware PWM channels (pins 17-22) with 25MHz clock precision for servo control
 - **Encoder Support**: Quadrature encoder reading with 4x/2x sampling modes, position and velocity tracking
 - **Pulse Engine v2**: Stepper motor control with advanced pulse generation
 - **Matrix Operations**: Matrix keyboard scanning and LED matrix control
@@ -118,6 +118,37 @@ fn main() -> Result<()> {
         println!("Encoder position: {}", position);
         std::thread::sleep(std::time::Duration::from_millis(100));
     }
+}
+```
+
+### PWM Servo Control
+```rust
+use pokeys_lib::*;
+
+fn main() -> Result<()> {
+    let mut device = connect_to_device(0)?;
+
+    // Configure PWM for servo control on pin 22 (PWM1)
+    // PoKeys PWM operates at 25MHz clock frequency
+    device.set_pwm_period(500000)?; // 20ms period (0.020 × 25,000,000)
+    device.enable_pwm_for_pin(22, true)?;
+
+    // Servo positions in clock cycles
+    let positions = [
+        (60000, "0°"),   // Custom calibrated 0° position
+        (36000, "90°"),  // Custom calibrated 90° position  
+        (12000, "180°"), // Custom calibrated 180° position
+    ];
+
+    for (duty_cycles, angle) in positions.iter() {
+        println!("Moving to {}", angle);
+        device.set_pwm_duty_cycle_for_pin(22, *duty_cycles)?;
+        std::thread::sleep(std::time::Duration::from_secs(1));
+    }
+
+    // Disable PWM
+    device.enable_pwm_for_pin(22, false)?;
+    Ok(())
 }
 ```
 
