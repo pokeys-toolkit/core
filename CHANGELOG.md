@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.16.0] - 2025-09-10
+
+- fix: Add Default implementation for PwmData
+- feat: Implement 25MHz PWM control with servo calibration
+
 ## [0.15.0] - 2025-09-06
 
 - fix: resolve doctest compilation error in keyboard_matrix.rs
