@@ -1161,6 +1161,34 @@ impl PoKeysDevice {
 
         Ok(())
     }
+
+    /// Configure and control a servo motor
+    pub fn configure_servo(&mut self, config: crate::pwm::ServoConfig) -> Result<()> {
+        // Ensure PWM period is set for servo control (20ms = 500,000 cycles)
+        if self.pwm.pwm_period == 0 {
+            self.set_pwm_period(500000)?; // 20ms period for servo control
+        }
+        
+        // Enable PWM for the servo pin
+        self.enable_pwm_for_pin(config.pin, true)?;
+        
+        Ok(())
+    }
+
+    /// Set servo angle (for position servos)
+    pub fn set_servo_angle(&mut self, config: &crate::pwm::ServoConfig, angle: f32) -> Result<()> {
+        config.set_angle(self, angle)
+    }
+
+    /// Set servo speed (for speed servos)
+    pub fn set_servo_speed(&mut self, config: &crate::pwm::ServoConfig, speed: f32) -> Result<()> {
+        config.set_speed(self, speed)
+    }
+
+    /// Stop servo (for speed servos)
+    pub fn stop_servo(&mut self, config: &crate::pwm::ServoConfig) -> Result<()> {
+        config.stop(self)
+    }
 }
 
 // Default implementations for device structures

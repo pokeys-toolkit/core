@@ -126,6 +126,9 @@ pub use protocols::{
 // Re-export uSPIBridge functionality
 pub use protocols::{SegmentMapping, SegmentMappingType, USPIBridgeCommand, USPIBridgeConfig};
 
+// Re-export servo control functionality
+pub use pwm::{ServoConfig, ServoType};
+
 /// Library version information
 pub const VERSION_MAJOR: u8 = 0;
 pub const VERSION_MINOR: u8 = 3;

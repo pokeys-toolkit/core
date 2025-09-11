@@ -700,4 +700,109 @@ mod mock_tests {
         assert_eq!(device.get_analog_input(1).unwrap(), 1234);
         assert_eq!(device.get_encoder_value(0).unwrap(), 567);
     }
+
+    #[test]
+    fn test_servo_types() {
+        // Test 180-degree servo
+        let servo_180 = ServoConfig::one_eighty(22, 25000, 50000);
+        assert_eq!(servo_180.pin, 22);
+        match servo_180.servo_type {
+            ServoType::OneEighty { pos_0, pos_180 } => {
+                assert_eq!(pos_0, 25000);
+                assert_eq!(pos_180, 50000);
+            }
+            _ => panic!("Expected OneEighty servo type"),
+        }
+
+        // Test 360-degree position servo
+        let servo_360_pos = ServoConfig::three_sixty_position(21, 30000, 60000);
+        assert_eq!(servo_360_pos.pin, 21);
+        match servo_360_pos.servo_type {
+            ServoType::ThreeSixtyPosition { pos_0, pos_360 } => {
+                assert_eq!(pos_0, 30000);
+                assert_eq!(pos_360, 60000);
+            }
+            _ => panic!("Expected ThreeSixtyPosition servo type"),
+        }
+
+        // Test 360-degree speed servo
+        let servo_360_speed = ServoConfig::three_sixty_speed(20, 37500, 50000, 25000);
+        assert_eq!(servo_360_speed.pin, 20);
+        match servo_360_speed.servo_type {
+            ServoType::ThreeSixtySpeed { stop, clockwise, anti_clockwise } => {
+                assert_eq!(stop, 37500);
+                assert_eq!(clockwise, 50000);
+                assert_eq!(anti_clockwise, 25000);
+            }
+            _ => panic!("Expected ThreeSixtySpeed servo type"),
+        }
+    }
+
+    #[test]
+    fn test_servo_angle_calculations() {
+        // Test 180-degree servo angle validation
+        let servo_180 = ServoConfig::one_eighty(22, 25000, 50000);
+        
+        // Test angle range calculations
+        match servo_180.servo_type {
+            ServoType::OneEighty { pos_0, pos_180 } => {
+                let range = pos_180 as f32 - pos_0 as f32;
+                let angle_90 = (pos_0 as f32 + (90.0 / 180.0) * range) as u32;
+                assert_eq!(angle_90, 37500); // Should be midpoint
+            }
+            _ => panic!("Expected OneEighty servo type"),
+        }
+        
+        // Test 360-degree position servo calculations
+        let servo_360 = ServoConfig::three_sixty_position(21, 30000, 60000);
+        
+        match servo_360.servo_type {
+            ServoType::ThreeSixtyPosition { pos_0, pos_360 } => {
+                let range = pos_360 as f32 - pos_0 as f32;
+                let angle_180 = (pos_0 as f32 + (180.0 / 360.0) * range) as u32;
+                assert_eq!(angle_180, 45000); // Should be midpoint
+            }
+            _ => panic!("Expected ThreeSixtyPosition servo type"),
+        }
+    }
+
+    #[test]
+    fn test_servo_speed_calculations() {
+        let servo_speed = ServoConfig::three_sixty_speed(20, 37500, 50000, 25000);
+        
+        match servo_speed.servo_type {
+            ServoType::ThreeSixtySpeed { stop, clockwise, anti_clockwise } => {
+                // Test speed calculations
+                let cw_range = clockwise as f32 - stop as f32;
+                let acw_range = anti_clockwise as f32 - stop as f32;
+                
+                // 50% clockwise should be halfway between stop and clockwise
+                let speed_50_cw = (stop as f32 + (50.0 / 100.0) * cw_range) as u32;
+                assert_eq!(speed_50_cw, 43750);
+                
+                // 50% anti-clockwise should be halfway between stop and anti_clockwise
+                let speed_50_acw = (stop as f32 + (50.0 / 100.0) * acw_range) as u32;
+                assert_eq!(speed_50_acw, 31250);
+            }
+            _ => panic!("Expected ThreeSixtySpeed servo type"),
+        }
+    }
+
+    #[test]
+    fn test_servo_type_validation() {
+        // Test that servo types are correctly identified
+        let servo_180 = ServoConfig::one_eighty(22, 25000, 50000);
+        let servo_360_pos = ServoConfig::three_sixty_position(21, 30000, 60000);
+        let servo_360_speed = ServoConfig::three_sixty_speed(20, 37500, 50000, 25000);
+        
+        // Verify servo types
+        assert!(matches!(servo_180.servo_type, ServoType::OneEighty { .. }));
+        assert!(matches!(servo_360_pos.servo_type, ServoType::ThreeSixtyPosition { .. }));
+        assert!(matches!(servo_360_speed.servo_type, ServoType::ThreeSixtySpeed { .. }));
+        
+        // Verify pins
+        assert_eq!(servo_180.pin, 22);
+        assert_eq!(servo_360_pos.pin, 21);
+        assert_eq!(servo_360_speed.pin, 20);
+    }
 }
