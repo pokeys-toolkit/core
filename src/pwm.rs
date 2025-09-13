@@ -133,9 +133,9 @@ impl ServoConfig {
                 device.set_pwm_duty_cycle_for_pin(self.pin, *stop)
             }
             _ => {
-                return Err(PoKeysError::Parameter(
+                Err(PoKeysError::Parameter(
                     "Stop command only applies to speed servos".to_string(),
-                ));
+                ))
             }
         }
     }
