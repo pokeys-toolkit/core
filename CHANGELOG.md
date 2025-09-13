@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.17.0] - 2025-09-13
+
+- fix(fmt): Correcting cargo format issues
+- fix: Remove needless return statement in servo stop method
+- feat: Add servo control types and functionality
+
 ## [0.16.0] - 2025-09-10
 
 - fix: Add Default implementation for PwmData
