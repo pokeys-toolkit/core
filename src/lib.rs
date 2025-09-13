@@ -18,7 +18,7 @@
 //! ### Advanced Control Systems
 //! - PWM control with configurable frequency and duty cycle
 //! - Quadrature encoder support (4x/2x sampling modes)
-//! - Pulse Engine v2 for stepper motor control
+
 //! - Matrix keyboard scanning and LED matrix control
 //!
 //! ### Communication Protocols
