@@ -1,0 +1,388 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Device Management API - PoKeys Core Library</title>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 w-full z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="flex justify-between items-center py-4">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="text-gray-300 hover:text-white transition-colors">Home</a>
+						<a href="/core/getting-started" class="text-gray-300 hover:text-white transition-colors">Getting Started</a>
+						<a href="/core/examples/" class="text-gray-300 hover:text-white transition-colors">Examples</a>
+						<a href="/core/api/" class="text-white font-semibold">API Reference</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Main Content -->
+		<div class="pt-20 flex min-h-screen">
+			<!-- Sidebar -->
+			<aside class="w-80 bg-gray-800/50 border-r border-gray-700 fixed h-full overflow-y-auto">
+				<div class="p-6">
+					<a href="/core/api/" class="text-blue-400 hover:text-blue-300 mb-4 inline-block">← Back to API Reference</a>
+					<h2 class="text-xl font-bold mb-6 text-white">Device Management</h2>
+					
+					<!-- Quick Navigation -->
+					<nav class="space-y-1">
+						<a href="#connection" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors text-sm">
+							Connection Functions
+						</a>
+						<a href="#device-info" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors text-sm">
+							Device Information
+						</a>
+						<a href="#configuration" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors text-sm">
+							Configuration Management
+						</a>
+						<a href="#pin-capabilities" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors text-sm">
+							Pin Capabilities
+						</a>
+						<a href="#health-monitoring" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors text-sm">
+							Health Monitoring
+						</a>
+						<a href="#network-config" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors text-sm">
+							Network Configuration
+						</a>
+					</nav>
+				</div>
+			</aside>
+
+			<!-- Main Content Area -->
+			<main class="ml-80 flex-1 p-8">
+				<div class="max-w-4xl">
+					<!-- Header -->
+					<div class="mb-12">
+						<div class="flex items-center gap-4 mb-6">
+							<span class="px-3 py-1 bg-blue-600/20 text-blue-300 text-sm rounded-full">Device Management</span>
+						</div>
+						<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+							Device Management API
+						</h1>
+						<p class="text-xl text-gray-400">
+							Core device operations, connection management, and device information retrieval
+						</p>
+					</div>
+
+					<!-- Connection Functions -->
+					<section id="connection" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Connection Functions</h2>
+						
+						<!-- enumerate_usb_devices -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">enumerate_usb_devices</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn enumerate_usb_devices() -> Result&lt;i32&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Enumerates all connected USB PoKeys devices and returns the count of available devices.
+							</p>
+							<div class="grid md:grid-cols-2 gap-4 mb-4">
+								<div>
+									<h4 class="font-semibold text-green-400 mb-2">Returns</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>Result&lt;i32&gt;</code> - Number of USB devices found</li>
+									</ul>
+								</div>
+								<div>
+									<h4 class="font-semibold text-red-400 mb-2">Errors</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>PoKeysError::DeviceNotFound</code> - No USB devices found</li>
+										<li>• <code>PoKeysError::SystemError</code> - USB enumeration failed</li>
+									</ul>
+								</div>
+							</div>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>let device_count = enumerate_usb_devices()?;
+println!(\"Found {`{`}{`}`} USB devices\", device_count);</code></pre>
+							</div>
+						</div>
+
+						<!-- connect_to_device -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">connect_to_device</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn connect_to_device(device_index: u32) -> Result&lt;PoKeysDevice&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Connects to a USB PoKeys device by its enumeration index.
+							</p>
+							<div class="grid md:grid-cols-2 gap-4 mb-4">
+								<div>
+									<h4 class="font-semibold text-blue-400 mb-2">Parameters</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>device_index</code> - Zero-based device index</li>
+									</ul>
+								</div>
+								<div>
+									<h4 class="font-semibold text-green-400 mb-2">Returns</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>Result&lt;PoKeysDevice&gt;</code> - Connected device instance</li>
+									</ul>
+								</div>
+							</div>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>let mut device = connect_to_device(0)?;
+println!(\"Connected to device: {`{`}{`}`}\", device.device_data.device_name);</code></pre>
+							</div>
+						</div>
+
+						<!-- connect_to_device_with_serial -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">connect_to_device_with_serial</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn connect_to_device_with_serial(
+    serial_number: u32,
+    check_network: bool,
+) -> Result&lt;PoKeysDevice&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Connects to a PoKeys device using its serial number, with optional network device checking.
+							</p>
+							<div class="grid md:grid-cols-2 gap-4 mb-4">
+								<div>
+									<h4 class="font-semibold text-blue-400 mb-2">Parameters</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>serial_number</code> - Device serial number</li>
+										<li>• <code>check_network</code> - Also search network devices</li>
+									</ul>
+								</div>
+								<div>
+									<h4 class="font-semibold text-green-400 mb-2">Returns</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>Result&lt;PoKeysDevice&gt;</code> - Connected device instance</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Device Information -->
+					<section id="device-info" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Device Information</h2>
+						
+						<!-- get_device_data -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">get_device_data</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn get_device_data(&mut self) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Retrieves comprehensive device information including firmware version, device type, and capabilities.
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>device.get_device_data()?;
+println!(\"Device: {`{`}{`}`}\", device.device_data.device_name);
+println!(\"Firmware: {`{`}{`}`}.{`{`}{`}`}\", 
+    device.device_data.firmware_version_major,
+    device.device_data.firmware_version_minor);</code></pre>
+							</div>
+						</div>
+
+						<!-- get_connection_type -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">get_connection_type</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn get_connection_type(&self) -> DeviceConnectionType</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Returns the connection type used to communicate with the device.
+							</p>
+							<div class="grid md:grid-cols-2 gap-4 mb-4">
+								<div>
+									<h4 class="font-semibold text-green-400 mb-2">Returns</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>DeviceConnectionType::UsbDevice</code></li>
+										<li>• <code>DeviceConnectionType::NetworkDevice</code></li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Configuration Management -->
+					<section id="configuration" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Configuration Management</h2>
+						
+						<!-- save_configuration -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">save_configuration</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn save_configuration(&mut self) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Saves the current device configuration to non-volatile memory. Configuration persists after power cycles.
+							</p>
+							<div class="bg-blue-900/20 border border-blue-500/30 rounded p-4 mb-4">
+								<p class="text-blue-300 text-sm">
+									<strong>Note:</strong> Always save configuration after making changes to ensure settings persist across device resets.
+								</p>
+							</div>
+						</div>
+
+						<!-- clear_configuration -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">clear_configuration</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn clear_configuration(&mut self) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Clears all device configuration settings, returning the device to factory defaults.
+							</p>
+							<div class="bg-red-900/20 border border-red-500/30 rounded p-4 mb-4">
+								<p class="text-red-300 text-sm">
+									<strong>Warning:</strong> This operation cannot be undone. All pin configurations, PWM settings, and other customizations will be lost.
+								</p>
+							</div>
+						</div>
+
+						<!-- set_device_name -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">set_device_name</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn set_device_name(&mut self, name: &str) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Sets a custom name for the device (up to 20 characters).
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>device.set_device_name(\"My PoKeys Device\")?;
+device.save_configuration()?;</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Pin Capabilities -->
+					<section id="pin-capabilities" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Pin Capabilities</h2>
+						
+						<!-- is_pin_capability_supported -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">is_pin_capability_supported</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn is_pin_capability_supported(&self, pin: u32, capability: &str) -> bool</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Checks if a specific pin supports a given capability based on the device model.
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>if device.is_pin_capability_supported(22, \"PWM\") {`{`}
+    println!(\"Pin 22 supports PWM\");
+{`}`}</code></pre>
+							</div>
+						</div>
+
+						<!-- get_pin_capabilities -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">get_pin_capabilities</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn get_pin_capabilities(&self, pin: u32) -> Vec&lt;String&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Returns a list of all capabilities supported by the specified pin.
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>let capabilities = device.get_pin_capabilities(22);
+for cap in capabilities {`{`}
+    println!(\"Pin 22 supports: {`{`}{`}`}\", cap);
+{`}`}</code></pre>
+							</div>
+						</div>
+
+						<!-- validate_pin_capability -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">validate_pin_capability</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn validate_pin_capability(&self, pin: u32, capability: &str) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Validates that a pin supports a specific capability, returning an error if not supported.
+							</p>
+							<div class="grid md:grid-cols-2 gap-4 mb-4">
+								<div>
+									<h4 class="font-semibold text-red-400 mb-2">Errors</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>PoKeysError::InvalidPin</code> - Pin number out of range</li>
+										<li>• <code>PoKeysError::UnsupportedCapability</code> - Capability not supported</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Health Monitoring -->
+					<section id="health-monitoring" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Health Monitoring</h2>
+						
+						<!-- health_check -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">health_check</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn health_check(&mut self) -> HealthStatus</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Performs a comprehensive health check of the device, testing connectivity and performance metrics.
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>let health = device.health_check();
+println!(\"Connectivity: {`{`}:?{`}`}\", health.connectivity);
+println!(\"Success Rate: {`{`}:.1{`}`}%\", health.performance.success_rate * 100.0);</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Best Practices -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Best Practices</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<div class="space-y-4">
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-green-400">Connection Management</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Always enumerate devices before attempting to connect</li>
+										<li>• Use serial number connection for specific device targeting</li>
+										<li>• Handle connection errors gracefully with retry logic</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-blue-400">Configuration</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Validate pin capabilities before configuration</li>
+										<li>• Save configuration after making changes</li>
+										<li>• Use health monitoring for production systems</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-purple-400">Performance</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Cache device information to avoid repeated queries</li>
+										<li>• Use bulk operations when available</li>
+										<li>• Monitor I2C metrics for communication health</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</section>
+				</div>
+			</main>
+		</div>
+	</body>
+</html>
