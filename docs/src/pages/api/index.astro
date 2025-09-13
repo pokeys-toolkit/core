@@ -1,0 +1,312 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>API Reference - PoKeys Core Library</title>
+		<style>
+			aside .sidebar-nav a {
+				display: block !important;
+				width: 100% !important;
+			}
+			aside .sidebar-nav {
+				display: flex !important;
+				flex-direction: column !important;
+			}
+		</style>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 left-0 right-0 z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800 h-16">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+				<div class="flex justify-between items-center h-full">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="text-gray-300 hover:text-white transition-colors">Home</a>
+						<a href="/core/getting-started" class="text-gray-300 hover:text-white transition-colors">Getting Started</a>
+						<a href="/core/examples/" class="text-gray-300 hover:text-white transition-colors">Examples</a>
+						<a href="/core/api/" class="text-white font-semibold">API Reference</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Main Content -->
+		<div class="flex min-h-screen pt-16">
+			<!-- Sidebar -->
+			<aside class="w-80 bg-gray-800/50 border-r border-gray-700 overflow-y-auto flex-shrink-0">
+				<div class="p-6">
+					<h2 class="text-xl font-bold mb-6 text-white">API Reference</h2>
+					
+					<!-- Core APIs -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Core APIs</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/device" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Device Management
+							</a>
+							<a href="/core/api/connection" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Connection & Enumeration
+							</a>
+							<a href="/core/api/models" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Device Models
+							</a>
+						</div>
+					</div>
+
+					<!-- I/O Operations -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">I/O Operations</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/digital-io" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Digital I/O
+							</a>
+							<a href="/core/api/analog-io" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Analog I/O
+							</a>
+							<a href="/core/api/pin-functions" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Pin Functions
+							</a>
+						</div>
+					</div>
+
+					<!-- Control Systems -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Control Systems</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/pwm" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								PWM Control
+							</a>
+							<a href="/core/api/pulse-engine" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Pulse Engine v2
+							</a>
+							<a href="/core/api/encoders" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Encoders
+							</a>
+							<a href="/core/api/pulse-engine" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Pulse Engine v2
+							</a>
+							<a href="/core/api/servo-control" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Servo Control
+							</a>
+						</div>
+					</div>
+
+					<!-- Communication -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Communication</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/spi" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								SPI Protocol
+							</a>
+							<a href="/core/api/i2c" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								I2C Protocol
+							</a>
+							<a href="/core/api/uart" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								UART Serial
+							</a>
+							<a href="/core/api/can" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								CAN Bus
+							</a>
+							<a href="/core/api/onewire" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								1-Wire Protocol
+							</a>
+						</div>
+					</div>
+
+					<!-- Matrix Operations -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Matrix Operations</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/matrix-keyboard" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Matrix Keyboard
+							</a>
+							<a href="/core/api/led-matrix" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								LED Matrix
+							</a>
+						</div>
+					</div>
+
+					<!-- Display & Sensors -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Display & Sensors</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/lcd" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								LCD Display
+							</a>
+							<a href="/core/api/sensors" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								EasySensors
+							</a>
+							<a href="/core/api/rtc" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Real-Time Clock
+							</a>
+						</div>
+					</div>
+
+					<!-- Error Handling -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Error Handling</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/errors" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Error Types
+							</a>
+							<a href="/core/api/result-handling" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Result Handling
+							</a>
+						</div>
+					</div>
+
+					<!-- Types & Utilities -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Types & Utilities</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/types" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Core Types
+							</a>
+							<a href="/core/api/constants" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Constants
+							</a>
+						</div>
+					</div>
+				</div>
+			</aside>
+
+			<!-- Main Content Area -->
+			<main class="flex-1 p-8 min-h-screen">
+				<div class="max-w-4xl">
+					<!-- Header -->
+					<div class="mb-12">
+						<div class="flex items-center gap-4 mb-6">
+							<span class="px-3 py-1 bg-blue-600/20 text-blue-300 text-sm rounded-full">API Reference</span>
+						</div>
+						<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+							PoKeys Core Library API
+						</h1>
+						<p class="text-xl text-gray-400">
+							Complete API reference for the PoKeys Core Library - a pure Rust implementation for controlling PoKeys devices
+						</p>
+					</div>
+
+					<!-- Overview -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<p class="text-gray-300 mb-4">
+								The PoKeys Core Library provides a comprehensive, type-safe API for controlling PoKeys devices. 
+								This documentation covers all public APIs, their parameters, return types, and usage examples.
+							</p>
+							<div class="grid md:grid-cols-2 gap-6">
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-blue-400">Key Features</h3>
+									<ul class="text-gray-300 space-y-1">
+										<li>• Pure Rust implementation</li>
+										<li>• Thread-safe concurrent access</li>
+										<li>• Comprehensive error handling</li>
+										<li>• Device model validation</li>
+										<li>• Performance optimized</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-purple-400">Supported Devices</h3>
+									<ul class="text-gray-300 space-y-1">
+										<li>• PoKeys55 v3</li>
+										<li>• PoKeys56U/56E</li>
+										<li>• PoKeys57U/57E</li>
+										<li>• PoKeys58EU</li>
+										<li>• Custom devices</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Quick Start -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Quick Start</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<p class="text-gray-300 mb-4">
+								Basic example showing device connection and pin control:
+							</p>
+							<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">use pokeys_lib::*;
+
+fn main() -> Result&lt;()&gt; {`{`}
+    // Enumerate and connect to first device
+    let device_count = enumerate_usb_devices()?;
+    if device_count > 0 {`{`}
+        let mut device = connect_to_device(0)?;
+
+        // Configure pin 1 as digital output
+        device.set_pin_function(1, PinFunction::DigitalOutput)?;
+
+        // Turn on pin 1
+        device.set_digital_output(1, true)?;
+
+        println!(\"Pin 1 is now HIGH\");
+    {`}`}
+    Ok(())
+{`}`}</code></pre>
+						</div>
+					</section>
+
+					<!-- API Categories -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">API Categories</h2>
+						<div class="flex flex-col gap-4">
+							<a href="/core/api/device" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
+								<h3 class="text-lg font-semibold mb-2 text-blue-400">Device Management</h3>
+								<p class="text-gray-300 text-sm">Core device operations, connection management, and device information</p>
+							</a>
+							<a href="/core/api/digital-io" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
+								<h3 class="text-lg font-semibold mb-2 text-green-400">Digital I/O</h3>
+								<p class="text-gray-300 text-sm">Digital input/output operations and pin configuration</p>
+							</a>
+							<a href="/core/api/pwm" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
+								<h3 class="text-lg font-semibold mb-2 text-purple-400">PWM Control</h3>
+								<p class="text-gray-300 text-sm">High-precision PWM generation and servo control</p>
+							</a>
+							<a href="/core/api/pulse-engine" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
+								<h3 class="text-lg font-semibold mb-2 text-purple-400">Pulse Engine v2</h3>
+								<p class="text-gray-300 text-sm">Advanced stepper motor control and motion coordination</p>
+							</a>
+							<a href="/core/api/spi" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
+								<h3 class="text-lg font-semibold mb-2 text-yellow-400">SPI Protocol</h3>
+								<p class="text-gray-300 text-sm">SPI master operations with multiple chip select support</p>
+							</a>
+							<a href="/core/api/encoders" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
+								<h3 class="text-lg font-semibold mb-2 text-red-400">Encoders</h3>
+								<p class="text-gray-300 text-sm">Quadrature encoder reading and position tracking</p>
+							</a>
+							<a href="/core/api/matrix-keyboard" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
+								<h3 class="text-lg font-semibold mb-2 text-indigo-400">Matrix Operations</h3>
+								<p class="text-gray-300 text-sm">Matrix keyboard scanning and LED matrix control</p>
+							</a>
+						</div>
+					</section>
+
+					<!-- Navigation -->
+					<section>
+						<h2 class="text-2xl font-bold mb-4 text-white">Navigation</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<p class="text-gray-300 mb-4">
+								Use the sidebar to navigate through different API sections. Each section provides:
+							</p>
+							<ul class="text-gray-300 space-y-2">
+								<li>• <strong>Function signatures</strong> with parameter types and return values</li>
+								<li>• <strong>Detailed descriptions</strong> of functionality and behavior</li>
+								<li>• <strong>Code examples</strong> showing practical usage</li>
+								<li>• <strong>Error conditions</strong> and handling strategies</li>
+								<li>• <strong>Performance notes</strong> and best practices</li>
+							</ul>
+						</div>
+					</section>
+				</div>
+			</main>
+		</div>
+	</body>
+</html>

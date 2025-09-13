@@ -22,8 +22,9 @@ A pure Rust implementation of the PoKeysLib for controlling PoKeys devices. This
 
 ### Advanced Control Systems
 - **PWM Control**: 6 hardware PWM channels (pins 17-22) with 25MHz clock precision for servo control
-- **Encoder Support**: Quadrature encoder reading with 4x/2x sampling modes, position and velocity tracking
 - **Pulse Engine v2**: Stepper motor control with advanced pulse generation
+- **Encoder Support**: Quadrature encoder reading with 4x/2x sampling modes, position and velocity tracking
+
 - **Matrix Operations**: Matrix keyboard scanning and LED matrix control
 - **Matrix Keyboard**: 4x4 to 16x8 matrix keyboard support with real-time key detection
 
