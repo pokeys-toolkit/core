@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.18.0] - 2025-09-13
+
+- feat: Add remaining API documentation pages
+- feat: Add comprehensive API documentation with professional layout
+- fix: Escape all curly braces in Astro code blocks
+- fix: Escape Astro template syntax in PWM documentation
+
 ## [0.17.0] - 2025-09-13
 
 - fix(fmt): Correcting cargo format issues
