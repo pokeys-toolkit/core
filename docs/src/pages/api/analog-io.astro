@@ -1,0 +1,467 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Analog I/O API - PoKeys Core Library</title>
+		<style>
+			aside .sidebar-nav a {
+				display: block !important;
+				width: 100% !important;
+			}
+			aside .sidebar-nav {
+				display: flex !important;
+				flex-direction: column !important;
+			}
+		</style>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 left-0 right-0 z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800 h-16">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+				<div class="flex justify-between items-center h-full">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="text-gray-300 hover:text-white transition-colors">Home</a>
+						<a href="/core/getting-started" class="text-gray-300 hover:text-white transition-colors">Getting Started</a>
+						<a href="/core/examples/" class="text-gray-300 hover:text-white transition-colors">Examples</a>
+						<a href="/core/api/" class="text-white font-semibold">API Reference</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Main Content -->
+		<div class="flex min-h-screen pt-16">
+			<!-- Sidebar -->
+			<aside class="w-80 bg-gray-800/50 border-r border-gray-700 overflow-y-auto flex-shrink-0">
+				<div class="p-6">
+					<a href="/core/api/" class="text-blue-400 hover:text-blue-300 mb-4 inline-block">← Back to API Reference</a>
+					<h2 class="text-xl font-bold mb-6 text-white">API Reference</h2>
+					
+					<!-- Core APIs -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Core APIs</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/device" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Device Management
+							</a>
+							<a href="/core/api/connection" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Connection & Enumeration
+							</a>
+							<a href="/core/api/models" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Device Models
+							</a>
+						</div>
+					</div>
+
+					<!-- I/O Operations -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">I/O Operations</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/digital-io" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Digital I/O
+							</a>
+							<a href="/core/api/analog-io" class="block px-3 py-2 text-white bg-gray-700/50 rounded-md transition-colors">
+								Analog I/O
+							</a>
+							<a href="/core/api/pin-functions" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Pin Functions
+							</a>
+						</div>
+					</div>
+
+					<!-- Control Systems -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Control Systems</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/pwm" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								PWM Control
+							</a>
+							<a href="/core/api/encoders" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Encoders
+							</a>
+							<a href="/core/api/pulse-engine" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Pulse Engine v2
+							</a>
+							<a href="/core/api/servo-control" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Servo Control
+							</a>
+						</div>
+					</div>
+
+					<!-- Communication -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Communication</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/spi" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								SPI Protocol
+							</a>
+							<a href="/core/api/i2c" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								I2C Protocol
+							</a>
+							<a href="/core/api/uart" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								UART Serial
+							</a>
+							<a href="/core/api/can" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								CAN Bus
+							</a>
+							<a href="/core/api/onewire" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								1-Wire Protocol
+							</a>
+						</div>
+					</div>
+
+					<!-- Matrix Operations -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Matrix Operations</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/matrix-keyboard" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Matrix Keyboard
+							</a>
+							<a href="/core/api/led-matrix" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								LED Matrix
+							</a>
+						</div>
+					</div>
+
+					<!-- Display & Sensors -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Display & Sensors</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/lcd" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								LCD Display
+							</a>
+							<a href="/core/api/sensors" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								EasySensors
+							</a>
+							<a href="/core/api/rtc" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Real-Time Clock
+							</a>
+						</div>
+					</div>
+
+					<!-- Error Handling -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Error Handling</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/errors" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Error Types
+							</a>
+							<a href="/core/api/result-handling" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Result Handling
+							</a>
+						</div>
+					</div>
+
+					<!-- Types & Utilities -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Types & Utilities</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/types" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Core Types
+							</a>
+							<a href="/core/api/constants" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Constants
+							</a>
+						</div>
+					</div>
+				</div>
+			</aside>
+
+			<!-- Main Content Area -->
+			<main class="flex-1 p-8 min-h-screen">
+				<div class="max-w-4xl">
+					<!-- Header -->
+					<div class="mb-12">
+						<div class="flex items-center gap-4 mb-6">
+							<span class="px-3 py-1 bg-teal-600/20 text-teal-300 text-sm rounded-full">Analog I/O</span>
+						</div>
+						<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-teal-400 to-cyan-500 bg-clip-text text-transparent">
+							Analog I/O API
+						</h1>
+						<p class="text-xl text-gray-400">
+							Analog input reading and output control with configurable reference voltage
+						</p>
+					</div>
+
+					<!-- Overview -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<p class="text-gray-300 mb-4">
+								The Analog I/O API provides functions for reading analog voltages and controlling analog outputs. 
+								PoKeys devices support multi-channel analog input with configurable reference voltage and precision analog output control.
+							</p>
+							<div class="grid md:grid-cols-2 gap-6">
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-teal-400">Key Features</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Multi-channel analog input reading</li>
+										<li>• Configurable reference voltage</li>
+										<li>• 12-bit ADC resolution (0-4095)</li>
+										<li>• Analog output control</li>
+										<li>• Bulk analog operations</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-cyan-400">Specifications</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• <strong>Input Range:</strong> 0V to reference voltage</li>
+										<li>• <strong>Resolution:</strong> 12-bit (4096 levels)</li>
+										<li>• <strong>Reference:</strong> Configurable (typically 3.3V or 5V)</li>
+										<li>• <strong>Channels:</strong> Device dependent</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Analog Input -->
+					<section id="analog-input" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Analog Input</h2>
+						
+						<!-- get_analog_input -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-teal-400">get_analog_input</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn get_analog_input(&mut self, pin: u32) -> Result&lt;u32&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Reads the analog voltage on a specific pin and returns the raw ADC value (0-4095).
+							</p>
+							<div class="grid md:grid-cols-2 gap-4 mb-4">
+								<div>
+									<h4 class="font-semibold text-blue-400 mb-2">Parameters</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>pin</code> - Pin number configured for analog input</li>
+									</ul>
+								</div>
+								<div>
+									<h4 class="font-semibold text-green-400 mb-2">Returns</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>u32</code> - Raw ADC value (0-4095)</li>
+									</ul>
+								</div>
+							</div>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Configure pin for analog input
+device.set_pin_function(1, PinFunction::AnalogInput)?;
+
+// Read analog value
+let raw_value = device.get_analog_input(1)?;
+
+// Convert to voltage (assuming 3.3V reference)
+let voltage = (raw_value as f32 / 4095.0) * 3.3;
+println!(\"Pin 1: {`{`}:.2{`}`}V (raw: {`{`}{`}`})\", voltage, raw_value);</code></pre>
+							</div>
+						</div>
+
+						<!-- read_analog_inputs -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-teal-400">read_analog_inputs</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn read_analog_inputs(&mut self) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Reads all analog input channels in a single operation. Results are stored in the device's pin data structure.
+							</p>
+							<div class="bg-blue-900/20 border border-blue-500/30 rounded p-4 mb-4">
+								<p class="text-blue-300 text-sm">
+									<strong>Performance:</strong> This bulk operation is more efficient than reading channels individually.
+								</p>
+							</div>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Read all analog inputs at once
+device.read_analog_inputs()?;
+
+// Access individual channel values
+for pin in 1..=8 {`{`}
+    if device.pins[pin - 1].is_analog_input() {`{`}
+        let value = device.pins[pin - 1].analog_input;
+        let voltage = (value as f32 / 4095.0) * 3.3;
+        println!(\"Pin {`{`}{`}`}: {`{`}:.2{`}`}V\", pin, voltage);
+    {`}`}
+{`}`}</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Analog Output -->
+					<section id="analog-output" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Analog Output</h2>
+						
+						<!-- set_analog_output -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-teal-400">set_analog_output</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn set_analog_output(&mut self, pin: u32, value: u32) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Sets the analog output value for a specific pin. The value is typically a DAC value or PWM duty cycle.
+							</p>
+							<div class="grid md:grid-cols-2 gap-4 mb-4">
+								<div>
+									<h4 class="font-semibold text-blue-400 mb-2">Parameters</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>pin</code> - Pin number configured for analog output</li>
+										<li>• <code>value</code> - Output value (range depends on implementation)</li>
+									</ul>
+								</div>
+								<div>
+									<h4 class="font-semibold text-red-400 mb-2">Requirements</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• Pin must support analog output capability</li>
+										<li>• Pin must be configured for analog output</li>
+									</ul>
+								</div>
+							</div>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Configure pin for analog output
+device.set_pin_function(10, PinFunction::AnalogOutput)?;
+
+// Set output to mid-range value
+device.set_analog_output(10, 2048)?;
+
+// Ramp output from 0 to maximum
+for value in (0..=4095).step_by(100) {`{`}
+    device.set_analog_output(10, value)?;
+    std::thread::sleep(std::time::Duration::from_millis(10));
+{`}`}</code></pre>
+							</div>
+						</div>
+
+						<!-- write_analog_outputs -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-teal-400">write_analog_outputs</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn write_analog_outputs(&mut self) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Writes all analog output values to the device in a single operation. Use after modifying multiple output values.
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Set multiple analog outputs
+device.pins[9].analog_output = 1024;   // Pin 10
+device.pins[10].analog_output = 2048;  // Pin 11
+device.pins[11].analog_output = 3072;  // Pin 12
+
+// Write all changes at once
+device.write_analog_outputs()?;</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Voltage Conversion -->
+					<section id="voltage-conversion" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Voltage Conversion</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<p class="text-gray-300 mb-4">
+								Converting between raw ADC values and actual voltages requires knowing the reference voltage.
+							</p>
+							<div class="grid md:grid-cols-2 gap-6">
+								<div>
+									<h3 class="text-lg font-semibold mb-3 text-teal-400">ADC to Voltage</h3>
+									<div class="bg-gray-900 rounded p-4">
+										<pre class="text-gray-300 text-sm"><code>// Formula: V = (ADC / 4095) * Vref
+let voltage = (adc_value as f32 / 4095.0) * reference_voltage;
+
+// Example with 3.3V reference
+let voltage_3v3 = (adc_value as f32 / 4095.0) * 3.3;
+
+// Example with 5V reference  
+let voltage_5v = (adc_value as f32 / 4095.0) * 5.0;</code></pre>
+									</div>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-3 text-cyan-400">Voltage to ADC</h3>
+									<div class="bg-gray-900 rounded p-4">
+										<pre class="text-gray-300 text-sm"><code>// Formula: ADC = (V / Vref) * 4095
+let adc_value = ((voltage / reference_voltage) * 4095.0) as u32;
+
+// Example: 1.65V with 3.3V reference
+let adc_1v65 = ((1.65 / 3.3) * 4095.0) as u32; // = 2047
+
+// Clamp to valid range
+let adc_clamped = adc_value.min(4095);</code></pre>
+									</div>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Common Applications -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Common Applications</h2>
+						<div class="grid md:grid-cols-2 gap-6">
+							<div class="bg-gray-800 rounded-lg p-6">
+								<h3 class="text-lg font-semibold mb-3 text-green-400">Sensor Reading</h3>
+								<div class="bg-gray-900 rounded p-4">
+									<pre class="text-gray-300 text-xs"><code>// Temperature sensor (e.g., TMP36)
+let adc_value = device.get_analog_input(1)?;
+let voltage = (adc_value as f32 / 4095.0) * 3.3;
+let temp_c = (voltage - 0.5) * 100.0;
+println!(\"Temperature: {`{`}:.1{`}`}°C\", temp_c);</code></pre>
+								</div>
+							</div>
+							
+							<div class="bg-gray-800 rounded-lg p-6">
+								<h3 class="text-lg font-semibold mb-3 text-blue-400">Potentiometer Reading</h3>
+								<div class="bg-gray-900 rounded p-4">
+									<pre class="text-gray-300 text-xs"><code>// Read potentiometer position (0-100%)
+let adc_value = device.get_analog_input(2)?;
+let percentage = (adc_value as f32 / 4095.0) * 100.0;
+println!(\"Position: {`{`}:.1{`}`}%\", percentage);</code></pre>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Best Practices -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Best Practices</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<div class="space-y-4">
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-green-400">Measurement Accuracy</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Use appropriate reference voltage for your measurement range</li>
+										<li>• Allow settling time between channel switches</li>
+										<li>• Average multiple readings for better accuracy</li>
+										<li>• Consider input impedance effects</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-blue-400">Performance</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Use bulk read operations for multiple channels</li>
+										<li>• Cache readings when update rate is not critical</li>
+										<li>• Consider sampling rate requirements</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-purple-400">Signal Conditioning</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Use appropriate filtering for noisy signals</li>
+										<li>• Consider voltage dividers for signals above reference</li>
+										<li>• Implement proper grounding and shielding</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</section>
+				</div>
+			</main>
+		</div>
+	</body>
+</html>

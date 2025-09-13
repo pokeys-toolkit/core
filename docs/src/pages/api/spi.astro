@@ -7,7 +7,7 @@
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<title>API Reference - PoKeys Core Library</title>
+		<title>SPI Protocol API - PoKeys Core Library</title>
 		<style>
 			aside .sidebar-nav a {
 				display: block !important;
@@ -42,6 +42,7 @@
 			<!-- Sidebar -->
 			<aside class="w-80 bg-gray-800/50 border-r border-gray-700 overflow-y-auto flex-shrink-0">
 				<div class="p-6">
+					<a href="/core/api/" class="text-blue-400 hover:text-blue-300 mb-4 inline-block">← Back to API Reference</a>
 					<h2 class="text-xl font-bold mb-6 text-white">API Reference</h2>
 					
 					<!-- Core APIs -->
@@ -99,7 +100,7 @@
 					<div class="mb-6">
 						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Communication</h3>
 						<div class="space-y-1 sidebar-nav">
-							<a href="/core/api/spi" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+							<a href="/core/api/spi" class="block px-3 py-2 text-white bg-gray-700/50 rounded-md transition-colors">
 								SPI Protocol
 							</a>
 							<a href="/core/api/i2c" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
@@ -180,13 +181,13 @@
 					<!-- Header -->
 					<div class="mb-12">
 						<div class="flex items-center gap-4 mb-6">
-							<span class="px-3 py-1 bg-blue-600/20 text-blue-300 text-sm rounded-full">API Reference</span>
+							<span class="px-3 py-1 bg-yellow-600/20 text-yellow-300 text-sm rounded-full">SPI Protocol</span>
 						</div>
-						<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-							PoKeys Core Library API
+						<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+							SPI Protocol API
 						</h1>
 						<p class="text-xl text-gray-400">
-							Complete API reference for the PoKeys Core Library - a pure Rust implementation for controlling PoKeys devices
+							SPI master operations with multiple chip select support and automatic pin reservation
 						</p>
 					</div>
 
@@ -195,107 +196,129 @@
 						<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
 						<div class="bg-gray-800 rounded-lg p-6">
 							<p class="text-gray-300 mb-4">
-								The PoKeys Core Library provides a comprehensive, type-safe API for controlling PoKeys devices. 
-								This documentation covers all public APIs, their parameters, return types, and usage examples.
+								The SPI Protocol API provides full SPI master support with automatic pin reservation and multiple chip select management. 
+								PoKeys devices support 31-33 chip select capable pins depending on the model.
 							</p>
 							<div class="grid md:grid-cols-2 gap-6">
 								<div>
-									<h3 class="text-lg font-semibold mb-2 text-blue-400">Key Features</h3>
-									<ul class="text-gray-300 space-y-1">
-										<li>• Pure Rust implementation</li>
-										<li>• Thread-safe concurrent access</li>
-										<li>• Comprehensive error handling</li>
-										<li>• Device model validation</li>
-										<li>• Performance optimized</li>
+									<h3 class="text-lg font-semibold mb-2 text-yellow-400">Key Features</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Full SPI master support</li>
+										<li>• Multiple chip select pins (31-33 per device)</li>
+										<li>• Automatic pin reservation (MOSI, CLK)</li>
+										<li>• Configurable clock speed and mode</li>
+										<li>• Hardware constraint enforcement</li>
 									</ul>
 								</div>
 								<div>
-									<h3 class="text-lg font-semibold mb-2 text-purple-400">Supported Devices</h3>
-									<ul class="text-gray-300 space-y-1">
-										<li>• PoKeys55 v3</li>
-										<li>• PoKeys56U/56E</li>
-										<li>• PoKeys57U/57E</li>
-										<li>• PoKeys58EU</li>
-										<li>• Custom devices</li>
+									<h3 class="text-lg font-semibold mb-2 text-orange-400">Pin Assignments</h3>
+									<ul class="text-gray-300 space-y-1 text-sm font-mono">
+										<li>• <strong>Pin 23 (MOSI)</strong> - Master Out Slave In</li>
+										<li>• <strong>Pin 24 (MISO)</strong> - Master In Slave Out</li>
+										<li>• <strong>Pin 25 (CLK)</strong> - Clock signal</li>
+										<li>• <strong>CS Pins</strong> - Various pins support chip select</li>
 									</ul>
 								</div>
 							</div>
 						</div>
 					</section>
 
-					<!-- Quick Start -->
+					<!-- Pin Reservation -->
 					<section class="mb-12">
-						<h2 class="text-2xl font-bold mb-4 text-white">Quick Start</h2>
+						<h2 class="text-2xl font-bold mb-6 text-white">Automatic Pin Reservation</h2>
+						<div class="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
+							<h3 class="text-red-400 font-semibold mb-3">Important: Hardware Constraints</h3>
+							<ul class="text-gray-300 space-y-2 text-sm">
+								<li>• <strong>Pin 23 (MOSI)</strong> and <strong>Pin 25 (CLK)</strong> are automatically reserved when SPI is enabled</li>
+								<li>• These pins cannot be used for other functions while SPI is active</li>
+								<li>• Configuration validation prevents conflicts</li>
+								<li>• Use <code>is_pin_capability_supported()</code> to check CS pin availability</li>
+							</ul>
+						</div>
+					</section>
+
+					<!-- Basic SPI Operations -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Basic SPI Operations</h2>
 						<div class="bg-gray-800 rounded-lg p-6">
-							<p class="text-gray-300 mb-4">
-								Basic example showing device connection and pin control:
-							</p>
-							<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">use pokeys_lib::*;
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example Usage</h4>
+								<pre class="text-gray-300"><code>use pokeys_lib::*;
 
 fn main() -> Result&lt;()&gt; {`{`}
-    // Enumerate and connect to first device
-    let device_count = enumerate_usb_devices()?;
-    if device_count > 0 {`{`}
-        let mut device = connect_to_device(0)?;
+    let mut device = connect_to_device(0)?;
 
-        // Configure pin 1 as digital output
-        device.set_pin_function(1, PinFunction::DigitalOutput)?;
+    // Initialize SPI (automatically reserves pins 23 and 25)
+    device.spi_init()?;
 
-        // Turn on pin 1
-        device.set_digital_output(1, true)?;
+    // Configure chip select pin
+    let cs_pin = 10;
+    device.validate_pin_capability(cs_pin, "SPI_CS")?;
 
-        println!(\"Pin 1 is now HIGH\");
-    {`}`}
+    // SPI transaction
+    let tx_data = vec![0x01, 0x02, 0x03];
+    let rx_data = device.spi_transfer(cs_pin, &tx_data)?;
+
+    println!(\"Received: {`{`}:?{`}`}\", rx_data);
     Ok(())
 {`}`}</code></pre>
+							</div>
 						</div>
 					</section>
 
-					<!-- API Categories -->
+					<!-- Device Model Support -->
 					<section class="mb-12">
-						<h2 class="text-2xl font-bold mb-6 text-white">API Categories</h2>
-						<div class="flex flex-col gap-4">
-							<a href="/core/api/device" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
-								<h3 class="text-lg font-semibold mb-2 text-blue-400">Device Management</h3>
-								<p class="text-gray-300 text-sm">Core device operations, connection management, and device information</p>
-							</a>
-							<a href="/core/api/digital-io" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
-								<h3 class="text-lg font-semibold mb-2 text-green-400">Digital I/O</h3>
-								<p class="text-gray-300 text-sm">Digital input/output operations and pin configuration</p>
-							</a>
-							<a href="/core/api/pwm" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
-								<h3 class="text-lg font-semibold mb-2 text-purple-400">PWM Control</h3>
-								<p class="text-gray-300 text-sm">High-precision PWM generation and servo control</p>
-							</a>
-							<a href="/core/api/spi" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
-								<h3 class="text-lg font-semibold mb-2 text-yellow-400">SPI Protocol</h3>
-								<p class="text-gray-300 text-sm">SPI master operations with multiple chip select support</p>
-							</a>
-							<a href="/core/api/encoders" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
-								<h3 class="text-lg font-semibold mb-2 text-red-400">Encoders</h3>
-								<p class="text-gray-300 text-sm">Quadrature encoder reading and position tracking</p>
-							</a>
-							<a href="/core/api/matrix-keyboard" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
-								<h3 class="text-lg font-semibold mb-2 text-indigo-400">Matrix Operations</h3>
-								<p class="text-gray-300 text-sm">Matrix keyboard scanning and LED matrix control</p>
-							</a>
+						<h2 class="text-2xl font-bold mb-6 text-white">Device Model Support</h2>
+						<div class="bg-gray-800 rounded-lg p-6 overflow-x-auto">
+							<table class="w-full text-sm">
+								<thead>
+									<tr class="border-b border-gray-600">
+										<th class="text-left py-2 text-yellow-400">Device Model</th>
+										<th class="text-left py-2 text-orange-400">Total Pins</th>
+										<th class="text-left py-2 text-green-400">CS Capable Pins</th>
+										<th class="text-left py-2 text-blue-400">Reserved Pins</th>
+									</tr>
+								</thead>
+								<tbody class="text-gray-300">
+									<tr class="border-b border-gray-700">
+										<td class="py-2 font-semibold">PoKeys56U/56E</td>
+										<td class="py-2">55</td>
+										<td class="py-2">31</td>
+										<td class="py-2">23 (MOSI), 25 (CLK)</td>
+									</tr>
+									<tr class="border-b border-gray-700">
+										<td class="py-2 font-semibold">PoKeys57U/57E</td>
+										<td class="py-2">57</td>
+										<td class="py-2">33</td>
+										<td class="py-2">23 (MOSI), 25 (CLK)</td>
+									</tr>
+								</tbody>
+							</table>
 						</div>
 					</section>
 
-					<!-- Navigation -->
-					<section>
-						<h2 class="text-2xl font-bold mb-4 text-white">Navigation</h2>
+					<!-- Best Practices -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Best Practices</h2>
 						<div class="bg-gray-800 rounded-lg p-6">
-							<p class="text-gray-300 mb-4">
-								Use the sidebar to navigate through different API sections. Each section provides:
-							</p>
-							<ul class="text-gray-300 space-y-2">
-								<li>• <strong>Function signatures</strong> with parameter types and return values</li>
-								<li>• <strong>Detailed descriptions</strong> of functionality and behavior</li>
-								<li>• <strong>Code examples</strong> showing practical usage</li>
-								<li>• <strong>Error conditions</strong> and handling strategies</li>
-								<li>• <strong>Performance notes</strong> and best practices</li>
-							</ul>
+							<div class="space-y-4">
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-green-400">Pin Planning</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Reserve pins 23 and 25 for SPI before other pin assignments</li>
+										<li>• Validate CS pin capability before configuration</li>
+										<li>• Plan peripheral connections based on available CS pins</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-blue-400">Performance</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Use appropriate clock speeds for your peripherals</li>
+										<li>• Minimize CS transitions for better performance</li>
+										<li>• Consider using bulk transfers for large data</li>
+									</ul>
+								</div>
+							</div>
 						</div>
 					</section>
 				</div>

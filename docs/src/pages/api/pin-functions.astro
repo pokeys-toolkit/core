@@ -7,7 +7,7 @@
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<title>API Reference - PoKeys Core Library</title>
+		<title>Pin Functions API - PoKeys Core Library</title>
 		<style>
 			aside .sidebar-nav a {
 				display: block !important;
@@ -42,6 +42,7 @@
 			<!-- Sidebar -->
 			<aside class="w-80 bg-gray-800/50 border-r border-gray-700 overflow-y-auto flex-shrink-0">
 				<div class="p-6">
+					<a href="/core/api/" class="text-blue-400 hover:text-blue-300 mb-4 inline-block">← Back to API Reference</a>
 					<h2 class="text-xl font-bold mb-6 text-white">API Reference</h2>
 					
 					<!-- Core APIs -->
@@ -70,7 +71,7 @@
 							<a href="/core/api/analog-io" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
 								Analog I/O
 							</a>
-							<a href="/core/api/pin-functions" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+							<a href="/core/api/pin-functions" class="block px-3 py-2 text-white bg-gray-700/50 rounded-md transition-colors">
 								Pin Functions
 							</a>
 						</div>
@@ -180,13 +181,13 @@
 					<!-- Header -->
 					<div class="mb-12">
 						<div class="flex items-center gap-4 mb-6">
-							<span class="px-3 py-1 bg-blue-600/20 text-blue-300 text-sm rounded-full">API Reference</span>
+							<span class="px-3 py-1 bg-indigo-600/20 text-indigo-300 text-sm rounded-full">Pin Functions</span>
 						</div>
-						<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-							PoKeys Core Library API
+						<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">
+							Pin Functions API
 						</h1>
 						<p class="text-xl text-gray-400">
-							Complete API reference for the PoKeys Core Library - a pure Rust implementation for controlling PoKeys devices
+							Pin function enumeration, configuration, and capability management
 						</p>
 					</div>
 
@@ -195,107 +196,84 @@
 						<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
 						<div class="bg-gray-800 rounded-lg p-6">
 							<p class="text-gray-300 mb-4">
-								The PoKeys Core Library provides a comprehensive, type-safe API for controlling PoKeys devices. 
-								This documentation covers all public APIs, their parameters, return types, and usage examples.
+								The Pin Functions API defines all available pin functions and provides utilities for pin configuration and validation. 
+								Each pin can be configured for different functions based on device capabilities.
 							</p>
-							<div class="grid md:grid-cols-2 gap-6">
-								<div>
-									<h3 class="text-lg font-semibold mb-2 text-blue-400">Key Features</h3>
-									<ul class="text-gray-300 space-y-1">
-										<li>• Pure Rust implementation</li>
-										<li>• Thread-safe concurrent access</li>
-										<li>• Comprehensive error handling</li>
-										<li>• Device model validation</li>
-										<li>• Performance optimized</li>
-									</ul>
-								</div>
-								<div>
-									<h3 class="text-lg font-semibold mb-2 text-purple-400">Supported Devices</h3>
-									<ul class="text-gray-300 space-y-1">
-										<li>• PoKeys55 v3</li>
-										<li>• PoKeys56U/56E</li>
-										<li>• PoKeys57U/57E</li>
-										<li>• PoKeys58EU</li>
-										<li>• Custom devices</li>
-									</ul>
-								</div>
+						</div>
+					</section>
+
+					<!-- PinFunction Enum -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">PinFunction Enum</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<div class="bg-gray-900 rounded p-4">
+								<pre class="text-gray-300"><code>pub enum PinFunction {`{`}
+    Disabled = 0,
+    DigitalInput = 1,
+    DigitalOutput = 2,
+    AnalogInput = 3,
+    AnalogOutput = 4,
+    DigitalCounter = 5,
+    PWM = 6,
+    Encoder = 7,
+    KeyboardMatrix = 8,
+{`}`}</code></pre>
 							</div>
 						</div>
 					</section>
 
-					<!-- Quick Start -->
+					<!-- Function Descriptions -->
 					<section class="mb-12">
-						<h2 class="text-2xl font-bold mb-4 text-white">Quick Start</h2>
+						<h2 class="text-2xl font-bold mb-6 text-white">Function Descriptions</h2>
+						<div class="space-y-4">
+							<div class="bg-gray-800 rounded-lg p-4">
+								<h3 class="text-lg font-semibold mb-2 text-indigo-400">Disabled</h3>
+								<p class="text-gray-300 text-sm">Pin is disabled and not used for any function.</p>
+							</div>
+							<div class="bg-gray-800 rounded-lg p-4">
+								<h3 class="text-lg font-semibold mb-2 text-green-400">DigitalInput</h3>
+								<p class="text-gray-300 text-sm">Pin configured for digital input reading (HIGH/LOW states).</p>
+							</div>
+							<div class="bg-gray-800 rounded-lg p-4">
+								<h3 class="text-lg font-semibold mb-2 text-blue-400">DigitalOutput</h3>
+								<p class="text-gray-300 text-sm">Pin configured for digital output control (set HIGH/LOW).</p>
+							</div>
+							<div class="bg-gray-800 rounded-lg p-4">
+								<h3 class="text-lg font-semibold mb-2 text-teal-400">AnalogInput</h3>
+								<p class="text-gray-300 text-sm">Pin configured for analog voltage measurement (0-4095 ADC values).</p>
+							</div>
+							<div class="bg-gray-800 rounded-lg p-4">
+								<h3 class="text-lg font-semibold mb-2 text-purple-400">PWM</h3>
+								<p class="text-gray-300 text-sm">Pin configured for PWM output (pins 17-22 only, 25MHz precision).</p>
+							</div>
+						</div>
+					</section>
+
+					<!-- Usage Example -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Usage Example</h2>
 						<div class="bg-gray-800 rounded-lg p-6">
-							<p class="text-gray-300 mb-4">
-								Basic example showing device connection and pin control:
-							</p>
-							<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">use pokeys_lib::*;
+							<div class="bg-gray-900 rounded p-4">
+								<pre class="text-gray-300"><code>use pokeys_lib::*;
 
 fn main() -> Result&lt;()&gt; {`{`}
-    // Enumerate and connect to first device
-    let device_count = enumerate_usb_devices()?;
-    if device_count > 0 {`{`}
-        let mut device = connect_to_device(0)?;
+    let mut device = connect_to_device(0)?;
 
-        // Configure pin 1 as digital output
-        device.set_pin_function(1, PinFunction::DigitalOutput)?;
+    // Configure different pin functions
+    device.set_pin_function(1, PinFunction::DigitalOutput)?;
+    device.set_pin_function(2, PinFunction::DigitalInput)?;
+    device.set_pin_function(3, PinFunction::AnalogInput)?;
+    device.set_pin_function(22, PinFunction::PWM)?;
 
-        // Turn on pin 1
-        device.set_digital_output(1, true)?;
+    // Use the configured pins
+    device.set_digital_output(1, true)?;
+    let input_state = device.get_digital_input(2)?;
+    let analog_value = device.get_analog_input(3)?;
+    device.set_pwm_duty_cycle_for_pin(22, 25000)?;
 
-        println!(\"Pin 1 is now HIGH\");
-    {`}`}
     Ok(())
 {`}`}</code></pre>
-						</div>
-					</section>
-
-					<!-- API Categories -->
-					<section class="mb-12">
-						<h2 class="text-2xl font-bold mb-6 text-white">API Categories</h2>
-						<div class="flex flex-col gap-4">
-							<a href="/core/api/device" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
-								<h3 class="text-lg font-semibold mb-2 text-blue-400">Device Management</h3>
-								<p class="text-gray-300 text-sm">Core device operations, connection management, and device information</p>
-							</a>
-							<a href="/core/api/digital-io" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
-								<h3 class="text-lg font-semibold mb-2 text-green-400">Digital I/O</h3>
-								<p class="text-gray-300 text-sm">Digital input/output operations and pin configuration</p>
-							</a>
-							<a href="/core/api/pwm" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
-								<h3 class="text-lg font-semibold mb-2 text-purple-400">PWM Control</h3>
-								<p class="text-gray-300 text-sm">High-precision PWM generation and servo control</p>
-							</a>
-							<a href="/core/api/spi" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
-								<h3 class="text-lg font-semibold mb-2 text-yellow-400">SPI Protocol</h3>
-								<p class="text-gray-300 text-sm">SPI master operations with multiple chip select support</p>
-							</a>
-							<a href="/core/api/encoders" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
-								<h3 class="text-lg font-semibold mb-2 text-red-400">Encoders</h3>
-								<p class="text-gray-300 text-sm">Quadrature encoder reading and position tracking</p>
-							</a>
-							<a href="/core/api/matrix-keyboard" class="block bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition-colors">
-								<h3 class="text-lg font-semibold mb-2 text-indigo-400">Matrix Operations</h3>
-								<p class="text-gray-300 text-sm">Matrix keyboard scanning and LED matrix control</p>
-							</a>
-						</div>
-					</section>
-
-					<!-- Navigation -->
-					<section>
-						<h2 class="text-2xl font-bold mb-4 text-white">Navigation</h2>
-						<div class="bg-gray-800 rounded-lg p-6">
-							<p class="text-gray-300 mb-4">
-								Use the sidebar to navigate through different API sections. Each section provides:
-							</p>
-							<ul class="text-gray-300 space-y-2">
-								<li>• <strong>Function signatures</strong> with parameter types and return values</li>
-								<li>• <strong>Detailed descriptions</strong> of functionality and behavior</li>
-								<li>• <strong>Code examples</strong> showing practical usage</li>
-								<li>• <strong>Error conditions</strong> and handling strategies</li>
-								<li>• <strong>Performance notes</strong> and best practices</li>
-							</ul>
+							</div>
 						</div>
 					</section>
 				</div>

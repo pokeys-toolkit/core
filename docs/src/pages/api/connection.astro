@@ -7,7 +7,7 @@
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Device Management API - PoKeys Core Library</title>
+		<title>Connection & Enumeration API - PoKeys Core Library</title>
 		<style>
 			aside .sidebar-nav a {
 				display: block !important;
@@ -49,10 +49,10 @@
 					<div class="mb-6">
 						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Core APIs</h3>
 						<div class="space-y-1 sidebar-nav">
-							<a href="/core/api/device" class="block px-3 py-2 text-white bg-gray-700/50 rounded-md transition-colors">
+							<a href="/core/api/device" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
 								Device Management
 							</a>
-							<a href="/core/api/connection" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+							<a href="/core/api/connection" class="block px-3 py-2 text-white bg-gray-700/50 rounded-md transition-colors">
 								Connection & Enumeration
 							</a>
 							<a href="/core/api/models" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
@@ -181,19 +181,49 @@
 					<!-- Header -->
 					<div class="mb-12">
 						<div class="flex items-center gap-4 mb-6">
-							<span class="px-3 py-1 bg-blue-600/20 text-blue-300 text-sm rounded-full">Device Management</span>
+							<span class="px-3 py-1 bg-blue-600/20 text-blue-300 text-sm rounded-full">Connection & Enumeration</span>
 						</div>
 						<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-							Device Management API
+							Connection & Enumeration API
 						</h1>
 						<p class="text-xl text-gray-400">
-							Core device operations, connection management, and device information retrieval
+							Device discovery, connection management, and enumeration functions for USB and network devices
 						</p>
 					</div>
 
-					<!-- Connection Functions -->
-					<section id="connection" class="mb-12">
-						<h2 class="text-2xl font-bold mb-6 text-white">Connection Functions</h2>
+					<!-- Overview -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<p class="text-gray-300 mb-4">
+								The Connection & Enumeration API provides functions for discovering, connecting to, and managing PoKeys devices 
+								across USB and network interfaces. It handles device discovery, connection establishment, and connection type detection.
+							</p>
+							<div class="grid md:grid-cols-2 gap-6">
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-blue-400">Key Features</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• USB device enumeration and connection</li>
+										<li>• Network device discovery with timeout control</li>
+										<li>• Serial number-based device targeting</li>
+										<li>• Automatic connection type detection</li>
+										<li>• Multi-device concurrent management</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-purple-400">Connection Types</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• <code>UsbDevice</code> - Direct USB connection</li>
+										<li>• <code>NetworkDevice</code> - Ethernet/WiFi connection</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- USB Enumeration -->
+					<section id="usb-enumeration" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">USB Enumeration</h2>
 						
 						<!-- enumerate_usb_devices -->
 						<div class="bg-gray-800 rounded-lg p-6 mb-6">
@@ -202,7 +232,7 @@
 								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn enumerate_usb_devices() -> Result&lt;i32&gt;</code></pre>
 							</div>
 							<p class="text-gray-300 mb-4">
-								Enumerates all connected USB PoKeys devices and returns the count of available devices.
+								Discovers and enumerates all connected USB PoKeys devices. Returns the total count of available devices.
 							</p>
 							<div class="grid md:grid-cols-2 gap-4 mb-4">
 								<div>
@@ -222,10 +252,60 @@
 							<div class="bg-gray-900 rounded p-4">
 								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
 								<pre class="text-gray-300"><code>let device_count = enumerate_usb_devices()?;
-println!(\"Found {`{`}{`}`} USB devices\", device_count);</code></pre>
+println!(\"Found {`{`}{`}`} USB PoKeys devices\", device_count);
+
+if device_count > 0 {`{`}
+    // Connect to first device
+    let device = connect_to_device(0)?;
+{`}`}</code></pre>
 							</div>
 						</div>
+					</section>
 
+					<!-- Network Discovery -->
+					<section id="network-discovery" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Network Discovery</h2>
+						
+						<!-- enumerate_network_devices -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">enumerate_network_devices</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn enumerate_network_devices(timeout_ms: u32) -> Result&lt;Vec&lt;NetworkDeviceSummary&gt;&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Discovers PoKeys devices on the network using broadcast discovery with configurable timeout.
+							</p>
+							<div class="grid md:grid-cols-2 gap-4 mb-4">
+								<div>
+									<h4 class="font-semibold text-blue-400 mb-2">Parameters</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>timeout_ms</code> - Discovery timeout in milliseconds</li>
+									</ul>
+								</div>
+								<div>
+									<h4 class="font-semibold text-green-400 mb-2">Returns</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>Vec&lt;NetworkDeviceSummary&gt;</code> - List of discovered devices</li>
+									</ul>
+								</div>
+							</div>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Discover network devices with 5 second timeout
+let devices = enumerate_network_devices(5000)?;
+
+for device in &devices {`{`}
+    println!(\"Found device: {`{`}{`}`} at {`{`}{`}`}\", 
+        device.device_name, device.ip_address);
+{`}`}</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Device Connection -->
+					<section id="device-connection" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Device Connection</h2>
+						
 						<!-- connect_to_device -->
 						<div class="bg-gray-800 rounded-lg p-6 mb-6">
 							<h3 class="text-xl font-semibold mb-4 text-blue-400">connect_to_device</h3>
@@ -233,26 +313,31 @@ println!(\"Found {`{`}{`}`} USB devices\", device_count);</code></pre>
 								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn connect_to_device(device_index: u32) -> Result&lt;PoKeysDevice&gt;</code></pre>
 							</div>
 							<p class="text-gray-300 mb-4">
-								Connects to a USB PoKeys device by its enumeration index.
+								Connects to a USB PoKeys device by its enumeration index. The device must be enumerated first.
 							</p>
 							<div class="grid md:grid-cols-2 gap-4 mb-4">
 								<div>
 									<h4 class="font-semibold text-blue-400 mb-2">Parameters</h4>
 									<ul class="text-gray-300 text-sm space-y-1">
-										<li>• <code>device_index</code> - Zero-based device index</li>
+										<li>• <code>device_index</code> - Zero-based device index from enumeration</li>
 									</ul>
 								</div>
 								<div>
-									<h4 class="font-semibold text-green-400 mb-2">Returns</h4>
+									<h4 class="font-semibold text-red-400 mb-2">Errors</h4>
 									<ul class="text-gray-300 text-sm space-y-1">
-										<li>• <code>Result&lt;PoKeysDevice&gt;</code> - Connected device instance</li>
+										<li>• <code>PoKeysError::InvalidIndex</code> - Index out of range</li>
+										<li>• <code>PoKeysError::ConnectionFailed</code> - Connection failed</li>
 									</ul>
 								</div>
 							</div>
 							<div class="bg-gray-900 rounded p-4">
 								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
-								<pre class="text-gray-300"><code>let mut device = connect_to_device(0)?;
-println!(\"Connected to device: {`{`}{`}`}\", device.device_data.device_name);</code></pre>
+								<pre class="text-gray-300"><code>// Connect to first enumerated device
+let mut device = connect_to_device(0)?;
+
+// Get device information
+device.get_device_data()?;
+println!(\"Connected to: {`{`}{`}`}\", device.device_data.device_name);</code></pre>
 							</div>
 						</div>
 
@@ -266,7 +351,7 @@ println!(\"Connected to device: {`{`}{`}`}\", device.device_data.device_name);</
 ) -> Result&lt;PoKeysDevice&gt;</code></pre>
 							</div>
 							<p class="text-gray-300 mb-4">
-								Connects to a PoKeys device using its serial number, with optional network device checking.
+								Connects to a specific PoKeys device using its serial number. Can search both USB and network devices.
 							</p>
 							<div class="grid md:grid-cols-2 gap-4 mb-4">
 								<div>
@@ -277,190 +362,59 @@ println!(\"Connected to device: {`{`}{`}`}\", device.device_data.device_name);</
 									</ul>
 								</div>
 								<div>
-									<h4 class="font-semibold text-green-400 mb-2">Returns</h4>
+									<h4 class="font-semibold text-green-400 mb-2">Benefits</h4>
 									<ul class="text-gray-300 text-sm space-y-1">
-										<li>• <code>Result&lt;PoKeysDevice&gt;</code> - Connected device instance</li>
+										<li>• Connects to specific device regardless of enumeration order</li>
+										<li>• Works across USB and network interfaces</li>
 									</ul>
 								</div>
 							</div>
-						</div>
-					</section>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Connect to device with specific serial number
+let device = connect_to_device_with_serial(12345, true)?;
 
-					<!-- Device Information -->
-					<section id="device-info" class="mb-12">
-						<h2 class="text-2xl font-bold mb-6 text-white">Device Information</h2>
-						
-						<!-- get_device_data -->
+// This will find the device whether it's connected via USB or network</code></pre>
+							</div>
+						</div>
+
+						<!-- connect_to_network_device -->
 						<div class="bg-gray-800 rounded-lg p-6 mb-6">
-							<h3 class="text-xl font-semibold mb-4 text-blue-400">get_device_data</h3>
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">connect_to_network_device</h3>
 							<div class="mb-4">
-								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn get_device_data(&mut self) -> Result&lt;()&gt;</code></pre>
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn connect_to_network_device(device_summary: &NetworkDeviceSummary) -> Result&lt;PoKeysDevice&gt;</code></pre>
 							</div>
 							<p class="text-gray-300 mb-4">
-								Retrieves comprehensive device information including firmware version, device type, and capabilities.
+								Connects to a network PoKeys device using information from network discovery.
 							</p>
 							<div class="bg-gray-900 rounded p-4">
 								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
-								<pre class="text-gray-300"><code>device.get_device_data()?;
-println!(\"Device: {`{`}{`}`}\", device.device_data.device_name);
-println!(\"Firmware: {`{`}{`}`}.{`{`}{`}`}\", 
-    device.device_data.firmware_version_major,
-    device.device_data.firmware_version_minor);</code></pre>
-							</div>
-						</div>
-
-						<!-- get_connection_type -->
-						<div class="bg-gray-800 rounded-lg p-6 mb-6">
-							<h3 class="text-xl font-semibold mb-4 text-blue-400">get_connection_type</h3>
-							<div class="mb-4">
-								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn get_connection_type(&self) -> DeviceConnectionType</code></pre>
-							</div>
-							<p class="text-gray-300 mb-4">
-								Returns the connection type used to communicate with the device.
-							</p>
-							<div class="grid md:grid-cols-2 gap-4 mb-4">
-								<div>
-									<h4 class="font-semibold text-green-400 mb-2">Returns</h4>
-									<ul class="text-gray-300 text-sm space-y-1">
-										<li>• <code>DeviceConnectionType::UsbDevice</code></li>
-										<li>• <code>DeviceConnectionType::NetworkDevice</code></li>
-									</ul>
-								</div>
-							</div>
-						</div>
-					</section>
-
-					<!-- Configuration Management -->
-					<section id="configuration" class="mb-12">
-						<h2 class="text-2xl font-bold mb-6 text-white">Configuration Management</h2>
-						
-						<!-- save_configuration -->
-						<div class="bg-gray-800 rounded-lg p-6 mb-6">
-							<h3 class="text-xl font-semibold mb-4 text-blue-400">save_configuration</h3>
-							<div class="mb-4">
-								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn save_configuration(&mut self) -> Result&lt;()&gt;</code></pre>
-							</div>
-							<p class="text-gray-300 mb-4">
-								Saves the current device configuration to non-volatile memory. Configuration persists after power cycles.
-							</p>
-							<div class="bg-blue-900/20 border border-blue-500/30 rounded p-4 mb-4">
-								<p class="text-blue-300 text-sm">
-									<strong>Note:</strong> Always save configuration after making changes to ensure settings persist across device resets.
-								</p>
-							</div>
-						</div>
-
-						<!-- clear_configuration -->
-						<div class="bg-gray-800 rounded-lg p-6 mb-6">
-							<h3 class="text-xl font-semibold mb-4 text-blue-400">clear_configuration</h3>
-							<div class="mb-4">
-								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn clear_configuration(&mut self) -> Result&lt;()&gt;</code></pre>
-							</div>
-							<p class="text-gray-300 mb-4">
-								Clears all device configuration settings, returning the device to factory defaults.
-							</p>
-							<div class="bg-red-900/20 border border-red-500/30 rounded p-4 mb-4">
-								<p class="text-red-300 text-sm">
-									<strong>Warning:</strong> This operation cannot be undone. All pin configurations, PWM settings, and other customizations will be lost.
-								</p>
-							</div>
-						</div>
-
-						<!-- set_device_name -->
-						<div class="bg-gray-800 rounded-lg p-6 mb-6">
-							<h3 class="text-xl font-semibold mb-4 text-blue-400">set_device_name</h3>
-							<div class="mb-4">
-								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn set_device_name(&mut self, name: &str) -> Result&lt;()&gt;</code></pre>
-							</div>
-							<p class="text-gray-300 mb-4">
-								Sets a custom name for the device (up to 20 characters).
-							</p>
-							<div class="bg-gray-900 rounded p-4">
-								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
-								<pre class="text-gray-300"><code>device.set_device_name(\"My PoKeys Device\")?;
-device.save_configuration()?;</code></pre>
-							</div>
-						</div>
-					</section>
-
-					<!-- Pin Capabilities -->
-					<section id="pin-capabilities" class="mb-12">
-						<h2 class="text-2xl font-bold mb-6 text-white">Pin Capabilities</h2>
-						
-						<!-- is_pin_capability_supported -->
-						<div class="bg-gray-800 rounded-lg p-6 mb-6">
-							<h3 class="text-xl font-semibold mb-4 text-blue-400">is_pin_capability_supported</h3>
-							<div class="mb-4">
-								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn is_pin_capability_supported(&self, pin: u32, capability: &str) -> bool</code></pre>
-							</div>
-							<p class="text-gray-300 mb-4">
-								Checks if a specific pin supports a given capability based on the device model.
-							</p>
-							<div class="bg-gray-900 rounded p-4">
-								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
-								<pre class="text-gray-300"><code>if device.is_pin_capability_supported(22, \"PWM\") {`{`}
-    println!(\"Pin 22 supports PWM\");
+								<pre class="text-gray-300"><code>let devices = enumerate_network_devices(5000)?;
+if let Some(device_info) = devices.first() {`{`}
+    let device = connect_to_network_device(device_info)?;
+    println!(\"Connected to network device: {`{`}{`}`}\", device_info.device_name);
 {`}`}</code></pre>
 							</div>
 						</div>
-
-						<!-- get_pin_capabilities -->
-						<div class="bg-gray-800 rounded-lg p-6 mb-6">
-							<h3 class="text-xl font-semibold mb-4 text-blue-400">get_pin_capabilities</h3>
-							<div class="mb-4">
-								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn get_pin_capabilities(&self, pin: u32) -> Vec&lt;String&gt;</code></pre>
-							</div>
-							<p class="text-gray-300 mb-4">
-								Returns a list of all capabilities supported by the specified pin.
-							</p>
-							<div class="bg-gray-900 rounded p-4">
-								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
-								<pre class="text-gray-300"><code>let capabilities = device.get_pin_capabilities(22);
-for cap in capabilities {`{`}
-    println!(\"Pin 22 supports: {`{`}{`}`}\", cap);
-{`}`}</code></pre>
-							</div>
-						</div>
-
-						<!-- validate_pin_capability -->
-						<div class="bg-gray-800 rounded-lg p-6 mb-6">
-							<h3 class="text-xl font-semibold mb-4 text-blue-400">validate_pin_capability</h3>
-							<div class="mb-4">
-								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn validate_pin_capability(&self, pin: u32, capability: &str) -> Result&lt;()&gt;</code></pre>
-							</div>
-							<p class="text-gray-300 mb-4">
-								Validates that a pin supports a specific capability, returning an error if not supported.
-							</p>
-							<div class="grid md:grid-cols-2 gap-4 mb-4">
-								<div>
-									<h4 class="font-semibold text-red-400 mb-2">Errors</h4>
-									<ul class="text-gray-300 text-sm space-y-1">
-										<li>• <code>PoKeysError::InvalidPin</code> - Pin number out of range</li>
-										<li>• <code>PoKeysError::UnsupportedCapability</code> - Capability not supported</li>
-									</ul>
-								</div>
-							</div>
-						</div>
 					</section>
 
-					<!-- Health Monitoring -->
-					<section id="health-monitoring" class="mb-12">
-						<h2 class="text-2xl font-bold mb-6 text-white">Health Monitoring</h2>
-						
-						<!-- health_check -->
-						<div class="bg-gray-800 rounded-lg p-6 mb-6">
-							<h3 class="text-xl font-semibold mb-4 text-blue-400">health_check</h3>
-							<div class="mb-4">
-								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn health_check(&mut self) -> HealthStatus</code></pre>
-							</div>
+					<!-- NetworkDeviceSummary -->
+					<section id="network-device-summary" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">NetworkDeviceSummary</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
 							<p class="text-gray-300 mb-4">
-								Performs a comprehensive health check of the device, testing connectivity and performance metrics.
+								Contains information about a discovered network device.
 							</p>
 							<div class="bg-gray-900 rounded p-4">
-								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
-								<pre class="text-gray-300"><code>let health = device.health_check();
-println!(\"Connectivity: {`{`}:?{`}`}\", health.connectivity);
-println!(\"Success Rate: {`{`}:.1{`}`}%\", health.performance.success_rate * 100.0);</code></pre>
+								<h4 class="font-semibold text-yellow-400 mb-2">Fields</h4>
+								<pre class="text-gray-300"><code>pub struct NetworkDeviceSummary {`{`}
+    pub device_name: String,        // Device name
+    pub ip_address: String,         // IP address
+    pub serial_number: u32,         // Device serial number
+    pub device_type: u8,            // Device type identifier
+    pub firmware_version: String,   // Firmware version
+    pub mac_address: String,        // MAC address
+{`}`}</code></pre>
 							</div>
 						</div>
 					</section>
@@ -471,29 +425,66 @@ println!(\"Success Rate: {`{`}:.1{`}`}%\", health.performance.success_rate * 100
 						<div class="bg-gray-800 rounded-lg p-6">
 							<div class="space-y-4">
 								<div>
-									<h3 class="text-lg font-semibold mb-2 text-green-400">Connection Management</h3>
+									<h3 class="text-lg font-semibold mb-2 text-green-400">Device Discovery</h3>
 									<ul class="text-gray-300 space-y-1 text-sm">
 										<li>• Always enumerate devices before attempting to connect</li>
-										<li>• Use serial number connection for specific device targeting</li>
-										<li>• Handle connection errors gracefully with retry logic</li>
+										<li>• Use appropriate timeouts for network discovery (3-10 seconds)</li>
+										<li>• Handle cases where no devices are found gracefully</li>
 									</ul>
 								</div>
 								<div>
-									<h3 class="text-lg font-semibold mb-2 text-blue-400">Configuration</h3>
+									<h3 class="text-lg font-semibold mb-2 text-blue-400">Connection Management</h3>
 									<ul class="text-gray-300 space-y-1 text-sm">
-										<li>• Validate pin capabilities before configuration</li>
-										<li>• Save configuration after making changes</li>
-										<li>• Use health monitoring for production systems</li>
+										<li>• Use serial number connection for production systems</li>
+										<li>• Implement connection retry logic for network devices</li>
+										<li>• Check device capabilities after connection</li>
 									</ul>
 								</div>
 								<div>
-									<h3 class="text-lg font-semibold mb-2 text-purple-400">Performance</h3>
+									<h3 class="text-lg font-semibold mb-2 text-purple-400">Error Handling</h3>
 									<ul class="text-gray-300 space-y-1 text-sm">
-										<li>• Cache device information to avoid repeated queries</li>
-										<li>• Use bulk operations when available</li>
-										<li>• Monitor I2C metrics for communication health</li>
+										<li>• Handle device disconnection gracefully</li>
+										<li>• Implement timeout handling for network operations</li>
+										<li>• Provide user feedback during discovery operations</li>
 									</ul>
 								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Complete Example -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Complete Example</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<p class="text-gray-300 mb-4">
+								Comprehensive example showing device discovery and connection:
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<pre class="text-gray-300"><code>use pokeys_lib::*;
+
+fn main() -> Result&lt;()&gt; {`{`}
+    // Try USB devices first
+    let usb_count = enumerate_usb_devices()?;
+    if usb_count > 0 {`{`}
+        println!(\"Found {`{`}{`}`} USB devices\", usb_count);
+        let device = connect_to_device(0)?;
+        return Ok(());
+    {`}`}
+    
+    // Try network devices
+    println!(\"No USB devices found, searching network...\");
+    let network_devices = enumerate_network_devices(5000)?;
+    
+    if let Some(device_info) = network_devices.first() {`{`}
+        println!(\"Connecting to {`{`}{`}`} at {`{`}{`}`}\", 
+            device_info.device_name, device_info.ip_address);
+        let device = connect_to_network_device(device_info)?;
+        return Ok(());
+    {`}`}
+    
+    println!(\"No PoKeys devices found\");
+    Ok(())
+{`}`}</code></pre>
 							</div>
 						</div>
 					</section>
