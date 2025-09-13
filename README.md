@@ -152,6 +152,29 @@ fn main() -> Result<()> {
 }
 ```
 
+### Advanced Servo Control
+```rust
+use pokeys_lib::*;
+
+fn main() -> Result<()> {
+    let mut device = connect_to_device(0)?;
+
+    // 180-degree position servo
+    let servo_180 = ServoConfig::one_eighty(22, 60000, 12000);
+    device.configure_servo(servo_180.clone())?;
+    device.set_servo_angle(&servo_180, 90.0)?; // Move to 90°
+
+    // 360-degree speed servo (continuous rotation)
+    // Datasheet: Counterclockwise 1-1.5ms, Stop 1.5ms, Clockwise 1.5-2ms
+    let servo_speed = ServoConfig::three_sixty_speed(21, 37500, 50000, 25000);
+    device.configure_servo(servo_speed.clone())?;
+    device.set_servo_speed(&servo_speed, 50.0)?; // 50% clockwise
+    device.stop_servo(&servo_speed)?; // Stop rotation
+
+    Ok(())
+}
+```
+
 ### Matrix Keyboard
 ```rust
 use pokeys_lib::*;

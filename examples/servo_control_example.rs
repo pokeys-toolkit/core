@@ -31,22 +31,11 @@ fn run_servo_examples(device: &mut PoKeysDevice) -> Result<()> {
         thread::sleep(Duration::from_millis(800));
     }
     
-    // Example 2: 360-degree position servo (multi-turn)
-    println!("\n--- 360-Degree Position Servo Example ---");
-    let servo_360_pos = ServoConfig::three_sixty_position(21, 25000, 50000); // Pin 21
-    
-    device.configure_servo(servo_360_pos.clone())?;
-    
-    let positions = [0.0, 90.0, 180.0, 270.0, 360.0, 180.0];
-    for position in positions.iter() {
-        println!("Moving to {}°", position);
-        device.set_servo_angle(&servo_360_pos, *position)?;
-        thread::sleep(Duration::from_millis(800));
-    }
-    
-    // Example 3: 360-degree speed servo (continuous rotation)
-    println!("\n--- 360-Degree Speed Servo Example ---");
-    let servo_360_speed = ServoConfig::three_sixty_speed(20, 37500, 50000, 25000); // Pin 20
+    // Example 2: 360-degree speed servo (continuous rotation) on pin 21
+    println!("\n--- 360-Degree Speed Servo Example (Pin 21) ---");
+    // Datasheet: Counterclockwise 1-1.5ms, Stop 1.5ms, Clockwise 1.5-2ms
+    // 1ms = 25,000 cycles, 1.5ms = 37,500 cycles, 2ms = 50,000 cycles
+    let servo_360_speed = ServoConfig::three_sixty_speed(21, 37500, 50000, 25000); // stop, clockwise, counterclockwise
     
     device.configure_servo(servo_360_speed.clone())?;
     
@@ -65,7 +54,7 @@ fn run_servo_examples(device: &mut PoKeysDevice) -> Result<()> {
     }
     
     // Disable all PWM channels
-    for pin in [22, 21, 20] {
+    for pin in [22, 21] {
         let _ = device.enable_pwm_for_pin(pin, false);
     }
     

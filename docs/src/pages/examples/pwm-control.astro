@@ -154,12 +154,12 @@
 								</ul>
 							</div>
 							<div>
-								<h3 class="text-lg font-semibold mb-2 text-purple-400">LED Dimming (1kHz)</h3>
+								<h3 class="text-lg font-semibold mb-2 text-purple-400">Speed Servo Timing</h3>
 								<ul class="text-gray-300 space-y-1 font-mono text-sm">
-									<li>• 1ms period = 25,000 cycles</li>
-									<li>• 10% duty = 2,500 cycles</li>
-									<li>• 50% duty = 12,500 cycles</li>
-									<li>• 90% duty = 22,500 cycles</li>
+									<li>• Counterclockwise: 1-1.5ms</li>
+									<li>• Stop: 1.5ms (37,500 cycles)</li>
+									<li>• Clockwise: 1.5-2ms</li>
+									<li>• Full range: 25,000-50,000 cycles</li>
 								</ul>
 							</div>
 						</div>
@@ -233,6 +233,48 @@ fn main() -> Result<()> {
     
     Ok(())
 }</code></pre>
+					</div>
+				</section>
+
+				<!-- Advanced Servo Control -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Advanced Servo Control</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<p class="text-gray-300 mb-4">
+							High-level servo control with different servo types:
+						</p>
+						<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">use pokeys_lib::*;
+
+fn main() -> Result<()> {
+    let mut device = connect_to_device(0)?;
+    
+    // 180-degree position servo
+    let servo_180 = ServoConfig::one_eighty(22, 60000, 12000);
+    device.configure_servo(servo_180.clone())?;
+    device.set_servo_angle(&servo_180, 90.0)?; // Move to 90°
+    
+    // 360-degree position servo (multi-turn)
+    let servo_360_pos = ServoConfig::three_sixty_position(20, 25000, 50000);
+    device.configure_servo(servo_360_pos.clone())?;
+    device.set_servo_angle(&servo_360_pos, 270.0)?; // Move to 270°
+    
+    // 360-degree speed servo (continuous rotation)
+    // Datasheet: Counterclockwise 1-1.5ms, Stop 1.5ms, Clockwise 1.5-2ms
+    let servo_speed = ServoConfig::three_sixty_speed(21, 37500, 50000, 25000);
+    device.configure_servo(servo_speed.clone())?;
+    device.set_servo_speed(&servo_speed, 50.0)?; // 50% clockwise
+    device.stop_servo(&servo_speed)?; // Stop rotation
+    
+    Ok(())
+}</code></pre>
+						<div class="mt-4 bg-blue-900/20 border border-blue-500/30 rounded p-4">
+							<h3 class="text-blue-400 font-semibold mb-2">Servo Types</h3>
+							<ul class="text-gray-300 space-y-1">
+								<li>• <strong>180° Position:</strong> Standard servo with 0-180° range</li>
+								<li>• <strong>360° Position:</strong> Multi-turn servo with 0-360° range</li>
+								<li>• <strong>360° Speed:</strong> Continuous rotation with speed control</li>
+							</ul>
+						</div>
 					</div>
 				</section>
 
@@ -345,7 +387,11 @@ fn main() -> Result<()> {
 							</div>
 							<div>
 								<h3 class="text-lg font-semibold mb-2 text-yellow-400">Incorrect Servo Positions</h3>
-								<p class="text-gray-300">Servo timing varies by manufacturer. Use the calibration tool to find correct duty cycle values for 0°, 90°, and 180° positions.</p>
+								<p class="text-gray-300">Servo timing varies by manufacturer. Use the calibration tool to find correct duty cycle values for 0°, 90°, and 180° positions. Speed servos require datasheet timing specifications.</p>
+							</div>
+							<div>
+								<h3 class="text-lg font-semibold mb-2 text-yellow-400">Speed Servo Not Responding</h3>
+								<p class="text-gray-300">Verify timing matches datasheet: counterclockwise (1-1.5ms), stop (1.5ms), clockwise (1.5-2ms). Use ServoConfig::three_sixty_speed with correct timing values.</p>
 							</div>
 							<div>
 								<h3 class="text-lg font-semibold mb-2 text-yellow-400">PWM Not Working</h3>
