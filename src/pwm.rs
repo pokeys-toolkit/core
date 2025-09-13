@@ -8,6 +8,137 @@ use serde::{Deserialize, Serialize};
 /// PWM1 = pin 22, PWM2 = pin 21, PWM3 = pin 20, PWM4 = pin 19, PWM5 = pin 18, PWM6 = pin 17
 const PWM_PIN_MAP: [u8; 6] = [22, 21, 20, 19, 18, 17];
 
+/// Servo type definitions
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ServoType {
+    /// 180-degree servo with calibrated 0° and 180° positions
+    OneEighty { pos_0: u32, pos_180: u32 },
+    /// 360-degree position servo (multi-turn with position feedback)
+    ThreeSixtyPosition { pos_0: u32, pos_360: u32 },
+    /// 360-degree speed servo (continuous rotation)
+    ThreeSixtySpeed {
+        stop: u32,
+        clockwise: u32,
+        anti_clockwise: u32,
+    },
+}
+
+/// Servo configuration for a specific pin
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServoConfig {
+    pub pin: u8,
+    pub servo_type: ServoType,
+}
+
+impl ServoConfig {
+    /// Create new 180-degree servo configuration
+    pub fn one_eighty(pin: u8, pos_0: u32, pos_180: u32) -> Self {
+        Self {
+            pin,
+            servo_type: ServoType::OneEighty { pos_0, pos_180 },
+        }
+    }
+
+    /// Create new 360-degree position servo configuration
+    pub fn three_sixty_position(pin: u8, pos_0: u32, pos_360: u32) -> Self {
+        Self {
+            pin,
+            servo_type: ServoType::ThreeSixtyPosition { pos_0, pos_360 },
+        }
+    }
+
+    /// Create new 360-degree speed servo configuration
+    pub fn three_sixty_speed(pin: u8, stop: u32, clockwise: u32, anti_clockwise: u32) -> Self {
+        Self {
+            pin,
+            servo_type: ServoType::ThreeSixtySpeed {
+                stop,
+                clockwise,
+                anti_clockwise,
+            },
+        }
+    }
+
+    /// Set servo to specific angle (0-180 degrees for OneEighty, 0-360 for ThreeSixtyPosition)
+    pub fn set_angle(&self, device: &mut PoKeysDevice, angle: f32) -> Result<()> {
+        let duty = match &self.servo_type {
+            ServoType::OneEighty { pos_0, pos_180 } => {
+                if !(0.0..=180.0).contains(&angle) {
+                    return Err(PoKeysError::Parameter(
+                        "Angle must be between 0.0 and 180.0 degrees".to_string(),
+                    ));
+                }
+                let range = *pos_180 as f32 - *pos_0 as f32;
+                (*pos_0 as f32 + (angle / 180.0) * range) as u32
+            }
+            ServoType::ThreeSixtyPosition { pos_0, pos_360 } => {
+                if !(0.0..=360.0).contains(&angle) {
+                    return Err(PoKeysError::Parameter(
+                        "Angle must be between 0.0 and 360.0 degrees".to_string(),
+                    ));
+                }
+                let range = *pos_360 as f32 - *pos_0 as f32;
+                (*pos_0 as f32 + (angle / 360.0) * range) as u32
+            }
+            ServoType::ThreeSixtySpeed { .. } => {
+                return Err(PoKeysError::Parameter(
+                    "Cannot set angle on speed servo. Use set_speed() instead".to_string(),
+                ));
+            }
+        };
+
+        device.set_pwm_duty_cycle_for_pin(self.pin, duty)
+    }
+
+    /// Set servo speed (-100.0 to 100.0, where 0 is stop, positive is clockwise)
+    pub fn set_speed(&self, device: &mut PoKeysDevice, speed: f32) -> Result<()> {
+        let duty = match &self.servo_type {
+            ServoType::ThreeSixtySpeed {
+                stop,
+                clockwise,
+                anti_clockwise,
+            } => {
+                if !(-100.0..=100.0).contains(&speed) {
+                    return Err(PoKeysError::Parameter(
+                        "Speed must be between -100.0 and 100.0".to_string(),
+                    ));
+                }
+
+                if speed == 0.0 {
+                    *stop
+                } else if speed > 0.0 {
+                    // Clockwise: interpolate between stop and clockwise
+                    let range = *clockwise as f32 - *stop as f32;
+                    (*stop as f32 + (speed / 100.0) * range) as u32
+                } else {
+                    // Anti-clockwise: interpolate between stop and anti_clockwise
+                    let range = *anti_clockwise as f32 - *stop as f32;
+                    (*stop as f32 + (speed.abs() / 100.0) * range) as u32
+                }
+            }
+            _ => {
+                return Err(PoKeysError::Parameter(
+                    "Cannot set speed on position servo. Use set_angle() instead".to_string(),
+                ));
+            }
+        };
+
+        device.set_pwm_duty_cycle_for_pin(self.pin, duty)
+    }
+
+    /// Stop the servo (for speed servos)
+    pub fn stop(&self, device: &mut PoKeysDevice) -> Result<()> {
+        match &self.servo_type {
+            ServoType::ThreeSixtySpeed { stop, .. } => {
+                device.set_pwm_duty_cycle_for_pin(self.pin, *stop)
+            }
+            _ => Err(PoKeysError::Parameter(
+                "Stop command only applies to speed servos".to_string(),
+            )),
+        }
+    }
+}
+
 /// PWM data structure matching the protocol specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PwmData {
