@@ -172,7 +172,7 @@
 					<div class="bg-gray-800 rounded-lg p-6">
 						<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">use pokeys_lib::*;
 
-fn main() -> Result<()> {
+fn main() -> Result&lt;()&gt; {`{`}
     let mut device = connect_to_device(0)?;
     
     // Configure PWM with 25MHz clock cycles
@@ -191,7 +191,7 @@ fn main() -> Result<()> {
     device.enable_pwm_for_pin(22, false)?;
     
     Ok(())
-}</code></pre>
+{`}`}</code></pre>
 					</div>
 				</section>
 
@@ -206,7 +206,7 @@ fn main() -> Result<()> {
 use std::thread;
 use std::time::Duration;
 
-fn main() -> Result<()> {
+fn main() -> Result&lt;()&gt; {`{`}
     let mut device = connect_to_device(0)?;
     
     // Configure for servo control (20ms period)
@@ -232,7 +232,7 @@ fn main() -> Result<()> {
     device.enable_pwm_for_pin(22, false)?;
     
     Ok(())
-}</code></pre>
+{`}`}</code></pre>
 					</div>
 				</section>
 
@@ -245,7 +245,7 @@ fn main() -> Result<()> {
 						</p>
 						<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">use pokeys_lib::*;
 
-fn main() -> Result<()> {
+fn main() -> Result&lt;()&gt; {`{`}
     let mut device = connect_to_device(0)?;
     
     // 180-degree position servo
@@ -266,7 +266,7 @@ fn main() -> Result<()> {
     device.stop_servo(&servo_speed)?; // Stop rotation
     
     Ok(())
-}</code></pre>
+{`}`}</code></pre>
 						<div class="mt-4 bg-blue-900/20 border border-blue-500/30 rounded p-4">
 							<h3 class="text-blue-400 font-semibold mb-2">Servo Types</h3>
 							<ul class="text-gray-300 space-y-1">
@@ -287,7 +287,7 @@ fn main() -> Result<()> {
 						</p>
 						<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">use pokeys_lib::*;
 
-fn main() -> Result<()> {
+fn main() -> Result&lt;()&gt; {`{`}
     let mut device = connect_to_device(0)?;
     
     // Set up PWM
@@ -305,7 +305,7 @@ fn main() -> Result<()> {
     device.enable_pwm_for_pin(22, false)?;
     
     Ok(())
-}</code></pre>
+{`}`}</code></pre>
 					</div>
 				</section>
 
@@ -318,7 +318,7 @@ fn main() -> Result<()> {
 						</p>
 						<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">use pokeys_lib::*;
 
-fn main() -> Result<()> {
+fn main() -> Result&lt;()&gt; {`{`}
     let mut device = connect_to_device(0)?;
     
     // Configure PWM period (shared by all channels)
@@ -343,7 +343,7 @@ fn main() -> Result<()> {
     }
     
     Ok(())
-}</code></pre>
+{`}`}</code></pre>
 					</div>
 				</section>
 
