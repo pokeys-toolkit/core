@@ -220,11 +220,11 @@ fn main() -> Result&lt;()&gt; {`{`}
         (12000, "180°"), // Custom calibrated 180° position
     ];
     
-    for (duty_cycles, angle) in positions.iter() {
-        println!("Moving to {}", angle);
+    for (duty_cycles, angle) in positions.iter() {`{`}
+        println!(\"Moving to {`{`}{`}`}\", angle);
         device.set_pwm_duty_cycle_for_pin(22, *duty_cycles)?;
         thread::sleep(Duration::from_secs(1));
-    }
+    {`}`}
     
     // Return to center and disable
     device.set_pwm_duty_cycle_for_pin(22, 36000)?;
@@ -295,11 +295,11 @@ fn main() -> Result&lt;()&gt; {`{`}
     device.enable_pwm_for_pin(22, true)?;
     
     // Fade LED from 0% to 100%
-    for brightness in (0..=100).step_by(10) {
+    for brightness in (0..=100).step_by(10) {`{`}
         device.set_pwm_duty_cycle_percent_for_pin(22, brightness as f32)?;
-        println!("Brightness: {}%", brightness);
+        println!(\"Brightness: {`{`}{`}`}%\", brightness);
         std::thread::sleep(std::time::Duration::from_millis(200));
-    }
+    {`}`}
     
     // Turn off
     device.enable_pwm_for_pin(22, false)?;
@@ -326,9 +326,9 @@ fn main() -> Result&lt;()&gt; {`{`}
     
     // Enable multiple PWM channels
     let servo_pins = [22, 21, 20]; // PWM1, PWM2, PWM3
-    for pin in servo_pins.iter() {
+    for pin in servo_pins.iter() {`{`}
         device.enable_pwm_for_pin(*pin, true)?;
-    }
+    {`}`}
     
     // Set different positions for each servo
     device.set_pwm_duty_cycle_for_pin(22, 60000)?; // Servo 1 to 0°
@@ -338,9 +338,9 @@ fn main() -> Result&lt;()&gt; {`{`}
     println!("All servos positioned");
     
     // Disable all channels
-    for pin in servo_pins.iter() {
+    for pin in servo_pins.iter() {`{`}
         device.enable_pwm_for_pin(*pin, false)?;
-    }
+    {`}`}
     
     Ok(())
 {`}`}</code></pre>
