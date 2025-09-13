@@ -1,0 +1,375 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Core Types API - PoKeys Core Library</title>
+		<style>
+			aside .sidebar-nav a {
+				display: block !important;
+				width: 100% !important;
+			}
+			aside .sidebar-nav {
+				display: flex !important;
+				flex-direction: column !important;
+			}
+		</style>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 left-0 right-0 z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800 h-16">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+				<div class="flex justify-between items-center h-full">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="text-gray-300 hover:text-white transition-colors">Home</a>
+						<a href="/core/getting-started" class="text-gray-300 hover:text-white transition-colors">Getting Started</a>
+						<a href="/core/examples/" class="text-gray-300 hover:text-white transition-colors">Examples</a>
+						<a href="/core/api/" class="text-white font-semibold">API Reference</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Main Content -->
+		<div class="flex min-h-screen pt-16">
+			<!-- Sidebar -->
+			<aside class="w-80 bg-gray-800/50 border-r border-gray-700 overflow-y-auto flex-shrink-0">
+				<div class="p-6">
+					<a href="/core/api/" class="text-blue-400 hover:text-blue-300 mb-4 inline-block">← Back to API Reference</a>
+					<h2 class="text-xl font-bold mb-6 text-white">API Reference</h2>
+					
+					<!-- Core APIs -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Core APIs</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/device" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Device Management
+							</a>
+							<a href="/core/api/connection" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Connection & Enumeration
+							</a>
+							<a href="/core/api/models" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Device Models
+							</a>
+						</div>
+					</div>
+
+					<!-- I/O Operations -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">I/O Operations</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/digital-io" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Digital I/O
+							</a>
+							<a href="/core/api/analog-io" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Analog I/O
+							</a>
+							<a href="/core/api/pin-functions" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Pin Functions
+							</a>
+						</div>
+					</div>
+
+					<!-- Control Systems -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Control Systems</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/pwm" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								PWM Control
+							</a>
+							<a href="/core/api/encoders" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Encoders
+							</a>
+							<a href="/core/api/pulse-engine" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Pulse Engine v2
+							</a>
+							<a href="/core/api/servo-control" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Servo Control
+							</a>
+						</div>
+					</div>
+
+					<!-- Communication -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Communication</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/spi" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								SPI Protocol
+							</a>
+							<a href="/core/api/i2c" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								I2C Protocol
+							</a>
+							<a href="/core/api/uart" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								UART Serial
+							</a>
+							<a href="/core/api/can" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								CAN Bus
+							</a>
+							<a href="/core/api/onewire" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								1-Wire Protocol
+							</a>
+						</div>
+					</div>
+
+					<!-- Matrix Operations -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Matrix Operations</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/matrix-keyboard" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Matrix Keyboard
+							</a>
+							<a href="/core/api/led-matrix" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								LED Matrix
+							</a>
+						</div>
+					</div>
+
+					<!-- Display & Sensors -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Display & Sensors</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/lcd" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								LCD Display
+							</a>
+							<a href="/core/api/sensors" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								EasySensors
+							</a>
+							<a href="/core/api/rtc" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Real-Time Clock
+							</a>
+						</div>
+					</div>
+
+					<!-- Error Handling -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Error Handling</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/errors" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Error Types
+							</a>
+							<a href="/core/api/result-handling" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Result Handling
+							</a>
+						</div>
+					</div>
+
+					<!-- Types & Utilities -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Types & Utilities</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/types" class="block px-3 py-2 text-white bg-gray-700/50 rounded-md transition-colors">
+								Core Types
+							</a>
+							<a href="/core/api/constants" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Constants
+							</a>
+						</div>
+					</div>
+				</div>
+			</aside>
+
+			<!-- Main Content Area -->
+			<main class="flex-1 p-8 min-h-screen">
+				<div class="max-w-4xl">
+					<!-- Header -->
+					<div class="mb-12">
+						<div class="flex items-center gap-4 mb-6">
+							<span class="px-3 py-1 bg-slate-600/20 text-slate-300 text-sm rounded-full">Core Types</span>
+						</div>
+						<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-slate-400 to-gray-500 bg-clip-text text-transparent">
+							Core Types API
+						</h1>
+						<p class="text-xl text-gray-400">
+							Essential data structures and type definitions used throughout the PoKeys Core Library
+						</p>
+					</div>
+
+					<!-- Device Types -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Device Types</h2>
+						
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-slate-400">DeviceConnectionType</h3>
+							<div class="bg-gray-900 rounded p-4">
+								<pre class="text-gray-300"><code>pub enum DeviceConnectionType {`{`}
+    UsbDevice,
+    NetworkDevice,
+{`}`}</code></pre>
+							</div>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-xl font-semibold mb-4 text-slate-400">NetworkDeviceSummary</h3>
+							<div class="bg-gray-900 rounded p-4">
+								<pre class="text-gray-300"><code>pub struct NetworkDeviceSummary {`{`}
+    pub device_name: String,
+    pub ip_address: String,
+    pub serial_number: u32,
+    pub device_type: u8,
+    pub firmware_version: String,
+    pub mac_address: String,
+{`}`}</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Configuration Types -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Configuration Types</h2>
+						
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-slate-400">I2cConfig</h3>
+							<div class="bg-gray-900 rounded p-4">
+								<pre class="text-gray-300"><code>pub struct I2cConfig {`{`}
+    pub clock_speed: u32,
+    pub timeout_ms: u32,
+    pub enable_pullups: bool,
+{`}`}</code></pre>
+							</div>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-slate-400">RetryConfig</h3>
+							<div class="bg-gray-900 rounded p-4">
+								<pre class="text-gray-300"><code>pub struct RetryConfig {`{`}
+    pub max_attempts: u32,
+    pub base_delay_ms: u64,
+    pub backoff_multiplier: f64,
+    pub jitter: bool,
+{`}`}</code></pre>
+							</div>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-xl font-semibold mb-4 text-slate-400">ValidationLevel</h3>
+							<div class="bg-gray-900 rounded p-4">
+								<pre class="text-gray-300"><code>pub enum ValidationLevel {`{`}
+    None,
+    Basic,
+    Strict,
+{`}`}</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Health & Metrics -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Health & Metrics</h2>
+						
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-slate-400">HealthStatus</h3>
+							<div class="bg-gray-900 rounded p-4">
+								<pre class="text-gray-300"><code>pub struct HealthStatus {`{`}
+    pub connectivity: ConnectivityStatus,
+    pub performance: PerformanceMetrics,
+{`}`}</code></pre>
+							</div>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-slate-400">I2cMetrics</h3>
+							<div class="bg-gray-900 rounded p-4">
+								<pre class="text-gray-300"><code>pub struct I2cMetrics {`{`}
+    pub total_operations: u64,
+    pub failed_operations: u64,
+    pub success_rate: f64,
+    pub average_response_time: f64,
+{`}`}</code></pre>
+							</div>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-xl font-semibold mb-4 text-slate-400">ConnectivityStatus</h3>
+							<div class="bg-gray-900 rounded p-4">
+								<pre class="text-gray-300"><code>pub enum ConnectivityStatus {`{`}
+    Healthy,
+    Degraded,
+    Unhealthy,
+{`}`}</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Control System Types -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Control System Types</h2>
+						
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-slate-400">ServoConfig</h3>
+							<div class="bg-gray-900 rounded p-4">
+								<pre class="text-gray-300"><code>pub struct ServoConfig {`{`}
+    pub pin: u8,
+    pub servo_type: ServoType,
+{`}`}
+
+pub enum ServoType {`{`}
+    OneEighty {`{`} pos_0: u32, pos_180: u32 {`}`},
+    ThreeSixtyPosition {`{`} pos_0: u32, pos_360: u32 {`}`},
+    ThreeSixtySpeed {`{`} stop: u32, clockwise: u32, anti_clockwise: u32 {`}`},
+{`}`}</code></pre>
+							</div>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-xl font-semibold mb-4 text-slate-400">EncoderOptions</h3>
+							<div class="bg-gray-900 rounded p-4">
+								<pre class="text-gray-300"><code>pub struct EncoderOptions {`{`}
+    pub sampling_mode: SamplingMode,
+    pub enable_index: bool,
+    pub invert_direction: bool,
+{`}`}
+
+pub enum SamplingMode {`{`}
+    FourX,
+    TwoX,
+{`}`}</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Usage Examples -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Usage Examples</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<div class="bg-gray-900 rounded p-4">
+								<pre class="text-gray-300"><code>use pokeys_lib::*;
+
+// Configure I2C with custom settings
+let i2c_config = I2cConfig {`{`}
+    clock_speed: 400000, // 400kHz
+    timeout_ms: 2000,
+    enable_pullups: true,
+{`}`};
+
+// Set up retry configuration
+let retry_config = RetryConfig {`{`}
+    max_attempts: 5,
+    base_delay_ms: 50,
+    backoff_multiplier: 1.5,
+    jitter: true,
+{`}`};
+
+// Configure servo
+let servo = ServoConfig::one_eighty(22, 25000, 50000);
+
+// Configure encoder
+let encoder_opts = EncoderOptions {`{`}
+    sampling_mode: SamplingMode::FourX,
+    enable_index: false,
+    invert_direction: false,
+{`}`};</code></pre>
+							</div>
+						</div>
+					</section>
+				</div>
+			</main>
+		</div>
+	</body>
+</html>
