@@ -1168,10 +1168,10 @@ impl PoKeysDevice {
         if self.pwm.pwm_period == 0 {
             self.set_pwm_period(500000)?; // 20ms period for servo control
         }
-        
+
         // Enable PWM for the servo pin
         self.enable_pwm_for_pin(config.pin, true)?;
-        
+
         Ok(())
     }
 

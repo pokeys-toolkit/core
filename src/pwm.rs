@@ -132,11 +132,9 @@ impl ServoConfig {
             ServoType::ThreeSixtySpeed { stop, .. } => {
                 device.set_pwm_duty_cycle_for_pin(self.pin, *stop)
             }
-            _ => {
-                Err(PoKeysError::Parameter(
-                    "Stop command only applies to speed servos".to_string(),
-                ))
-            }
+            _ => Err(PoKeysError::Parameter(
+                "Stop command only applies to speed servos".to_string(),
+            )),
         }
     }
 }
