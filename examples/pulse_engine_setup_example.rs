@@ -106,5 +106,24 @@ fn main() -> Result<()> {
         );
     }
 
-    Ok(())
+    // Move axis positions in a loop
+    println!("\nMoving axis positions (Ctrl+C to stop)...");
+    let mut position = 0i32;
+    loop {
+        position += 1;
+
+        // Set position for axis 0
+        device.set_axis_position(0, position)?;
+
+        // Read back current status to show actual position
+        device.get_pulse_engine_status()?;
+        let actual_position = device.pulse_engine_v2.current_position[0];
+
+        println!(
+            "Set axis 0 position to: {} (actual: {})",
+            position, actual_position
+        );
+
+        std::thread::sleep(std::time::Duration::from_millis(250));
+    }
 }
