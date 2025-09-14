@@ -112,15 +112,15 @@ fn main() -> Result<()> {
     loop {
         position += 1;
 
-        // Set position for axis 0
-        device.set_axis_position(0, position)?;
+        // Set position for axis 2
+        device.set_axis_position(2, position)?;
 
         // Read back current status to show actual position
         device.get_pulse_engine_status()?;
-        let actual_position = device.pulse_engine_v2.current_position[0];
+        let actual_position = device.pulse_engine_v2.current_position[2];
 
         println!(
-            "Set axis 0 position to: {} (actual: {})",
+            "Set axis 2 position to: {} (actual: {})",
             position, actual_position
         );
 
