@@ -35,33 +35,23 @@ fn main() -> Result<()> {
     println!("Disabling pulse engine...");
     device.enable_pulse_engine(false)?;
 
-    device.pulse_engine_v2.info.nr_of_axes = 3;
-    device.pulse_engine_v2.pulse_generator_type = 1; // 3ch internal
-    device.pulse_engine_v2.charge_pump_enabled = 0; // Disabled
-    device.pulse_engine_v2.emergency_switch_polarity = 1; // Default polarity
-    device.pulse_engine_v2.axis_enabled_states_mask = 0x07; // Enable power for all states
+    // Create configuration for 3-channel internal generator
+    let config = PulseEngineConfig::three_channel_internal(3);
+    println!("Using 3-channel internal configuration");
+
+    // Alternative: 8-channel external configuration
+    // let config = PulseEngineConfig::eight_channel_external(8);
+    // println!("Using 8-channel external configuration");
 
     // Setup pulse engine with 3ch internal configuration
     println!("Sending setup command (0x85/0x01)...");
-    println!("  Axes: {}", device.pulse_engine_v2.info.nr_of_axes);
-    println!(
-        "  Generator: 0x{:02X}",
-        device.pulse_engine_v2.pulse_generator_type
-    );
-    println!(
-        "  Charge pump: {}",
-        device.pulse_engine_v2.charge_pump_enabled
-    );
-    println!(
-        "  Emergency polarity: {}",
-        device.pulse_engine_v2.emergency_switch_polarity
-    );
-    println!(
-        "  Power states: 0x{:02X}",
-        device.pulse_engine_v2.axis_enabled_states_mask
-    );
+    println!("  Axes: {}", config.enabled_axes);
+    println!("  Generator: 0x{:02X}", config.generator_type);
+    println!("  Charge pump: {}", config.charge_pump_enabled);
+    println!("  Emergency polarity: {}", config.emergency_switch_polarity);
+    println!("  Power states: 0x{:02X}", config.power_states);
 
-    device.setup_pulse_engine()?;
+    device.setup_pulse_engine(&config)?;
     println!("✓ Setup command sent successfully");
 
     // Enable pulse engine

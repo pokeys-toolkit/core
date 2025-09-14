@@ -102,6 +102,7 @@ pub mod types;
 
 pub use device::*;
 pub use error::*;
+pub use pulse_engine::PulseEngineConfig;
 pub use types::*;
 
 // Re-export main functionality

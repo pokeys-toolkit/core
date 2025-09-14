@@ -5,6 +5,43 @@ use crate::error::{PoKeysError, Result};
 use crate::types::{PulseEngineAxisState, PulseEngineState};
 use serde::{Deserialize, Serialize};
 
+/// Pulse engine setup configuration
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PulseEngineConfig {
+    pub enabled_axes: u8,
+    pub charge_pump_enabled: u8,
+    pub generator_type: u8,
+    pub buffer_size: u8,
+    pub emergency_switch_polarity: u8,
+    pub power_states: u8,
+}
+
+impl PulseEngineConfig {
+    /// Create configuration for 3-channel internal generator
+    pub fn three_channel_internal(axes: u8) -> Self {
+        Self {
+            enabled_axes: axes,
+            charge_pump_enabled: 0,
+            generator_type: 1, // 3ch internal
+            buffer_size: 0,    // default
+            emergency_switch_polarity: 1,
+            power_states: 0x07, // Enable power for all states
+        }
+    }
+
+    /// Create configuration for 8-channel external generator
+    pub fn eight_channel_external(axes: u8) -> Self {
+        Self {
+            enabled_axes: axes,
+            charge_pump_enabled: 0,
+            generator_type: 0, // 8ch external
+            buffer_size: 0,    // default
+            emergency_switch_polarity: 1,
+            power_states: 0x07, // Enable power for all states
+        }
+    }
+}
+
 /// Pulse Engine v2 information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PulseEngineV2Info {
@@ -404,30 +441,21 @@ impl PoKeysDevice {
     }
 
     /// Setup pulse engine (0x85/0x01)
-    pub fn setup_pulse_engine(&mut self) -> Result<()> {
+    pub fn setup_pulse_engine(&mut self, config: &PulseEngineConfig) -> Result<()> {
         let mut request = vec![0u8; 56]; // Only data payload (protocol bytes 9-64)
 
         // Build request according to specification
-        request[0] = self.pulse_engine_v2.info.nr_of_axes; // Protocol byte 9: Number of enabled axes
-        request[1] = self.pulse_engine_v2.charge_pump_enabled; // Protocol byte 10: Safety charge pump
-        request[2] = self.pulse_engine_v2.pulse_generator_type; // Protocol byte 11: Generator configuration
-        request[3] = self.pulse_engine_v2.info.buffer_depth; // Protocol byte 12: Motion buffer size
-        request[4] = self.pulse_engine_v2.emergency_switch_polarity; // Protocol byte 13: Emergency switch polarity
+        request[0] = config.enabled_axes; // Protocol byte 9: Number of enabled axes
+        request[1] = config.charge_pump_enabled; // Protocol byte 10: Safety charge pump
+        request[2] = config.generator_type; // Protocol byte 11: Generator configuration
+        request[3] = config.buffer_size; // Protocol byte 12: Motion buffer size
+        request[4] = config.emergency_switch_polarity; // Protocol byte 13: Emergency switch polarity
 
         // Protocol byte 14: States with enabled power and charge pump
-        let mut power_states = 0u8;
-        if self.pulse_engine_v2.axis_enabled_states_mask & 0x01 != 0 {
-            power_states |= 0x01;
-        } // peSTOPPED
-        if self.pulse_engine_v2.axis_enabled_states_mask & 0x02 != 0 {
-            power_states |= 0x02;
-        } // peSTOP_LIMIT
-        if self.pulse_engine_v2.axis_enabled_states_mask & 0x04 != 0 {
-            power_states |= 0x04;
-        } // peSTOP_EMERGENCY
+        let mut power_states = config.power_states & 0x07; // Power states (bits 0-2)
 
         // Charge pump states (bits 4-6)
-        if self.pulse_engine_v2.charge_pump_enabled != 0 {
+        if config.charge_pump_enabled != 0 {
             power_states |= 0x10; // peSTOPPED charge pump
             power_states |= 0x20; // peSTOP_LIMIT charge pump
             power_states |= 0x40; // peSTOP_EMERGENCY charge pump
