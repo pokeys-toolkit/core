@@ -28,10 +28,36 @@ fn main() -> Result<()> {
         device.pulse_engine_v2.charge_pump_enabled
     );
 
-    // Setup pulse engine with current configuration
-    println!("\nSending setup command (0x85/0x01)...");
+    // Configure for 3-channel internal pulse generator
+    println!("\nConfiguring for 3-channel internal pulse generator...");
+    device.pulse_engine_v2.info.nr_of_axes = 3;
+    device.pulse_engine_v2.pulse_generator_type = 1; // 3ch internal
+    device.pulse_engine_v2.charge_pump_enabled = 0; // Disabled
+    device.pulse_engine_v2.emergency_switch_polarity = 1; // Default polarity
+    device.pulse_engine_v2.axis_enabled_states_mask = 0x07; // Enable power for all states
+
+    // Setup pulse engine with 3ch internal configuration
+    println!("Sending setup command (0x85/0x01)...");
     device.setup_pulse_engine()?;
     println!("✓ Setup command sent successfully");
+
+    // Small delay for device to process
+    std::thread::sleep(std::time::Duration::from_millis(100));
+
+    // Verify configuration
+    device.get_pulse_engine_status()?;
+    println!("\nVerified configuration:");
+    println!("  Enabled axes: {}", device.pulse_engine_v2.info.nr_of_axes);
+    println!(
+        "  Generator: {} ({})",
+        device.pulse_engine_v2.get_generator_type(),
+        device.pulse_engine_v2.get_generator_type_description()
+    );
+
+    println!(
+        "  Raw generator type: 0x{:02X}",
+        device.pulse_engine_v2.pulse_generator_type
+    );
 
     Ok(())
 }
