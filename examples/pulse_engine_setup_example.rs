@@ -144,20 +144,22 @@ fn main() -> Result<()> {
     let mut position = device.pulse_engine_v2.current_position[2];
     println!("Starting from current position: {}", position);
 
+    // Try enabling stepper driver on common enable pins
+    println!("Enabling stepper drivers on pins 40-42...");
+    for pin in 40..=42 {
+        device.set_pin_function(pin, PinFunction::DigitalOutput)?;
+        device.set_digital_output(pin, true)?; // Enable driver
+    }
+
     loop {
-        let step_size = 100; // Larger steps for visible movement
+        let step_size = 100;
         position += step_size;
 
-        // Try relative movement instead of absolute position
         println!("Moving {} steps relative", step_size);
-
-        // Use command 0x82 for relative movement (common in stepper systems)
         device.send_request(0x82, 2, step_size as u8, (step_size >> 8) as u8, 0)?;
 
-        // Wait for movement to complete
         std::thread::sleep(std::time::Duration::from_millis(500));
 
-        // Read back current status
         device.get_pulse_engine_status()?;
         let actual_position = device.pulse_engine_v2.current_position[2];
         let axis_state = device.pulse_engine_v2.get_axis_state(2);
