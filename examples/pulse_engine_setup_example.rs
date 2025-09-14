@@ -108,7 +108,12 @@ fn main() -> Result<()> {
 
     // Move axis positions in a loop
     println!("\nMoving axis positions (Ctrl+C to stop)...");
-    let mut position = 0i32;
+
+    // Read initial position from device
+    device.get_pulse_engine_status()?;
+    let mut position = device.pulse_engine_v2.current_position[2];
+    println!("Starting from current position: {}", position);
+
     loop {
         position += 1;
 
