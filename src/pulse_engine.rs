@@ -544,6 +544,96 @@ impl PoKeysDevice {
         Ok(())
     }
 
+    /// Set axis configuration (0x85/0x11)
+    pub fn set_axis_configuration(&mut self, axis: usize) -> Result<()> {
+        if axis >= 8 {
+            return Err(PoKeysError::Parameter("Axis index must be 0-7".to_string()));
+        }
+
+        let mut request = vec![0u8; 56]; // Data payload (protocol bytes 9-64)
+
+        // Byte 9: Axis options - Enable axis with internal planner
+        request[0] = 0x05; // aoENABLED | aoINTERNAL_PLANNER
+
+        // Byte 10: Axis switch options
+        request[1] = 0x00; // No switches
+
+        // Bytes 11-13: Switch pins (0 for external)
+        request[2] = 0; // Home switch pin
+        request[3] = 0; // Limit- switch pin  
+        request[4] = 0; // Limit+ switch pin
+
+        // Bytes 14-15: Homing speeds
+        request[5] = 50; // Homing speed (50% of max)
+        request[6] = 10; // Homing return speed (10% of homing)
+
+        // Byte 16: MPG jog encoder ID
+        request[7] = 0;
+
+        // Bytes 17-20: Maximum speed (32-bit float)
+        let max_speed = 1000.0f32;
+        let speed_bytes = max_speed.to_le_bytes();
+        request[8..12].copy_from_slice(&speed_bytes);
+
+        // Bytes 21-24: Maximum acceleration (32-bit float)
+        let max_accel = 100.0f32;
+        let accel_bytes = max_accel.to_le_bytes();
+        request[12..16].copy_from_slice(&accel_bytes);
+
+        // Bytes 25-28: Maximum deceleration (32-bit float)
+        let max_decel = 100.0f32;
+        let decel_bytes = max_decel.to_le_bytes();
+        request[16..20].copy_from_slice(&decel_bytes);
+
+        // Bytes 29-32: Soft-limit minimum position
+        let min_pos = 0i32;
+        let min_bytes = min_pos.to_le_bytes();
+        request[20..24].copy_from_slice(&min_bytes);
+
+        // Bytes 33-36: Soft-limit maximum position
+        let max_pos = 0i32;
+        let max_bytes = max_pos.to_le_bytes();
+        request[24..28].copy_from_slice(&max_bytes);
+
+        // Bytes 37-38: MPG jog multiplier
+        request[28] = 1;
+        request[29] = 0;
+
+        // Byte 39: Axis enable output pin (0 for external)
+        request[30] = 0;
+
+        // Byte 40: Invert axis enable signal
+        request[31] = 0;
+
+        // Bytes 41-43: Filter settings
+        request[32] = 0; // Limit- filter
+        request[33] = 0; // Limit+ filter
+        request[34] = 0; // Home filter
+
+        // Byte 44: Home algorithm
+        request[35] = 0x83; // Default algorithm
+
+        // Bytes 46-49: Home back-off distance
+        let backoff = 0i32;
+        let backoff_bytes = backoff.to_le_bytes();
+        request[37..41].copy_from_slice(&backoff_bytes);
+
+        // Bytes 50-51: MPG encoder divider
+        request[41] = 1;
+        request[42] = 0;
+
+        // Byte 52: Additional misc options
+        request[43] = 0x00; // No inversion
+
+        // Byte 53: Probe filter
+        request[44] = 0;
+
+        // Bytes 54-63: Reserved (already 0)
+
+        self.send_request_with_data(0x85, 0x11, axis as u8, 0, 0, &request)?;
+        Ok(())
+    }
+
     /// Get axis configuration (0x85/0x10)
     pub fn get_axis_configuration(&mut self, axis: usize) -> Result<()> {
         if axis >= 8 {

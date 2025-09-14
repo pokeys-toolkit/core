@@ -150,16 +150,23 @@ fn main() -> Result<()> {
     // Disable pulse engine to configure pins
     device.enable_pulse_engine(false)?;
 
-    // Configure axis 2 output pins - this might need a specific command
-    // Try setting the pin assignments in the pulse engine structure
-    device.pulse_engine_v2.axis_enable_output_pins[2] = 40; // Direction pin
+    // Properly configure axis 2 using the specification
+    println!("Setting axis 2 configuration...");
+    device.set_axis_configuration(2)?;
 
     // Re-enable pulse engine
     device.enable_pulse_engine(true)?;
 
     // Verify configuration
     device.get_pulse_engine_status()?;
-    println!("Pulse engine re-enabled with pin configuration");
+    device.get_axis_configuration(2)?;
+    println!("Axis 2 Configuration after setup:");
+    println!("  Options: 0x{:02X}", device.pulse_engine_v2.axes_config[2]);
+    println!("  Max speed: {}", device.pulse_engine_v2.max_speed[2]);
+    println!(
+        "  Max acceleration: {}",
+        device.pulse_engine_v2.max_acceleration[2]
+    );
 
     loop {
         position += 10;
