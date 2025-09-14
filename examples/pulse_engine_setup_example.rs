@@ -137,23 +137,30 @@ fn main() -> Result<()> {
     println!("\nMoving axis positions (Ctrl+C to stop)...");
 
     // Read initial position from device
-    let mut position = device.get_axis_position(2)?;
+    device.get_pulse_engine_status()?;
+    let mut position = device.pulse_engine_v2.current_position[2];
     println!("Starting from current position: {}", position);
 
     loop {
-        position += 1;
+        position += 10; // Increment by 10 steps for visible movement
 
         // Move axis 2 to position
+        println!("Sending move command to position: {}", position);
         device.move_axis_to_position(2, position, 5.0)?;
 
+        // Small delay to allow movement
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
         // Read back current status to show actual position
-        let actual_position = device.get_axis_position(2)?;
+        device.get_pulse_engine_status()?;
+        let actual_position = device.pulse_engine_v2.current_position[2];
+        let axis_state = device.pulse_engine_v2.get_axis_state(2);
 
         println!(
-            "Move axis 2 to position: {} (actual: {})",
-            position, actual_position
+            "Target: {}, Actual: {}, State: {:?}",
+            position, actual_position, axis_state
         );
 
-        std::thread::sleep(std::time::Duration::from_millis(250));
+        std::thread::sleep(std::time::Duration::from_millis(150));
     }
 }
