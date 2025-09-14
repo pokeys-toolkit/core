@@ -135,6 +135,9 @@ fn main() -> Result<()> {
 
     // Move axis positions in a loop
     println!("\nMoving axis positions (Ctrl+C to stop)...");
+    println!(
+        "Note: If no physical stepper motor is connected, you'll only see position changes in software"
+    );
 
     // Read initial position from device
     device.get_pulse_engine_status()?;
@@ -142,18 +145,17 @@ fn main() -> Result<()> {
     println!("Starting from current position: {}", position);
 
     loop {
-        position += 10; // Increment by 10 steps for visible movement
+        let step_size = 100; // Larger steps for visible movement
+        position += step_size;
 
-        // Set target position using the working command
-        println!("Setting target position: {}", position);
-        device.set_axis_position(2, position)?;
+        // Try relative movement instead of absolute position
+        println!("Moving {} steps relative", step_size);
 
-        // Try to trigger movement by sending a start command
-        // Command 0x83 might be axis control
-        device.send_request(0x83, 2, 1, 0, 0)?; // Try to start axis 2
+        // Use command 0x82 for relative movement (common in stepper systems)
+        device.send_request(0x82, 2, step_size as u8, (step_size >> 8) as u8, 0)?;
 
-        // Small delay to allow movement
-        std::thread::sleep(std::time::Duration::from_millis(200));
+        // Wait for movement to complete
+        std::thread::sleep(std::time::Duration::from_millis(500));
 
         // Read back current status
         device.get_pulse_engine_status()?;
@@ -161,10 +163,10 @@ fn main() -> Result<()> {
         let axis_state = device.pulse_engine_v2.get_axis_state(2);
 
         println!(
-            "Target: {}, Actual: {}, State: {:?}",
+            "Expected: {}, Actual: {}, State: {:?}",
             position, actual_position, axis_state
         );
 
-        std::thread::sleep(std::time::Duration::from_millis(50));
+        std::thread::sleep(std::time::Duration::from_millis(250));
     }
 }
