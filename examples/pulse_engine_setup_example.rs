@@ -143,14 +143,14 @@ fn main() -> Result<()> {
     loop {
         position += 1;
 
-        // Set position for axis 2
-        device.set_axis_position(2, position)?;
+        // Move axis 2 to position
+        device.move_axis_to_position(2, position, 5.0)?;
 
         // Read back current status to show actual position
         let actual_position = device.get_axis_position(2)?;
 
         println!(
-            "Set axis 2 position to: {} (actual: {})",
+            "Move axis 2 to position: {} (actual: {})",
             position, actual_position
         );
 
