@@ -144,31 +144,44 @@ fn main() -> Result<()> {
     let mut position = device.pulse_engine_v2.current_position[2];
     println!("Starting from current position: {}", position);
 
-    // Try enabling stepper driver on common enable pins
-    println!("Enabling stepper drivers on pins 40-42...");
-    for pin in 40..=42 {
-        device.set_pin_function(pin, PinFunction::DigitalOutput)?;
-        device.set_digital_output(pin, true)?; // Enable driver
-    }
+    // The pulse engine reserves pins for step/direction output
+    // Let's check which pins are available and try different ones
+    println!("Pulse engine may have reserved pins 49/40 for internal use");
+    println!("Trying alternative pins for manual step generation...");
+
+    // Try pins that might not be reserved by pulse engine
+    let step_pin = 20;
+    let dir_pin = 21;
+
+    println!(
+        "Using pin {} for step, pin {} for direction",
+        step_pin, dir_pin
+    );
+
+    // Configure alternative pins
+    device.set_pin_function(step_pin, PinFunction::DigitalOutput)?;
+    device.set_digital_output(step_pin, false)?;
+
+    device.set_pin_function(dir_pin, PinFunction::DigitalOutput)?;
+    device.set_digital_output(dir_pin, false)?;
 
     loop {
-        let step_size = 100;
-        position += step_size;
+        println!("Generating 50 step pulses on pin {}", step_pin);
 
-        println!("Moving {} steps relative", step_size);
-        device.send_request(0x82, 2, step_size as u8, (step_size >> 8) as u8, 0)?;
+        // Set direction
+        device.set_digital_output(dir_pin, position % 200 > 100)?;
+
+        // Generate step pulses
+        for _ in 0..50 {
+            device.set_digital_output(step_pin, true)?;
+            std::thread::sleep(std::time::Duration::from_millis(2));
+            device.set_digital_output(step_pin, false)?;
+            std::thread::sleep(std::time::Duration::from_millis(2));
+        }
+
+        position += 50;
+        println!("Generated {} total steps", position);
 
         std::thread::sleep(std::time::Duration::from_millis(500));
-
-        device.get_pulse_engine_status()?;
-        let actual_position = device.pulse_engine_v2.current_position[2];
-        let axis_state = device.pulse_engine_v2.get_axis_state(2);
-
-        println!(
-            "Expected: {}, Actual: {}, State: {:?}",
-            position, actual_position, axis_state
-        );
-
-        std::thread::sleep(std::time::Duration::from_millis(250));
     }
 }
