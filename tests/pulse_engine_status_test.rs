@@ -55,12 +55,27 @@ fn test_pulse_engine_status_hardware() -> Result<()> {
     // Send pulse engine status request (0x85/0x00)
     let response = device.send_request(0x85, 0x00, 0, 0, 0)?;
 
-    assert!(response.len() >= 8);
+    assert!(response.len() >= 64); // Full response should be 64 bytes
     assert_eq!(response[1], 0x85); // Command echo
     assert_eq!(response[2], 0x00); // Operation echo
 
-    println!("Pulse engine status: {}", response[3]);
-    println!("Number of axes: {}", response[4]);
+    // Test using the structured method
+    device.get_pulse_engine_status()?;
+
+    println!(
+        "Pulse engine state: {}",
+        device.pulse_engine_v2.pulse_engine_state
+    );
+    println!("Enabled axes: {}", device.pulse_engine_v2.info.nr_of_axes);
+    println!(
+        "Activated: {}",
+        device.pulse_engine_v2.pulse_engine_activated
+    );
+    println!(
+        "Max frequency: {} kHz",
+        device.pulse_engine_v2.info.max_pulse_frequency
+    );
+    println!("Buffer depth: {}", device.pulse_engine_v2.info.buffer_depth);
 
     Ok(())
 }

@@ -349,9 +349,50 @@ impl PoKeysDevice {
     pub fn get_pulse_engine_status(&mut self) -> Result<()> {
         let response = self.send_request(0x85, 0x00, 0, 0, 0)?;
 
-        if response.len() >= 8 {
-            self.pulse_engine_v2.pulse_engine_state = response[3];
-            self.pulse_engine_v2.info.nr_of_axes = response[4];
+        if response.len() >= 64 {
+            // Parse response according to specification
+            self.pulse_engine_v2.soft_limit_status = response[3];
+            self.pulse_engine_v2.axis_enabled_states_mask = response[4];
+            self.pulse_engine_v2.limit_override = response[5];
+            // Skip request ID (6) and checksum (7)
+            self.pulse_engine_v2.info.nr_of_axes = response[8];
+            self.pulse_engine_v2.pulse_engine_activated = response[9];
+            self.pulse_engine_v2.pulse_engine_state = response[10];
+            self.pulse_engine_v2.charge_pump_enabled = response[11];
+            self.pulse_engine_v2.limit_status_p = response[12];
+            self.pulse_engine_v2.limit_status_n = response[13];
+            self.pulse_engine_v2.home_status = response[14];
+            self.pulse_engine_v2.pulse_generator_type = response[15];
+
+            // Parse axes status (bytes 16-23)
+            for i in 0..8 {
+                if 16 + i < response.len() {
+                    self.pulse_engine_v2.axes_state[i] = response[16 + i];
+                }
+            }
+
+            // Parse axes positions (bytes 24-55, 8x 32-bit LSB first)
+            for i in 0..8 {
+                let base = 24 + i * 4;
+                if base + 3 < response.len() {
+                    self.pulse_engine_v2.current_position[i] = i32::from_le_bytes([
+                        response[base],
+                        response[base + 1],
+                        response[base + 2],
+                        response[base + 3],
+                    ]);
+                }
+            }
+
+            // Parse remaining fields
+            if response.len() >= 63 {
+                self.pulse_engine_v2.info.max_pulse_frequency = response[57];
+                self.pulse_engine_v2.info.buffer_depth = response[58];
+                self.pulse_engine_v2.info.slot_timing = response[59];
+                self.pulse_engine_v2.emergency_switch_polarity = response[60];
+                self.pulse_engine_v2.error_input_status = response[61];
+                self.pulse_engine_v2.misc_input_status = response[62];
+            }
         }
 
         Ok(())
