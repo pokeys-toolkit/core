@@ -403,6 +403,42 @@ impl PoKeysDevice {
         Ok(())
     }
 
+    /// Setup pulse engine (0x85/0x01)
+    pub fn setup_pulse_engine(&mut self) -> Result<()> {
+        let mut request = vec![0u8; 64];
+
+        // Build request according to specification
+        request[8] = self.pulse_engine_v2.info.nr_of_axes; // Number of enabled axes
+        request[9] = self.pulse_engine_v2.charge_pump_enabled; // Safety charge pump
+        request[10] = self.pulse_engine_v2.pulse_generator_type; // Generator configuration
+        request[11] = self.pulse_engine_v2.info.buffer_depth; // Motion buffer size
+        request[12] = self.pulse_engine_v2.emergency_switch_polarity; // Emergency switch polarity
+
+        // States with enabled power and charge pump (byte 13)
+        let mut power_states = 0u8;
+        if self.pulse_engine_v2.axis_enabled_states_mask & 0x01 != 0 {
+            power_states |= 0x01;
+        } // peSTOPPED
+        if self.pulse_engine_v2.axis_enabled_states_mask & 0x02 != 0 {
+            power_states |= 0x02;
+        } // peSTOP_LIMIT  
+        if self.pulse_engine_v2.axis_enabled_states_mask & 0x04 != 0 {
+            power_states |= 0x04;
+        } // peSTOP_EMERGENCY
+
+        // Charge pump states (bits 4-6)
+        if self.pulse_engine_v2.charge_pump_enabled != 0 {
+            power_states |= 0x10; // peSTOPPED charge pump
+            power_states |= 0x20; // peSTOP_LIMIT charge pump
+            power_states |= 0x40; // peSTOP_EMERGENCY charge pump
+        }
+
+        request[13] = power_states;
+
+        self.send_request_with_data(0x85, 0x01, 0, 0, 0, &request)?;
+        Ok(())
+    }
+
     /// Get pulse engine status (0x85/0x00)
     pub fn get_pulse_engine_status(&mut self) -> Result<()> {
         let response = self.send_request(0x85, 0x00, 0, 0, 0)?;
