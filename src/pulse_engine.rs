@@ -630,13 +630,8 @@ impl PoKeysDevice {
 
         // Bytes 54-63: Reserved (already 0)
 
-        // Send the configuration using the standard request method
-        // Pack the first 5 bytes of data into the request parameters
-        let response = self.send_request(
-            0x85, 0x11, axis as u8, request[0], // Axis options
-            request[1], // Switch options
-        )?;
-
+        // Send the complete configuration using send_request_with_data
+        self.send_request_with_data(0x85, 0x11, axis as u8, 0, 0, &request)?;
         Ok(())
     }
 

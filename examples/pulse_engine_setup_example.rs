@@ -152,7 +152,10 @@ fn main() -> Result<()> {
 
     // Properly configure axis 2 using the specification
     println!("Setting axis 2 configuration...");
-    device.set_axis_configuration(2)?;
+    match device.set_axis_configuration(2) {
+        Ok(_) => println!("✓ Axis 2 configuration set successfully"),
+        Err(e) => println!("✗ Failed to set axis 2 configuration: {}", e),
+    }
 
     // Re-enable pulse engine
     device.enable_pulse_engine(true)?;
