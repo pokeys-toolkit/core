@@ -38,6 +38,24 @@ fn main() -> Result<()> {
 
     // Setup pulse engine with 3ch internal configuration
     println!("Sending setup command (0x85/0x01)...");
+    println!("  Axes: {}", device.pulse_engine_v2.info.nr_of_axes);
+    println!(
+        "  Generator: 0x{:02X}",
+        device.pulse_engine_v2.pulse_generator_type
+    );
+    println!(
+        "  Charge pump: {}",
+        device.pulse_engine_v2.charge_pump_enabled
+    );
+    println!(
+        "  Emergency polarity: {}",
+        device.pulse_engine_v2.emergency_switch_polarity
+    );
+    println!(
+        "  Power states: 0x{:02X}",
+        device.pulse_engine_v2.axis_enabled_states_mask
+    );
+
     device.setup_pulse_engine()?;
     println!("✓ Setup command sent successfully");
 
