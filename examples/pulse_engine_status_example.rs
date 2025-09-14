@@ -28,23 +28,28 @@ fn main() -> Result<()> {
 
     println!("✓ Connected to device {}", target_device.serial_number);
 
-    // Get pulse engine status (0x85/0x00)
-    let response = device.send_request(0x85, 0x00, 0, 0, 0)?;
-
-    let status = response[3];
-    let axes_count = response[4];
+    // Get pulse engine status using PulseEngineV2
+    device.get_pulse_engine_status()?;
 
     println!("\nPulse Engine Status:");
     println!(
-        "  Status: {} ({})",
-        status,
-        match status {
+        "  State: {} ({})",
+        device.pulse_engine_v2.pulse_engine_state,
+        match device.pulse_engine_v2.pulse_engine_state {
             0 => "Stopped",
             1 => "Running",
             _ => "Unknown",
         }
     );
-    println!("  Configured axes: {}", axes_count);
+    println!(
+        "  Configured axes: {}",
+        device.pulse_engine_v2.info.nr_of_axes
+    );
+    println!("  Enabled: {}", device.pulse_engine_v2.pulse_engine_enabled);
+    println!(
+        "  Activated: {}",
+        device.pulse_engine_v2.pulse_engine_activated
+    );
 
     Ok(())
 }

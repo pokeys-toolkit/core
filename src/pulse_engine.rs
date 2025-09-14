@@ -345,6 +345,18 @@ impl PoKeysDevice {
         Ok(())
     }
 
+    /// Get pulse engine status (0x85/0x00)
+    pub fn get_pulse_engine_status(&mut self) -> Result<()> {
+        let response = self.send_request(0x85, 0x00, 0, 0, 0)?;
+
+        if response.len() >= 8 {
+            self.pulse_engine_v2.pulse_engine_state = response[3];
+            self.pulse_engine_v2.info.nr_of_axes = response[4];
+        }
+
+        Ok(())
+    }
+
     /// Set axis position
     pub fn set_axis_position(&mut self, axis: usize, position: i32) -> Result<()> {
         if axis >= 8 {
