@@ -266,6 +266,7 @@ impl PulseEngineV2 {
         self.pulse_generator_type & 0x80 != 0
     }
 
+    /// Get axis state for a specific axis
     pub fn get_axis_state(&self, axis: usize) -> PulseEngineAxisState {
         if axis >= 8 {
             return PulseEngineAxisState::Stopped;

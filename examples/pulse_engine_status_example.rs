@@ -87,9 +87,10 @@ fn main() -> Result<()> {
     // Axes status
     println!("\nAxes Status:");
     for i in 0..pe.info.nr_of_axes as usize {
+        let axis_state = pe.get_axis_state(i);
         println!(
-            "  Axis {}: status=0x{:02X}, position={}",
-            i, pe.axes_state[i], pe.current_position[i]
+            "  Axis {}: status=0x{:02X} ({:?}), position={}",
+            i, pe.axes_state[i], axis_state, pe.current_position[i]
         );
     }
 
