@@ -144,44 +144,44 @@ fn main() -> Result<()> {
     let mut position = device.pulse_engine_v2.current_position[2];
     println!("Starting from current position: {}", position);
 
-    // The pulse engine reserves pins for step/direction output
-    // Let's check which pins are available and try different ones
-    println!("Pulse engine may have reserved pins 49/40 for internal use");
-    println!("Trying alternative pins for manual step generation...");
+    // Configure pulse engine to use pins 40 (direction) and 49 (step) for axis 2
+    println!("Configuring pulse engine axis 2 to use pins 40 (dir) and 49 (step)");
 
-    // Try pins that might not be reserved by pulse engine
-    let step_pin = 20;
-    let dir_pin = 21;
+    // Disable pulse engine to configure pins
+    device.enable_pulse_engine(false)?;
 
-    println!(
-        "Using pin {} for step, pin {} for direction",
-        step_pin, dir_pin
-    );
+    // Configure axis 2 output pins - this might need a specific command
+    // Try setting the pin assignments in the pulse engine structure
+    device.pulse_engine_v2.axis_enable_output_pins[2] = 40; // Direction pin
 
-    // Configure alternative pins
-    device.set_pin_function(step_pin, PinFunction::DigitalOutput)?;
-    device.set_digital_output(step_pin, false)?;
+    // Re-enable pulse engine
+    device.enable_pulse_engine(true)?;
 
-    device.set_pin_function(dir_pin, PinFunction::DigitalOutput)?;
-    device.set_digital_output(dir_pin, false)?;
+    // Verify configuration
+    device.get_pulse_engine_status()?;
+    println!("Pulse engine re-enabled with pin configuration");
 
     loop {
-        println!("Generating 50 step pulses on pin {}", step_pin);
+        position += 10;
 
-        // Set direction
-        device.set_digital_output(dir_pin, position % 200 > 100)?;
+        // Use pulse engine axis 2 movement
+        println!("Moving axis 2 to position: {}", position);
+        device.set_axis_position(2, position)?;
 
-        // Generate step pulses
-        for _ in 0..50 {
-            device.set_digital_output(step_pin, true)?;
-            std::thread::sleep(std::time::Duration::from_millis(2));
-            device.set_digital_output(step_pin, false)?;
-            std::thread::sleep(std::time::Duration::from_millis(2));
-        }
+        // Trigger movement
+        device.send_request(0x83, 2, 1, 0, 0)?;
 
-        position += 50;
-        println!("Generated {} total steps", position);
+        std::thread::sleep(std::time::Duration::from_millis(200));
 
-        std::thread::sleep(std::time::Duration::from_millis(500));
+        device.get_pulse_engine_status()?;
+        let actual_position = device.pulse_engine_v2.current_position[2];
+        let axis_state = device.pulse_engine_v2.get_axis_state(2);
+
+        println!(
+            "Target: {}, Actual: {}, State: {:?}",
+            position, actual_position, axis_state
+        );
+
+        std::thread::sleep(std::time::Duration::from_millis(300));
     }
 }
