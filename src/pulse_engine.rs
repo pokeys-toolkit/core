@@ -405,23 +405,23 @@ impl PoKeysDevice {
 
     /// Setup pulse engine (0x85/0x01)
     pub fn setup_pulse_engine(&mut self) -> Result<()> {
-        let mut request = vec![0u8; 64];
+        let mut request = vec![0u8; 56]; // Only data payload (protocol bytes 9-64)
 
         // Build request according to specification
-        request[8] = self.pulse_engine_v2.info.nr_of_axes; // Number of enabled axes
-        request[9] = self.pulse_engine_v2.charge_pump_enabled; // Safety charge pump
-        request[10] = self.pulse_engine_v2.pulse_generator_type; // Generator configuration
-        request[11] = self.pulse_engine_v2.info.buffer_depth; // Motion buffer size
-        request[12] = self.pulse_engine_v2.emergency_switch_polarity; // Emergency switch polarity
+        request[0] = self.pulse_engine_v2.info.nr_of_axes; // Protocol byte 9: Number of enabled axes
+        request[1] = self.pulse_engine_v2.charge_pump_enabled; // Protocol byte 10: Safety charge pump
+        request[2] = self.pulse_engine_v2.pulse_generator_type; // Protocol byte 11: Generator configuration
+        request[3] = self.pulse_engine_v2.info.buffer_depth; // Protocol byte 12: Motion buffer size
+        request[4] = self.pulse_engine_v2.emergency_switch_polarity; // Protocol byte 13: Emergency switch polarity
 
-        // States with enabled power and charge pump (byte 13)
+        // Protocol byte 14: States with enabled power and charge pump
         let mut power_states = 0u8;
         if self.pulse_engine_v2.axis_enabled_states_mask & 0x01 != 0 {
             power_states |= 0x01;
         } // peSTOPPED
         if self.pulse_engine_v2.axis_enabled_states_mask & 0x02 != 0 {
             power_states |= 0x02;
-        } // peSTOP_LIMIT  
+        } // peSTOP_LIMIT
         if self.pulse_engine_v2.axis_enabled_states_mask & 0x04 != 0 {
             power_states |= 0x04;
         } // peSTOP_EMERGENCY
@@ -433,7 +433,9 @@ impl PoKeysDevice {
             power_states |= 0x40; // peSTOP_EMERGENCY charge pump
         }
 
-        request[13] = power_states;
+        request[5] = power_states; // Protocol byte 14: Power and charge pump states
+
+        // Protocol bytes 15-63 are reserved (already initialized to 0)
 
         self.send_request_with_data(0x85, 0x01, 0, 0, 0, &request)?;
         Ok(())
