@@ -106,6 +106,33 @@ fn main() -> Result<()> {
         );
     }
 
+    // Get axis 2 configuration
+    println!("\nGetting axis 2 configuration...");
+    device.get_axis_configuration(2)?;
+    println!("Axis 2 Configuration:");
+    println!("  Options: 0x{:02X}", device.pulse_engine_v2.axes_config[2]);
+    println!(
+        "  Switch options: 0x{:02X}",
+        device.pulse_engine_v2.axes_switch_config[2]
+    );
+    println!("  Max speed: {}", device.pulse_engine_v2.max_speed[2]);
+    println!(
+        "  Max acceleration: {}",
+        device.pulse_engine_v2.max_acceleration[2]
+    );
+    println!(
+        "  Max deceleration: {}",
+        device.pulse_engine_v2.max_deceleration[2]
+    );
+    println!(
+        "  Soft limit min: {}",
+        device.pulse_engine_v2.soft_limit_minimum[2]
+    );
+    println!(
+        "  Soft limit max: {}",
+        device.pulse_engine_v2.soft_limit_maximum[2]
+    );
+
     // Move axis positions in a loop
     println!("\nMoving axis positions (Ctrl+C to stop)...");
 

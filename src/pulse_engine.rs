@@ -544,7 +544,54 @@ impl PoKeysDevice {
         Ok(())
     }
 
-    /// Get axis position
+    /// Get axis configuration (0x85/0x10)
+    pub fn get_axis_configuration(&mut self, axis: usize) -> Result<()> {
+        if axis >= 8 {
+            return Err(PoKeysError::Parameter("Axis index must be 0-7".to_string()));
+        }
+
+        let response = self.send_request(0x85, 0x10, axis as u8, 0, 0)?;
+
+        // Parse response according to specification
+        if response.len() >= 64 {
+            // Byte 9: Axis options
+            self.pulse_engine_v2.axes_config[axis] = response[8];
+
+            // Byte 10: Axis switch options
+            self.pulse_engine_v2.axes_switch_config[axis] = response[9];
+
+            // Byte 14: Homing speed
+            self.pulse_engine_v2.homing_speed[axis] = response[13];
+
+            // Byte 15: Homing return speed
+            self.pulse_engine_v2.homing_return_speed[axis] = response[14];
+
+            // Byte 16: MPG jog encoder ID
+            self.pulse_engine_v2.mpg_jog_encoder[axis] = response[15];
+
+            // Bytes 17-20: Maximum speed (32-bit float)
+            let speed_bytes = [response[16], response[17], response[18], response[19]];
+            self.pulse_engine_v2.max_speed[axis] = f32::from_le_bytes(speed_bytes);
+
+            // Bytes 21-24: Maximum acceleration (32-bit float)
+            let accel_bytes = [response[20], response[21], response[22], response[23]];
+            self.pulse_engine_v2.max_acceleration[axis] = f32::from_le_bytes(accel_bytes);
+
+            // Bytes 25-28: Maximum deceleration (32-bit float)
+            let decel_bytes = [response[24], response[25], response[26], response[27]];
+            self.pulse_engine_v2.max_deceleration[axis] = f32::from_le_bytes(decel_bytes);
+
+            // Bytes 29-32: Soft-limit minimum position (32-bit int)
+            let min_pos_bytes = [response[28], response[29], response[30], response[31]];
+            self.pulse_engine_v2.soft_limit_minimum[axis] = i32::from_le_bytes(min_pos_bytes);
+
+            // Bytes 33-36: Soft-limit maximum position (32-bit int)
+            let max_pos_bytes = [response[32], response[33], response[34], response[35]];
+            self.pulse_engine_v2.soft_limit_maximum[axis] = i32::from_le_bytes(max_pos_bytes);
+        }
+
+        Ok(())
+    }
     pub fn get_axis_position(&mut self, axis: usize) -> Result<i32> {
         if axis >= 8 {
             return Err(PoKeysError::Parameter("Invalid axis number".to_string()));
