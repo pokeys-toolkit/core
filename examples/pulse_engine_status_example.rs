@@ -41,26 +41,27 @@ fn main() -> Result<()> {
     println!("  Charge pump: {}", pe.charge_pump_enabled);
 
     // Generator info
-    let gen_type = pe.pulse_generator_type;
-    let gen_type_bits = gen_type & 0x0F;
-    println!("  Generator type: 0x{:02X}", gen_type);
+    println!("  Generator type: 0x{:02X}", pe.pulse_generator_type);
     println!(
         "    Type: {} ({})",
-        gen_type_bits,
-        match gen_type_bits {
-            0 => "8ch external",
-            1 => "3ch internal",
-            2 => "8ch smart external",
-            _ => "unknown",
-        }
+        pe.get_generator_type(),
+        pe.get_generator_type_description()
     );
     println!(
         "    Swap step/dir: {}",
-        if gen_type & 0x40 != 0 { "Yes" } else { "No" }
+        if pe.is_step_dir_swapped() {
+            "Yes"
+        } else {
+            "No"
+        }
     );
     println!(
         "    Extended IO: {}",
-        if gen_type & 0x80 != 0 { "Yes" } else { "No" }
+        if pe.is_extended_io_enabled() {
+            "Yes"
+        } else {
+            "No"
+        }
     );
     println!("  Max frequency: {} kHz", pe.info.max_pulse_frequency);
     println!("  Buffer depth: {}", pe.info.buffer_depth);

@@ -241,6 +241,31 @@ impl PulseEngineV2 {
         }
     }
 
+    /// Get pulse generator type (bits 0-3)
+    pub fn get_generator_type(&self) -> u8 {
+        self.pulse_generator_type & 0x0F
+    }
+
+    /// Get pulse generator type description
+    pub fn get_generator_type_description(&self) -> &'static str {
+        match self.get_generator_type() {
+            0 => "8ch external",
+            1 => "3ch internal",
+            2 => "8ch smart external",
+            _ => "unknown",
+        }
+    }
+
+    /// Check if step/dir signals are swapped (bit 6)
+    pub fn is_step_dir_swapped(&self) -> bool {
+        self.pulse_generator_type & 0x40 != 0
+    }
+
+    /// Check if external extended IO features are enabled (bit 7)
+    pub fn is_extended_io_enabled(&self) -> bool {
+        self.pulse_generator_type & 0x80 != 0
+    }
+
     pub fn get_axis_state(&self, axis: usize) -> PulseEngineAxisState {
         if axis >= 8 {
             return PulseEngineAxisState::Stopped;
