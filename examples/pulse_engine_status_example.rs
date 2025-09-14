@@ -31,41 +31,45 @@ fn main() -> Result<()> {
     // Get pulse engine status using PulseEngineV2
     device.get_pulse_engine_status()?;
 
-    println!("\nPulse Engine Status:");
-    let state = device.pulse_engine_v2.pulse_engine_state;
-    let state_enum = device.pulse_engine_v2.get_state();
-    println!("  State: {} ({:?})", state, state_enum);
-    println!("  Enabled axes: {}", device.pulse_engine_v2.info.nr_of_axes);
-    println!(
-        "  Activated: {}",
-        device.pulse_engine_v2.pulse_engine_activated
-    );
-    println!(
-        "  Charge pump: {}",
-        device.pulse_engine_v2.charge_pump_enabled
-    );
-    println!(
-        "  Generator type: 0x{:02X}",
-        device.pulse_engine_v2.pulse_generator_type
-    );
-    println!(
-        "  Max frequency: {} kHz",
-        device.pulse_engine_v2.info.max_pulse_frequency
-    );
-    println!(
-        "  Buffer depth: {}",
-        device.pulse_engine_v2.info.buffer_depth
-    );
+    println!("\nPulse Engine Status (Complete):");
+    let pe = &device.pulse_engine_v2;
 
-    // Show axis positions if any axes are configured
-    if device.pulse_engine_v2.info.nr_of_axes > 0 {
-        println!("\nAxis Positions:");
-        for i in 0..device.pulse_engine_v2.info.nr_of_axes as usize {
-            println!(
-                "  Axis {}: {}",
-                i, device.pulse_engine_v2.current_position[i]
-            );
-        }
+    // Basic status
+    println!("  State: {} ({:?})", pe.pulse_engine_state, pe.get_state());
+    println!("  Enabled axes: {}", pe.info.nr_of_axes);
+    println!("  Activated: {}", pe.pulse_engine_activated);
+    println!("  Charge pump: {}", pe.charge_pump_enabled);
+
+    // Generator info
+    println!("  Generator type: 0x{:02X}", pe.pulse_generator_type);
+    println!("  Max frequency: {} kHz", pe.info.max_pulse_frequency);
+    println!("  Buffer depth: {}", pe.info.buffer_depth);
+    println!("  Slot timing: {} (100us steps)", pe.info.slot_timing);
+
+    // Status flags
+    println!("  Soft limit status: 0x{:02X}", pe.soft_limit_status);
+    println!(
+        "  Axis enabled states: 0x{:02X}",
+        pe.axis_enabled_states_mask
+    );
+    println!("  Limit override: 0x{:02X}", pe.limit_override);
+    println!("  Limit+ status: 0x{:02X}", pe.limit_status_p);
+    println!("  Limit- status: 0x{:02X}", pe.limit_status_n);
+    println!("  Home status: 0x{:02X}", pe.home_status);
+    println!(
+        "  Emergency switch polarity: {}",
+        pe.emergency_switch_polarity
+    );
+    println!("  Error input status: 0x{:02X}", pe.error_input_status);
+    println!("  Misc input status: 0x{:02X}", pe.misc_input_status);
+
+    // Axes status
+    println!("\nAxes Status:");
+    for i in 0..pe.info.nr_of_axes as usize {
+        println!(
+            "  Axis {}: status=0x{:02X}, position={}",
+            i, pe.axes_state[i], pe.current_position[i]
+        );
     }
 
     Ok(())
