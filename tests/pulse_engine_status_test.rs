@@ -26,13 +26,30 @@ fn test_pulse_engine_get_status() {
 #[cfg(feature = "hardware-tests")]
 #[test]
 fn test_pulse_engine_status_hardware() -> Result<()> {
+    // Try USB first
     let device_count = enumerate_usb_devices()?;
-    if device_count == 0 {
-        println!("No USB devices found, skipping hardware test");
-        return Ok(());
-    }
+    let mut device = if device_count > 0 {
+        connect_to_device(0)?
+    } else {
+        // Try network devices
+        let network_devices = enumerate_network_devices(2000)?;
+        if network_devices.is_empty() {
+            println!("No devices found, skipping hardware test");
+            return Ok(());
+        }
 
-    let mut device = connect_to_device(0)?;
+        // Look for device 32223 or use first available
+        let target_device = network_devices
+            .iter()
+            .find(|d| d.serial_number == 32223)
+            .unwrap_or(&network_devices[0]);
+
+        println!(
+            "Connecting to network device: serial={}",
+            target_device.serial_number
+        );
+        connect_to_network_device(target_device)?
+    };
     device.get_device_data()?;
 
     // Send pulse engine status request (0x85/0x00)
