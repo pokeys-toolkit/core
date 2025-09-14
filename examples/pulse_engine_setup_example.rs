@@ -144,14 +144,18 @@ fn main() -> Result<()> {
     loop {
         position += 10; // Increment by 10 steps for visible movement
 
-        // Move axis 2 to position
-        println!("Sending move command to position: {}", position);
-        device.move_axis_to_position(2, position, 5.0)?;
+        // Set target position using the working command
+        println!("Setting target position: {}", position);
+        device.set_axis_position(2, position)?;
+
+        // Try to trigger movement by sending a start command
+        // Command 0x83 might be axis control
+        device.send_request(0x83, 2, 1, 0, 0)?; // Try to start axis 2
 
         // Small delay to allow movement
-        std::thread::sleep(std::time::Duration::from_millis(100));
+        std::thread::sleep(std::time::Duration::from_millis(200));
 
-        // Read back current status to show actual position
+        // Read back current status
         device.get_pulse_engine_status()?;
         let actual_position = device.pulse_engine_v2.current_position[2];
         let axis_state = device.pulse_engine_v2.get_axis_state(2);
@@ -161,6 +165,6 @@ fn main() -> Result<()> {
             position, actual_position, axis_state
         );
 
-        std::thread::sleep(std::time::Duration::from_millis(150));
+        std::thread::sleep(std::time::Duration::from_millis(50));
     }
 }
