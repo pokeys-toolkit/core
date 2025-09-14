@@ -77,5 +77,34 @@ fn main() -> Result<()> {
         device.pulse_engine_v2.pulse_generator_type
     );
 
+    // Show pulse engine status
+    println!("\nPulse Engine Status:");
+    println!(
+        "  State: {} ({:?})",
+        device.pulse_engine_v2.pulse_engine_state,
+        device.pulse_engine_v2.get_state()
+    );
+    println!(
+        "  Activated: {}",
+        device.pulse_engine_v2.pulse_engine_activated
+    );
+    println!(
+        "  Charge pump: {}",
+        device.pulse_engine_v2.charge_pump_enabled
+    );
+
+    // Show axes status
+    println!("\nAxes Status:");
+    for i in 0..device.pulse_engine_v2.info.nr_of_axes as usize {
+        let axis_state = device.pulse_engine_v2.get_axis_state(i);
+        println!(
+            "  Axis {}: status=0x{:02X} ({:?}), position={}",
+            i,
+            device.pulse_engine_v2.axes_state[i],
+            axis_state,
+            device.pulse_engine_v2.current_position[i]
+        );
+    }
+
     Ok(())
 }
