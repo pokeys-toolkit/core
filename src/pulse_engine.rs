@@ -469,7 +469,6 @@ impl PoKeysDevice {
         Ok(())
     }
 
-    /// Get pulse engine status (0x85/0x00)
     pub fn get_pulse_engine_status(&mut self) -> Result<()> {
         let response = self.send_request(0x85, 0x00, 0, 0, 0)?;
 
@@ -522,22 +521,26 @@ impl PoKeysDevice {
         Ok(())
     }
 
-    /// Set axis position
+    /// Set axis position (0x85/0x03)
     pub fn set_axis_position(&mut self, axis: usize, position: i32) -> Result<()> {
         if axis >= 8 {
-            return Err(PoKeysError::Parameter("Invalid axis number".to_string()));
+            return Err(PoKeysError::Parameter("Axis index must be 0-7".to_string()));
         }
 
-        self.pulse_engine_v2.position_setup[axis] = position;
+        let mut request = vec![0u8; 56]; // Only data payload (protocol bytes 9-64)
 
-        self.send_request(
-            0x83,
-            axis as u8,
-            (position & 0xFF) as u8,
-            ((position >> 8) & 0xFF) as u8,
-            ((position >> 16) & 0xFF) as u8,
-        )?;
+        // Protocol bytes 9-40: Axis positions (32-bit LSB first)
+        // Each axis position is 4 bytes, so axis N starts at byte N*4
+        let pos_bytes = position.to_le_bytes();
+        let start_idx = axis * 4;
+        request[start_idx..start_idx + 4].copy_from_slice(&pos_bytes);
 
+        // Protocol byte 4: Axis position setup selection (bit-mapped)
+        let axis_mask = 1u8 << axis;
+
+        // Protocol bytes 41-63 are reserved (already initialized to 0)
+
+        self.send_request_with_data(0x85, 0x03, axis_mask, 0, 0, &request)?;
         Ok(())
     }
 
