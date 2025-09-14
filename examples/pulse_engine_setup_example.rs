@@ -30,6 +30,11 @@ fn main() -> Result<()> {
 
     // Configure for 3-channel internal pulse generator
     println!("\nConfiguring for 3-channel internal pulse generator...");
+
+    // First disable pulse engine
+    println!("Disabling pulse engine...");
+    device.enable_pulse_engine(false)?;
+
     device.pulse_engine_v2.info.nr_of_axes = 3;
     device.pulse_engine_v2.pulse_generator_type = 1; // 3ch internal
     device.pulse_engine_v2.charge_pump_enabled = 0; // Disabled
@@ -58,6 +63,11 @@ fn main() -> Result<()> {
 
     device.setup_pulse_engine()?;
     println!("✓ Setup command sent successfully");
+
+    // Enable pulse engine
+    println!("Enabling pulse engine...");
+    device.enable_pulse_engine(true)?;
+    println!("✓ Pulse engine enabled");
 
     // Small delay for device to process
     std::thread::sleep(std::time::Duration::from_millis(100));
