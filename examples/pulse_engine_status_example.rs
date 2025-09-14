@@ -92,6 +92,25 @@ fn main() -> Result<()> {
             "  Axis {}: status=0x{:02X} ({:?}), position={}",
             i, pe.axes_state[i], axis_state, pe.current_position[i]
         );
+
+        // Show limit status for each axis
+        let mut limits = Vec::new();
+        if pe.is_axis_limit_positive(i) {
+            limits.push("Limit+");
+        }
+        if pe.is_axis_limit_negative(i) {
+            limits.push("Limit-");
+        }
+        if pe.is_axis_home(i) {
+            limits.push("Home");
+        }
+        if pe.is_axis_soft_limit(i) {
+            limits.push("SoftLimit");
+        }
+
+        if !limits.is_empty() {
+            println!("    Limits: {}", limits.join(", "));
+        }
     }
 
     Ok(())

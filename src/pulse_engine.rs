@@ -291,6 +291,38 @@ impl PulseEngineV2 {
         }
     }
 
+    /// Check if axis has positive limit switch triggered
+    pub fn is_axis_limit_positive(&self, axis: usize) -> bool {
+        if axis >= 8 {
+            return false;
+        }
+        self.limit_status_p & (1 << axis) != 0
+    }
+
+    /// Check if axis has negative limit switch triggered
+    pub fn is_axis_limit_negative(&self, axis: usize) -> bool {
+        if axis >= 8 {
+            return false;
+        }
+        self.limit_status_n & (1 << axis) != 0
+    }
+
+    /// Check if axis is at home position
+    pub fn is_axis_home(&self, axis: usize) -> bool {
+        if axis >= 8 {
+            return false;
+        }
+        self.home_status & (1 << axis) != 0
+    }
+
+    /// Check if axis has soft limit triggered
+    pub fn is_axis_soft_limit(&self, axis: usize) -> bool {
+        if axis >= 8 {
+            return false;
+        }
+        self.soft_limit_status & (1 << axis) != 0
+    }
+
     pub fn is_axis_enabled(&self, axis: usize) -> bool {
         if axis >= 8 {
             return false;
