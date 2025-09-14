@@ -32,14 +32,19 @@ fn main() -> Result<()> {
     device.get_pulse_engine_status()?;
 
     println!("\nPulse Engine Status:");
+    let state = device.pulse_engine_v2.pulse_engine_state;
+    println!("  State: 0x{:02X}", state);
     println!(
-        "  State: {} ({})",
-        device.pulse_engine_v2.pulse_engine_state,
-        match device.pulse_engine_v2.pulse_engine_state {
-            0 => "Stopped",
-            1 => "Running",
-            _ => "Unknown",
-        }
+        "    STOPPED: {}",
+        if state & 0x01 != 0 { "Yes" } else { "No" }
+    );
+    println!(
+        "    STOP_LIMIT: {}",
+        if state & 0x02 != 0 { "Yes" } else { "No" }
+    );
+    println!(
+        "    STOP_EMERGENCY: {}",
+        if state & 0x04 != 0 { "Yes" } else { "No" }
     );
     println!("  Enabled axes: {}", device.pulse_engine_v2.info.nr_of_axes);
     println!(
