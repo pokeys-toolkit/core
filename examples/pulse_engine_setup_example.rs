@@ -140,15 +140,19 @@ fn main() -> Result<()> {
     println!("Configuring axis 3...");
     device
         .configure_axis(2)
-        .max_speed(1000)
-        .max_acceleration(100)
-        .max_deceleration(100)
+        .max_speed(1000.0)
+        .max_acceleration(100.0)
+        .max_deceleration(100.0)
         // .soft_limit_min(-1800)
         // .soft_limit_max(1800)
         .build(&mut device)?;
 
     // Send configuration to device
     device.set_axis_configuration(2)?;
+    println!(
+        "Values sent to device: speed={}, accel={}, decel={}",
+        1000.0, 100.0, 100.0
+    );
 
     // Read back configuration to verify
     device.get_axis_configuration(2)?;
