@@ -198,6 +198,8 @@ pub struct PulseEngineV2 {
     pub trigger_active: u8,
     pub spindle_speed_estimate: i32,
     pub spindle_position_error: i32,
+    pub motor_step_setting: [u8; 4],
+    pub motor_current_setting: [u8; 4],
     pub spindle_rpm: u32,
     pub spindle_index_counter: u32,
     pub dedicated_limit_n_inputs: u8,
@@ -299,6 +301,8 @@ impl PulseEngineV2 {
             trigger_active: 0,
             spindle_speed_estimate: 0,
             spindle_position_error: 0,
+            motor_step_setting: [0; 4],
+            motor_current_setting: [0; 4],
             spindle_rpm: 0,
             spindle_index_counter: 0,
             dedicated_limit_n_inputs: 0,
@@ -896,6 +900,25 @@ impl PoKeysDevice {
                     }
                     std::thread::sleep(std::time::Duration::from_millis(10));
                 }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Get internal motor drivers configuration (0x85/0x18)
+    pub fn get_motor_drivers_configuration(&mut self) -> Result<()> {
+        let response = self.send_request(0x85, 0x18, 0, 0, 0)?;
+
+        // Parse motor driver settings for each axis
+        for axis in 0..4 {
+            let byte_offset = 8 + (axis * 2); // Bytes 9-16 for axes 1-4
+            if byte_offset + 1 < response.len() {
+                let step_setting = response[byte_offset];
+                let current_setting = response[byte_offset + 1];
+
+                self.pulse_engine_v2.motor_step_setting[axis] = step_setting;
+                self.pulse_engine_v2.motor_current_setting[axis] = current_setting;
             }
         }
 

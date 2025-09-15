@@ -34,11 +34,11 @@ fn main() -> Result<()> {
     println!("Configuring axis 2...");
     device
         .configure_axis(2)
-        .max_speed(1000)
+        .max_speed(2500)
         .max_acceleration(1000)
         .max_deceleration(1000)
-        .soft_limit_min(-180)
-        .soft_limit_max(180)
+        .soft_limit_min(-90)
+        .soft_limit_max(90)
         .build(&mut device)?;
 
     // Read back configuration to verify
@@ -50,6 +50,31 @@ fn main() -> Result<()> {
         device.pulse_engine_v2.max_deceleration[2] as u32,
         device.pulse_engine_v2.soft_limit_minimum[2],
         device.pulse_engine_v2.soft_limit_maximum[2]
+    );
+
+    // Get motor driver configuration
+    println!("Reading motor driver configuration...");
+    device.get_motor_drivers_configuration()?;
+    let step_names = [
+        "1/1",
+        "1/2 non-circular",
+        "1/2",
+        "1/4",
+        "1/8",
+        "1/16",
+        "1/32",
+        "1/128",
+        "1/256",
+    ];
+    let step_setting = device.pulse_engine_v2.motor_step_setting[1]; // Axis 2 (0-indexed)
+    let current_setting = device.pulse_engine_v2.motor_current_setting[1];
+    let current_amps = (current_setting as f32) * 2.5 / 255.0;
+
+    println!(
+        "✓ Axis 2 motor driver: step={} ({}), current={:.2}A",
+        step_setting,
+        step_names.get(step_setting as usize).unwrap_or(&"Unknown"),
+        current_amps
     );
 
     Ok(())
