@@ -931,6 +931,16 @@ impl PoKeysDevice {
         Ok(())
     }
 
+    /// Create axis configuration builder
+    pub fn configure_axis(&mut self, axis: usize) -> AxisConfigBuilder {
+        AxisConfigBuilder::new(axis)
+    }
+
+    /// Create motor driver configuration builder
+    pub fn configure_motor_drivers(&mut self) -> MotorDriverConfigBuilder {
+        MotorDriverConfigBuilder::new()
+    }
+
     /// Get internal motor drivers configuration (0x85/0x18)
     pub fn get_motor_drivers_configuration(&mut self) -> Result<()> {
         let response = self.send_request(0x85, 0x18, 0, 0, 0)?;
@@ -948,11 +958,6 @@ impl PoKeysDevice {
         }
 
         Ok(())
-    }
-
-    /// Create axis configuration builder
-    pub fn configure_axis(&mut self, axis: usize) -> AxisConfigBuilder {
-        AxisConfigBuilder::new(axis)
     }
 }
 
@@ -1062,5 +1067,40 @@ impl AxisConfigBuilder {
         device.pulse_engine_v2.soft_limit_maximum[self.axis] = self.soft_limit_max;
 
         device.set_axis_configuration(self.axis)
+    }
+}
+
+/// Motor driver configuration builder
+pub struct MotorDriverConfigBuilder {
+    step_settings: [u8; 4],
+    current_settings: [u8; 4],
+}
+
+impl MotorDriverConfigBuilder {
+    pub fn new() -> Self {
+        Self {
+            step_settings: [0; 4],
+            current_settings: [0; 4],
+        }
+    }
+
+    pub fn axis_step_setting(mut self, axis: usize, step_setting: u8) -> Self {
+        if axis < 4 {
+            self.step_settings[axis] = step_setting;
+        }
+        self
+    }
+
+    pub fn axis_current_setting(mut self, axis: usize, current_setting: u8) -> Self {
+        if axis < 4 {
+            self.current_settings[axis] = current_setting;
+        }
+        self
+    }
+
+    pub fn build(self, device: &mut PoKeysDevice) -> Result<()> {
+        device.pulse_engine_v2.motor_step_setting = self.step_settings;
+        device.pulse_engine_v2.motor_current_setting = self.current_settings;
+        device.set_motor_drivers_configuration()
     }
 }

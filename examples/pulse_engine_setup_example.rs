@@ -79,8 +79,10 @@ fn main() -> Result<()> {
 
     // Set axis 2 to 1/16 step setting
     println!("Setting axis 2 to 1/16 step setting...");
-    device.pulse_engine_v2.motor_step_setting[1] = 5; // 1/16 = setting 5
-    device.set_motor_drivers_configuration()?;
+    device
+        .configure_motor_drivers()
+        .axis_step_setting(1, 5) // Axis 2 (0-indexed), 1/16 = setting 5
+        .build(&mut device)?;
 
     // Read back to verify
     device.get_motor_drivers_configuration()?;
