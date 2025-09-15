@@ -1,5 +1,10 @@
 use pokeys_lib::*;
 
+// Constants for pulse engine configuration
+const PULSE_ENGINE_STATE_RUNNING: u8 = 3;
+const GENERATOR_TYPE_3AXIS_INTERNAL: u8 = 0x01;
+const AXIS_OPTIONS_ENABLED_INTERNAL_PLANNER: u8 = 0x05; // aoENABLED | aoINTERNAL_PLANNER
+
 fn main() -> Result<()> {
     println!("PoKeys Pulse Engine Setup Example");
     println!("=================================");
@@ -37,7 +42,7 @@ fn main() -> Result<()> {
 
     // Create configuration for 3-axis internal generator without step/dir swap
     let mut config = PulseEngineConfig::three_channel_internal(3);
-    config.generator_type = 0x01; // 3-axis internal, no swap
+    config.generator_type = GENERATOR_TYPE_3AXIS_INTERNAL;
     println!(
         "Using 3-axis internal configuration (generator type: 0x{:02X})",
         config.generator_type
@@ -168,7 +173,7 @@ fn main() -> Result<()> {
     device.activate_pulse_engine(true)?;
 
     // Set pulse engine state to Running before movement
-    match device.set_pulse_engine_state(3, 0, 0) {
+    match device.set_pulse_engine_state(PULSE_ENGINE_STATE_RUNNING, 0, 0) {
         Ok(_) => println!("✓ Pulse engine state set to Running"),
         Err(e) => println!("✗ Failed to set pulse engine state: {}", e),
     }
