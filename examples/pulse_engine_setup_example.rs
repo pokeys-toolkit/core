@@ -1,3 +1,4 @@
+use pokeys_lib::pulse_engine::PulseEnginePowerState;
 use pokeys_lib::*;
 
 // Constants for pulse engine configuration
@@ -40,9 +41,20 @@ fn main() -> Result<()> {
 
     // Create configuration for 3-axis internal generator without step/dir swap
     let config = PulseEngineConfig::three_channel_internal(3, false).build();
+    println!("Using 3-axis internal configuration:");
+    println!("  Axes: {}", config.enabled_axes);
+    println!("  Generator type: 0x{:02X}", config.generator_type);
+    println!("  Charge pump: {}", config.charge_pump_enabled);
+    println!("  Buffer size: {}", config.buffer_size);
+    println!("  Emergency polarity: {}", config.emergency_switch_polarity);
     println!(
-        "Using 3-axis internal configuration (generator type: 0x{:02X})",
-        config.generator_type
+        "  Power states: 0x{:02X} ({})",
+        config.power_states,
+        if config.power_states == PulseEnginePowerState::ALL_POWER_ENABLED {
+            "All power enabled"
+        } else {
+            "Custom power states"
+        }
     );
 
     // Alternative: 8-channel external configuration
