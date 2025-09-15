@@ -34,9 +34,9 @@ fn main() -> Result<()> {
     println!("Configuring axis 2...");
     device
         .configure_axis(2)
-        .max_speed(1000.0)
-        .max_acceleration(1000.0)
-        .max_deceleration(1000.0)
+        .max_speed(1000)
+        .max_acceleration(1000)
+        .max_deceleration(1000)
         .build(&mut device)?;
     println!("✓ Axis 2 configured: speed=1000, accel=1000, decel=1000");
 

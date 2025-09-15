@@ -950,32 +950,32 @@ mod tests {
 /// Axis configuration builder
 pub struct AxisConfigBuilder {
     axis: usize,
-    max_speed: f32,
-    max_acceleration: f32,
-    max_deceleration: f32,
+    max_speed: u32,
+    max_acceleration: u32,
+    max_deceleration: u32,
 }
 
 impl AxisConfigBuilder {
     pub fn new(axis: usize) -> Self {
         Self {
             axis,
-            max_speed: 1000.0,
-            max_acceleration: 100.0,
-            max_deceleration: 100.0,
+            max_speed: 1000,
+            max_acceleration: 100,
+            max_deceleration: 100,
         }
     }
 
-    pub fn max_speed(mut self, speed: f32) -> Self {
+    pub fn max_speed(mut self, speed: u32) -> Self {
         self.max_speed = speed;
         self
     }
 
-    pub fn max_acceleration(mut self, acceleration: f32) -> Self {
+    pub fn max_acceleration(mut self, acceleration: u32) -> Self {
         self.max_acceleration = acceleration;
         self
     }
 
-    pub fn max_deceleration(mut self, deceleration: f32) -> Self {
+    pub fn max_deceleration(mut self, deceleration: u32) -> Self {
         self.max_deceleration = deceleration;
         self
     }
@@ -985,9 +985,9 @@ impl AxisConfigBuilder {
             return Err(PoKeysError::Parameter("Axis index must be 0-7".to_string()));
         }
 
-        device.pulse_engine_v2.max_speed[self.axis] = self.max_speed;
-        device.pulse_engine_v2.max_acceleration[self.axis] = self.max_acceleration;
-        device.pulse_engine_v2.max_deceleration[self.axis] = self.max_deceleration;
+        device.pulse_engine_v2.max_speed[self.axis] = self.max_speed as f32;
+        device.pulse_engine_v2.max_acceleration[self.axis] = self.max_acceleration as f32;
+        device.pulse_engine_v2.max_deceleration[self.axis] = self.max_deceleration as f32;
 
         device.set_axis_configuration(self.axis)
     }
