@@ -142,7 +142,7 @@ fn main() -> Result<()> {
     println!("Configuring axis 3...");
     device
         .configure_axis(2)
-        .max_speed(10000)
+        .max_speed(1000)
         .max_acceleration(1000)
         .max_deceleration(1000)
         // .soft_limit_min(-1800)
@@ -156,9 +156,9 @@ fn main() -> Result<()> {
     device.get_axis_configuration(2)?;
     println!(
         "✓ Axis 3 configured: speed={}, accel={}, decel={}, limits=[{}, {}]",
-        device.pulse_engine_v2.max_speed[2] as u32,
-        device.pulse_engine_v2.max_acceleration[2] as u32,
-        device.pulse_engine_v2.max_deceleration[2] as u32,
+        (device.pulse_engine_v2.max_speed[2] * 1000.0) as u32,
+        (device.pulse_engine_v2.max_acceleration[2] * 1000.0) as u32,
+        (device.pulse_engine_v2.max_deceleration[2] * 1000.0) as u32,
         device.pulse_engine_v2.soft_limit_minimum[2],
         device.pulse_engine_v2.soft_limit_maximum[2]
     );
