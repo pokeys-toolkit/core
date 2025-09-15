@@ -328,10 +328,16 @@ fn main() -> Result<()> {
                 current_pos, target_position, state
             );
 
-            // Stop when target reached OR when stopped and close to target
-            if current_pos == target_position
-                || (state == "Stopped" && (current_pos - target_position).abs() <= 2)
-            {
+            // Stop when target reached OR when stopped and close to target OR when soft limits prevent exact positioning
+            let soft_limits_active = device.pulse_engine_v2.soft_limit_minimum[2] != 0
+                || device.pulse_engine_v2.soft_limit_maximum[2] != 0;
+            let close_enough = if soft_limits_active {
+                (current_pos - target_position).abs() <= 2
+            } else {
+                current_pos == target_position
+            };
+
+            if close_enough || (state == "Stopped" && (current_pos - target_position).abs() <= 2) {
                 println!(
                     "✓ Target position {} reached! (Final: {})",
                     target_position, current_pos
