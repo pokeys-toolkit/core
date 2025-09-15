@@ -490,27 +490,21 @@ impl PoKeysDevice {
     }
 
     /// Setup pulse engine (0x85/0x01)
-    pub fn setup_pulse_engine(&mut self, config: &PulseEngineConfig) -> Result<()> {
+    /// Setup pulse engine (0x85/0x01) with axis enable mask
+    pub fn setup_pulse_engine_with_axes(
+        &mut self,
+        config: &PulseEngineConfig,
+        axis_enable_mask: u8,
+    ) -> Result<()> {
         let mut request = vec![0u8; 56]; // Only data payload (protocol bytes 9-64)
 
-        // Build request according to specification
+        // Build request according to official PoKeysLib implementation
         request[0] = config.enabled_axes; // Protocol byte 9: Number of enabled axes
         request[1] = config.charge_pump_enabled; // Protocol byte 10: Safety charge pump
-        request[2] = config.generator_type & 0x7F; // Protocol byte 11: Generator configuration (ensure bit 7 = 0)
+        request[2] = config.generator_type & 0x7F; // Protocol byte 11: Generator configuration
         request[3] = config.buffer_size; // Protocol byte 12: Motion buffer size
         request[4] = config.emergency_switch_polarity; // Protocol byte 13: Emergency switch polarity
-
-        // Protocol byte 14: States with enabled power and charge pump
-        let mut power_states = config.power_states & 0x07; // Power states (bits 0-2)
-
-        // Charge pump states (bits 4-6)
-        if config.charge_pump_enabled != 0 {
-            power_states |= 0x10; // peSTOPPED charge pump
-            power_states |= 0x20; // peSTOP_LIMIT charge pump
-            power_states |= 0x40; // peSTOP_EMERGENCY charge pump
-        }
-
-        request[5] = power_states; // Protocol byte 14: Power and charge pump states
+        request[5] = axis_enable_mask; // Protocol byte 14: AxisEnabledStatesMask (like official PoKeysLib)
 
         // Protocol bytes 15-63 are reserved (already initialized to 0)
 

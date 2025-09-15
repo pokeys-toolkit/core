@@ -24,6 +24,9 @@ fn main() -> Result<()> {
         .power_states(0x06) // Only enable power for STOP_LIMIT and STOP_EMERGENCY, NOT STOPPED
         .build();
 
+    // Enable axis 3 (bit 2) for testing
+    let axis_enabled_mask = 0x04;
+
     // Debug: Show what we're sending to setup_pulse_engine
     println!("Setup pulse engine config:");
     println!("  enabled_axes: {}", config.enabled_axes);
@@ -35,8 +38,9 @@ fn main() -> Result<()> {
         config.emergency_switch_polarity
     );
     println!("  power_states: 0x{:02X}", config.power_states);
+    println!("  axis_enabled_mask: 0x{:02X}", axis_enabled_mask);
 
-    device.setup_pulse_engine(&config)?;
+    device.setup_pulse_engine_with_axes(&config, axis_enabled_mask)?;
 
     // Reboot pulse engine to reset state
     device.reboot_pulse_engine()?;
@@ -153,7 +157,7 @@ fn main() -> Result<()> {
         .max_acceleration(5000)
         .max_deceleration(5000)
         .soft_limit_min(-1800)
-        .soft_limit_max(18000)
+        .soft_limit_max(1800)
         .build(&mut device)?;
 
     // Read back configuration to verify
