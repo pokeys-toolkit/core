@@ -28,16 +28,20 @@ fn main() -> Result<()> {
         device.pulse_engine_v2.charge_pump_enabled
     );
 
-    // Configure for 3-channel internal pulse generator
-    println!("\nConfiguring for 3-channel internal pulse generator...");
+    // Configure for 3-axis internal pulse generator (no step/dir swap)
+    println!("\nConfiguring for 3-axis internal pulse generator (no step/dir swap)...");
 
     // First disable pulse engine
     println!("Disabling pulse engine...");
     device.enable_pulse_engine(false)?;
 
-    // Create configuration for 3-channel internal generator
-    let config = PulseEngineConfig::three_channel_internal(3);
-    println!("Using 3-channel internal configuration");
+    // Create configuration for 3-axis internal generator without step/dir swap
+    let mut config = PulseEngineConfig::three_channel_internal(3);
+    config.generator_type = 0x01; // 3-axis internal, no swap
+    println!(
+        "Using 3-axis internal configuration (generator type: 0x{:02X})",
+        config.generator_type
+    );
 
     // Alternative: 8-channel external configuration
     // let config = PulseEngineConfig::eight_channel_external(8);
