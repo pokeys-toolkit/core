@@ -68,14 +68,14 @@ fn main() -> Result<()> {
         .build(&mut device)?;
 
     // Read back configuration to verify
-    device.get_axis_configuration(2)?;
+    device.get_axis_configuration(1)?;
     println!(
-        "✓ Axis 2 configured: speed={}, accel={}, decel={}, limits=[{}, {}]",
-        device.pulse_engine_v2.max_speed[2] as u32,
-        device.pulse_engine_v2.max_acceleration[2] as u32,
-        device.pulse_engine_v2.max_deceleration[2] as u32,
-        device.pulse_engine_v2.soft_limit_minimum[2],
-        device.pulse_engine_v2.soft_limit_maximum[2]
+        "✓ Axis 1 configured: speed={}, accel={}, decel={}, limits=[{}, {}]",
+        device.pulse_engine_v2.max_speed[1] as u32,
+        device.pulse_engine_v2.max_acceleration[1] as u32,
+        device.pulse_engine_v2.max_deceleration[1] as u32,
+        device.pulse_engine_v2.soft_limit_minimum[1],
+        device.pulse_engine_v2.soft_limit_maximum[1]
     );
 
     // Get motor driver configuration
@@ -97,14 +97,14 @@ fn main() -> Result<()> {
     let current_amps = (current_setting as f32) * 2.5 / 255.0;
 
     println!(
-        "✓ Axis 2 motor driver: step={} ({}), current={:.2}A",
+        "✓ Axis 1 motor driver: step={} ({}), current={:.2}A",
         step_setting,
         step_names.get(step_setting as usize).unwrap_or(&"Unknown"),
         current_amps
     );
 
     // Set axis 2 to 1/16 step setting
-    println!("Setting axis 2 to 1/16 step setting...");
+    println!("Setting axis 1 to 1/16 step setting...");
     device
         .configure_motor_drivers()
         .axis_step_setting(1, step_setting::SIXTEENTH_STEP) // Axis 2 (0-indexed), 1/16
@@ -113,7 +113,7 @@ fn main() -> Result<()> {
     // Read back to verify
     let new_step_setting = device.pulse_engine_v2.motor_step_setting[1];
     println!(
-        "✓ Axis 2 motor driver updated: step={} ({})",
+        "✓ Axis 1 motor driver updated: step={} ({})",
         new_step_setting,
         step_names
             .get(new_step_setting as usize)
@@ -122,13 +122,13 @@ fn main() -> Result<()> {
 
     // Interactive move command
     println!("\n--- Interactive Move Command ---");
-    print!("Enter position for axis 0 (-180 to 180): ");
+    print!("Enter position for axis 1 (-180 to 180): ");
     io::stdout().flush().unwrap();
     let mut input = String::new();
     io::stdin().read_line(&mut input).unwrap();
     let position: i32 = input.trim().parse().unwrap_or(0);
 
-    println!("Setting axis 0 to position {}...", position);
+    println!("Setting axis 1 to position {}...", position);
 
     // Enable pulse engine before moving
     device.enable_pulse_engine(true)?;
@@ -161,8 +161,8 @@ fn main() -> Result<()> {
     println!("✓ Move command sent");
 
     // Check state after move command
-    let axis_state_after = device.get_axis_state(0)?;
-    println!("Axis 0 state after move: {:?}", axis_state_after);
+    let axis_state_after = device.get_axis_state(1)?;
+    println!("Axis 1 state after move: {:?}", axis_state_after);
 
     Ok(())
 }
