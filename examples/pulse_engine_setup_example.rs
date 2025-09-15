@@ -160,9 +160,9 @@ fn main() -> Result<()> {
     );
     println!(
         "✓ Axis 3 configured: speed={}, accel={}, decel={}, limits=[{}, {}]",
-        (device.pulse_engine_v2.max_speed[2] * 1000.0) as u32,
-        (device.pulse_engine_v2.max_acceleration[2] * 500.0) as u32,
-        (device.pulse_engine_v2.max_deceleration[2] * 500.0) as u32,
+        device.pulse_engine_v2.max_speed[2] as u32,
+        device.pulse_engine_v2.max_acceleration[2] as u32,
+        device.pulse_engine_v2.max_deceleration[2] as u32,
         device.pulse_engine_v2.soft_limit_minimum[2],
         device.pulse_engine_v2.soft_limit_maximum[2]
     );
