@@ -262,6 +262,30 @@ fn main() -> Result<()> {
     device.move_axis_to_position(2, position, 50.0)?; // 50% speed
     println!("✓ Move command sent");
 
+    // Monitor position while moving
+    println!("Monitoring position...");
+    for i in 0..20 {
+        device.get_pulse_engine_status()?;
+        let current_pos = device.pulse_engine_v2.current_position[2];
+        let state = match device.pulse_engine_v2.axes_state[2] {
+            0 => "Stopped",
+            1 => "Moving",
+            2 => "Accelerating",
+            3 => "Decelerating",
+            _ => "Unknown",
+        };
+        println!(
+            "  Step {}: Position = {}, State = {}",
+            i, current_pos, state
+        );
+
+        if state == "Stopped" && i > 5 {
+            break;
+        }
+
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+
     // Check state after move command
     let axis_state_after = device.get_axis_state(2)?;
     println!("Axis 3 state after move: {:?}", axis_state_after);
