@@ -39,8 +39,8 @@ fn main() -> Result<()> {
         .max_speed(5000)
         .max_acceleration(2500)
         .max_deceleration(2500)
-        .soft_limit_min(0)
-        .soft_limit_max(0)
+        .soft_limit_min(-180)
+        .soft_limit_max(180)
         .build(&mut device)?;
 
     // Read back configuration to verify
@@ -104,21 +104,15 @@ fn main() -> Result<()> {
     io::stdin().read_line(&mut input).unwrap();
     let position: i32 = input.trim().parse().unwrap_or(0);
 
-    print!("Enter speed (0-100%): ");
-    io::stdout().flush().unwrap();
-    input.clear();
-    io::stdin().read_line(&mut input).unwrap();
-    let speed: u16 = input.trim().parse().unwrap_or(50);
-    let velocity = (speed as f32 / 100.0 * 65535.0) as u16;
+    println!("Setting axis 2 to position {}...", position);
 
-    println!(
-        "Moving axis 2 to position {} at {}% speed...",
-        position, speed
-    );
+    // Enable pulse engine before moving
+    device.enable_pulse_engine(true)?;
+
     let mut positions = [0i32; 8];
     positions[1] = position; // Axis 2 (0-indexed)
-    device.move_pv(0x02, &positions, velocity)?; // Axis mask bit 1 for axis 2
-    println!("✓ Move command sent");
+    device.set_axis_positions(0x02, &positions)?; // Axis mask bit 1 for axis 2
+    println!("✓ Position set command sent");
 
     Ok(())
 }
