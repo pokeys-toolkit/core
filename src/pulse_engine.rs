@@ -544,6 +544,25 @@ impl PoKeysDevice {
         Ok(())
     }
 
+    /// Set pulse engine state (0x85/0x02)
+    pub fn set_pulse_engine_state(
+        &mut self,
+        state: u8,
+        limit_override: u8,
+        output_enable_mask: u8,
+    ) -> Result<()> {
+        let request = vec![0u8; 55]; // Reserved bytes 9-63
+        self.send_request_with_data(
+            0x85,
+            0x02,
+            state,
+            limit_override,
+            output_enable_mask,
+            &request,
+        )?;
+        Ok(())
+    }
+
     /// Set axis configuration (0x85/0x11)
     pub fn set_axis_configuration(&mut self, axis: usize) -> Result<()> {
         if axis >= 8 {
