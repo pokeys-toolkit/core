@@ -603,8 +603,14 @@ impl PoKeysDevice {
 
         let mut request = vec![0u8; 56]; // Data payload (protocol bytes 9-64)
 
-        // Byte 9: Axis options - Enable axis with internal planner
-        request[0] = 0x05; // aoENABLED | aoINTERNAL_PLANNER
+        // Byte 9: Axis options - Enable axis with internal planner and soft limits
+        let mut axis_options = 0x05; // aoENABLED | aoINTERNAL_PLANNER
+        if self.pulse_engine_v2.soft_limit_minimum[axis] != 0
+            || self.pulse_engine_v2.soft_limit_maximum[axis] != 0
+        {
+            axis_options |= 1 << 5; // aoSOFT_LIMIT_ENABLED
+        }
+        request[0] = axis_options;
 
         // Byte 10: Axis switch options
         request[1] = 0x00; // No switches
