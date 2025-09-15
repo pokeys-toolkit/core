@@ -496,7 +496,7 @@ impl PoKeysDevice {
         // Build request according to specification
         request[0] = config.enabled_axes; // Protocol byte 9: Number of enabled axes
         request[1] = config.charge_pump_enabled; // Protocol byte 10: Safety charge pump
-        request[2] = config.generator_type; // Protocol byte 11: Generator configuration
+        request[2] = config.generator_type & 0x7F; // Protocol byte 11: Generator configuration (ensure bit 7 = 0)
         request[3] = config.buffer_size; // Protocol byte 12: Motion buffer size
         request[4] = config.emergency_switch_polarity; // Protocol byte 13: Emergency switch polarity
 
