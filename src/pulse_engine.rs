@@ -930,16 +930,10 @@ impl PoKeysDevice {
             request[byte_offset + 1] = self.pulse_engine_v2.motor_current_setting[axis];
         }
 
-        let response = self.send_request_with_data(0x85, 0x19, 0, 0, 0, &request)?;
+        let _response = self.send_request_with_data(0x85, 0x19, 0, 0, 0, &request)?;
 
-        // Parse response to update local state
-        for axis in 0..4 {
-            let byte_offset = 8 + (axis * 2); // Bytes 9-16 for axes 1-4
-            if byte_offset + 1 < response.len() {
-                self.pulse_engine_v2.motor_step_setting[axis] = response[byte_offset];
-                self.pulse_engine_v2.motor_current_setting[axis] = response[byte_offset + 1];
-            }
-        }
+        // Don't parse response - the device echoes back what we sent
+        // The values are already set in the device struct
 
         Ok(())
     }
