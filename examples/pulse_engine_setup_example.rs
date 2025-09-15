@@ -43,7 +43,7 @@ fn main() -> Result<()> {
     device.setup_pulse_engine_with_axes(&config, axis_enabled_mask)?;
 
     // Reboot pulse engine to reset state
-    device.reboot_pulse_engine()?;
+    // device.reboot_pulse_engine()?;
 
     // Simple test - configure and enable axis 3 (index 2, bit 2)
     println!("Simple test - enabling axis 3 (bit 2)...");
@@ -51,8 +51,6 @@ fn main() -> Result<()> {
     // Try to enable axis 3 (bit 2) - match what we set in setup
     device.set_pulse_engine_state(0x02, 0x00, axis_enabled_mask)?;
     device.enable_pulse_engine(true)?;
-    device.get_pulse_engine_status()?;
-
     // Get detailed status using 0x85/0x00
     println!("Getting pulse engine status (0x85/0x00)...");
     device.get_pulse_engine_status()?;
@@ -154,6 +152,12 @@ fn main() -> Result<()> {
 
     // Read back configuration to verify
     device.get_axis_configuration(2)?;
+    println!(
+        "Raw device values: speed={:.3}, accel={:.3}, decel={:.3}",
+        device.pulse_engine_v2.max_speed[2],
+        device.pulse_engine_v2.max_acceleration[2],
+        device.pulse_engine_v2.max_deceleration[2]
+    );
     println!(
         "✓ Axis 3 configured: speed={}, accel={}, decel={}, limits=[{}, {}]",
         (device.pulse_engine_v2.max_speed[2] * 1000.0) as u32,
@@ -368,7 +372,7 @@ fn main() -> Result<()> {
                 break;
             }
 
-            std::thread::sleep(std::time::Duration::from_millis(50));
+            std::thread::sleep(std::time::Duration::from_millis(25));
         }
     }
 }
