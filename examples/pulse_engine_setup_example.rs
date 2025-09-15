@@ -283,12 +283,52 @@ fn main() -> Result<()> {
             break;
         }
 
-        std::thread::sleep(std::time::Duration::from_millis(100));
+        std::thread::sleep(std::time::Duration::from_millis(50));
     }
 
-    // Check state after move command
-    let axis_state_after = device.get_axis_state(2)?;
-    println!("Axis 3 state after move: {:?}", axis_state_after);
+    loop {
+        println!("\n--- Interactive Move Command ---");
+        print!("Enter position for axis 3 (-180 to 180): ");
+        io::stdout().flush().unwrap();
 
-    Ok(())
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).unwrap();
+        let position: i32 = match input.trim().parse() {
+            Ok(pos) => pos,
+            Err(_) => {
+                println!("Invalid input, please enter a number");
+                continue;
+            }
+        };
+
+        println!("Setting axis 3 to position {}...", position);
+
+        // Use the existing move_axis_to_position method
+        device.move_axis_to_position(2, position, 50.0)?; // 50% speed
+        println!("✓ Move command sent");
+
+        // Monitor position while moving
+        println!("Monitoring position...");
+        for i in 0..20 {
+            device.get_pulse_engine_status()?;
+            let current_pos = device.pulse_engine_v2.current_position[2];
+            let state = match device.pulse_engine_v2.axes_state[2] {
+                0 => "Stopped",
+                1 => "Moving",
+                2 => "Accelerating",
+                3 => "Decelerating",
+                _ => "Unknown",
+            };
+            println!(
+                "  Step {}: Position = {}, State = {}",
+                i, current_pos, state
+            );
+
+            if state == "Stopped" && i > 5 {
+                break;
+            }
+
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
+    }
 }
