@@ -32,8 +32,9 @@ fn main() -> Result<()> {
 
     // Configure axis 2
     println!("Configuring axis 2...");
-    device.configure_axis(2, true, false, 1000.0, 1000.0)?;
-    device.pulse_engine_v2.max_deceleration[2] = 1000.0; // Set deceleration separately
+    device.pulse_engine_v2.max_speed[2] = 1000.0;
+    device.pulse_engine_v2.max_acceleration[2] = 1000.0;
+    device.pulse_engine_v2.max_deceleration[2] = 1000.0;
     device.set_axis_configuration(2)?;
     println!("✓ Axis 2 configured: speed=1000, accel=1000, decel=1000");
 
