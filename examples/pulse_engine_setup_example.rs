@@ -39,7 +39,7 @@ fn main() -> Result<()> {
     device.enable_pulse_engine(false)?;
 
     // Create configuration for 3-axis internal generator without step/dir swap
-    let config = PulseEngineConfig::three_channel_internal(3, false);
+    let config = PulseEngineConfig::three_channel_internal(3, false).build();
     println!(
         "Using 3-axis internal configuration (generator type: 0x{:02X})",
         config.generator_type

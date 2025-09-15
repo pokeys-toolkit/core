@@ -20,34 +20,15 @@ pub struct PulseEngineConfig {
 }
 
 impl PulseEngineConfig {
-    /// Create configuration for 3-channel internal generator with defaults
-    pub fn three_channel_internal(axes: u8, swap_step_dir: bool) -> Self {
-        Self {
+    /// Create builder for 3-channel internal generator
+    pub fn three_channel_internal(axes: u8, swap_step_dir: bool) -> PulseEngineConfigBuilder {
+        PulseEngineConfigBuilder {
             enabled_axes: axes,
             charge_pump_enabled: 0,
             generator_type: if swap_step_dir { 0x41 } else { 0x01 },
             buffer_size: 0,
             emergency_switch_polarity: 1,
             power_states: POWER_STATE_ALL_ENABLED,
-        }
-    }
-
-    /// Create configuration for 3-channel internal generator with custom settings
-    pub fn three_channel_internal_custom(
-        axes: u8,
-        swap_step_dir: bool,
-        charge_pump_enabled: u8,
-        buffer_size: u8,
-        emergency_switch_polarity: u8,
-        power_states: u8,
-    ) -> Self {
-        Self {
-            enabled_axes: axes,
-            charge_pump_enabled,
-            generator_type: if swap_step_dir { 0x41 } else { 0x01 },
-            buffer_size,
-            emergency_switch_polarity,
-            power_states,
         }
     }
 
@@ -60,6 +41,48 @@ impl PulseEngineConfig {
             buffer_size: 0,    // default
             emergency_switch_polarity: 1,
             power_states: POWER_STATE_ALL_ENABLED,
+        }
+    }
+}
+
+pub struct PulseEngineConfigBuilder {
+    enabled_axes: u8,
+    charge_pump_enabled: u8,
+    generator_type: u8,
+    buffer_size: u8,
+    emergency_switch_polarity: u8,
+    power_states: u8,
+}
+
+impl PulseEngineConfigBuilder {
+    pub fn charge_pump_enabled(mut self, enabled: u8) -> Self {
+        self.charge_pump_enabled = enabled;
+        self
+    }
+
+    pub fn buffer_size(mut self, size: u8) -> Self {
+        self.buffer_size = size;
+        self
+    }
+
+    pub fn emergency_switch_polarity(mut self, polarity: u8) -> Self {
+        self.emergency_switch_polarity = polarity;
+        self
+    }
+
+    pub fn power_states(mut self, states: u8) -> Self {
+        self.power_states = states;
+        self
+    }
+
+    pub fn build(self) -> PulseEngineConfig {
+        PulseEngineConfig {
+            enabled_axes: self.enabled_axes,
+            charge_pump_enabled: self.charge_pump_enabled,
+            generator_type: self.generator_type,
+            buffer_size: self.buffer_size,
+            emergency_switch_polarity: self.emergency_switch_polarity,
+            power_states: self.power_states,
         }
     }
 }
