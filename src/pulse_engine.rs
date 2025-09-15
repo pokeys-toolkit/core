@@ -703,13 +703,8 @@ impl PoKeysDevice {
         self.pulse_engine_v2.reference_position_speed[axis] = position;
         self.pulse_engine_v2.reference_velocity_pv[axis] = speed;
 
-        self.send_request(
-            0x84,
-            axis as u8,
-            (position & 0xFF) as u8,
-            ((position >> 8) & 0xFF) as u8,
-            ((position >> 16) & 0xFF) as u8,
-        )?;
+        // Use set_axis_position which properly implements 0x85/0x03
+        self.set_axis_position(axis, position)?;
 
         Ok(())
     }
