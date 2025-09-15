@@ -109,10 +109,9 @@ fn main() -> Result<()> {
     // Enable pulse engine before moving
     device.enable_pulse_engine(true)?;
 
-    let mut positions = [0i32; 8];
-    positions[1] = position; // Axis 2 (0-indexed)
-    device.set_axis_positions(0x02, &positions)?; // Axis mask bit 1 for axis 2
-    println!("✓ Position set command sent");
+    // Use the existing move_axis_to_position method
+    device.move_axis_to_position(2, position, 50.0)?; // 50% speed
+    println!("✓ Move command sent");
 
     Ok(())
 }
