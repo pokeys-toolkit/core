@@ -143,8 +143,8 @@ fn main() -> Result<()> {
     device
         .configure_axis(2)
         .max_speed(10000)
-        .max_acceleration(5000)
-        .max_deceleration(5000)
+        .max_acceleration(1000)
+        .max_deceleration(1000)
         .soft_limit_min(-1800)
         .soft_limit_max(1800)
         .build(&mut device)?;
@@ -307,6 +307,19 @@ fn main() -> Result<()> {
                 continue;
             }
         };
+
+        // Check soft limits
+        let soft_min = device.pulse_engine_v2.soft_limit_minimum[2];
+        let soft_max = device.pulse_engine_v2.soft_limit_maximum[2];
+        if (soft_min != 0 || soft_max != 0)
+            && (target_position < soft_min || target_position > soft_max)
+        {
+            println!(
+                "Error: Target position {} is outside soft limits [{}, {}]",
+                target_position, soft_min, soft_max
+            );
+            continue;
+        }
 
         println!("Moving to position {}...", target_position);
         device.move_axis_to_position(2, target_position, 100.0)?;
