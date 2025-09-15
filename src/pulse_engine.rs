@@ -472,38 +472,6 @@ impl PoKeysDevice {
         Ok(())
     }
 
-    /// Configure axis
-    pub fn configure_axis(
-        &mut self,
-        axis: usize,
-        enabled: bool,
-        inverted: bool,
-        max_speed: f32,
-        max_acceleration: f32,
-    ) -> Result<()> {
-        if axis >= 8 {
-            return Err(PoKeysError::Parameter("Invalid axis number".to_string()));
-        }
-
-        // Set axis configuration
-        let mut config = 0u8;
-        if enabled {
-            config |= 1 << 0;
-        }
-        if inverted {
-            config |= 1 << 1;
-        }
-
-        self.pulse_engine_v2.axes_config[axis] = config;
-        self.pulse_engine_v2.max_speed[axis] = max_speed;
-        self.pulse_engine_v2.max_acceleration[axis] = max_acceleration;
-        self.pulse_engine_v2.max_deceleration[axis] = max_acceleration; // Use same value for deceleration
-
-        // Send axis configuration to device
-        self.send_request(0x82, axis as u8, config, 0, 0)?;
-        Ok(())
-    }
-
     /// Setup pulse engine (0x85/0x01)
     pub fn setup_pulse_engine(&mut self, config: &PulseEngineConfig) -> Result<()> {
         let mut request = vec![0u8; 56]; // Only data payload (protocol bytes 9-64)
@@ -929,6 +897,11 @@ impl PoKeysDevice {
 
         Ok(())
     }
+
+    /// Create axis configuration builder
+    pub fn configure_axis(&mut self, axis: usize) -> AxisConfigBuilder {
+        AxisConfigBuilder::new(axis)
+    }
 }
 
 #[cfg(test)]
@@ -971,5 +944,51 @@ mod tests {
         assert!(pe.is_axis_enabled(0));
         assert!(pe.is_axis_enabled(1));
         assert!(!pe.is_axis_enabled(2));
+    }
+}
+
+/// Axis configuration builder
+pub struct AxisConfigBuilder {
+    axis: usize,
+    max_speed: f32,
+    max_acceleration: f32,
+    max_deceleration: f32,
+}
+
+impl AxisConfigBuilder {
+    pub fn new(axis: usize) -> Self {
+        Self {
+            axis,
+            max_speed: 1000.0,
+            max_acceleration: 100.0,
+            max_deceleration: 100.0,
+        }
+    }
+
+    pub fn max_speed(mut self, speed: f32) -> Self {
+        self.max_speed = speed;
+        self
+    }
+
+    pub fn max_acceleration(mut self, acceleration: f32) -> Self {
+        self.max_acceleration = acceleration;
+        self
+    }
+
+    pub fn max_deceleration(mut self, deceleration: f32) -> Self {
+        self.max_deceleration = deceleration;
+        self
+    }
+
+    pub fn build(self, device: &mut PoKeysDevice) -> Result<()> {
+        if self.axis >= 8 {
+            return Err(PoKeysError::Parameter("Axis index must be 0-7".to_string()));
+        }
+
+        device.pulse_engine_v2.max_speed[self.axis] = self.max_speed;
+        device.pulse_engine_v2.max_acceleration[self.axis] = self.max_acceleration;
+        device.pulse_engine_v2.max_deceleration[self.axis] = self.max_deceleration;
+
+        device.set_axis_configuration(self.axis)
     }
 }
