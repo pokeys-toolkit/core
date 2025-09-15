@@ -20,15 +20,34 @@ pub struct PulseEngineConfig {
 }
 
 impl PulseEngineConfig {
-    /// Create configuration for 3-channel internal generator
+    /// Create configuration for 3-channel internal generator with defaults
     pub fn three_channel_internal(axes: u8, swap_step_dir: bool) -> Self {
         Self {
             enabled_axes: axes,
             charge_pump_enabled: 0,
-            generator_type: if swap_step_dir { 0x41 } else { 0x01 }, // 3ch internal with/without swap
-            buffer_size: 0,                                          // default
+            generator_type: if swap_step_dir { 0x41 } else { 0x01 },
+            buffer_size: 0,
             emergency_switch_polarity: 1,
             power_states: POWER_STATE_ALL_ENABLED,
+        }
+    }
+
+    /// Create configuration for 3-channel internal generator with custom settings
+    pub fn three_channel_internal_custom(
+        axes: u8,
+        swap_step_dir: bool,
+        charge_pump_enabled: u8,
+        buffer_size: u8,
+        emergency_switch_polarity: u8,
+        power_states: u8,
+    ) -> Self {
+        Self {
+            enabled_axes: axes,
+            charge_pump_enabled,
+            generator_type: if swap_step_dir { 0x41 } else { 0x01 },
+            buffer_size,
+            emergency_switch_polarity,
+            power_states,
         }
     }
 
