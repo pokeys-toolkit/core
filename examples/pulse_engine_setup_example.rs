@@ -41,8 +41,60 @@ fn main() -> Result<()> {
     // Reboot pulse engine to reset state
     device.reboot_pulse_engine()?;
 
-    // Enable axis 3 (index 2) specifically (bit 2 for axis index 2)
-    let axis_enabled_mask = 1 << 2; // Enable axis index 2
+    // Simple test - just try bit 0 with proper sequence
+    println!("Simple test - enabling bit 0...");
+
+    // Configure axis 1 (index 0)
+    device
+        .configure_axis(0)
+        .max_speed(10)
+        .max_acceleration(0)
+        .max_deceleration(0)
+        .soft_limit_min(-1800)
+        .soft_limit_max(1800)
+        .build(&mut device)?;
+    device.set_axis_configuration(0)?;
+
+    // Try to enable axis 1 (bit 0)
+    device.set_pulse_engine_state(0x02, 0x00, 0x01)?;
+    device.enable_pulse_engine(true)?;
+    device.get_pulse_engine_status()?;
+
+    // Get detailed status using 0x85/0x00
+    println!("Getting pulse engine status (0x85/0x00)...");
+    device.get_pulse_engine_status()?;
+
+    println!("Pulse engine status:");
+    println!(
+        "  pulse_engine_activated: {}",
+        device.pulse_engine_v2.pulse_engine_activated
+    );
+    println!(
+        "  pulse_engine_state: {}",
+        device.pulse_engine_v2.pulse_engine_state
+    );
+    println!(
+        "  axis_enabled_states_mask: 0x{:02X}",
+        device.pulse_engine_v2.axis_enabled_states_mask
+    );
+    println!(
+        "  axis_enabled_mask: 0x{:02X}",
+        device.pulse_engine_v2.axis_enabled_mask
+    );
+    println!("  nr_of_axes: {}", device.pulse_engine_v2.info.nr_of_axes);
+
+    // Show axis positions from 0x85/0x00
+    println!("Axis positions from status:");
+    for i in 0..3 {
+        println!(
+            "  Axis {} position: {}",
+            i + 1,
+            device.pulse_engine_v2.current_position[i]
+        );
+    }
+
+    // Use bit 0 for axis 1
+    let axis_enabled_mask = 0x01;
 
     // Enable pulse engine FIRST
     device.enable_pulse_engine(true)?;

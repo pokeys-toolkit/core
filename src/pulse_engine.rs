@@ -525,6 +525,7 @@ impl PoKeysDevice {
             // Parse response according to specification
             self.pulse_engine_v2.soft_limit_status = response[3];
             self.pulse_engine_v2.axis_enabled_states_mask = response[4];
+            self.pulse_engine_v2.axis_enabled_mask = response[4]; // Update the field used by is_axis_enabled
             self.pulse_engine_v2.limit_override = response[5];
             // Skip request ID (6) and checksum (7)
             self.pulse_engine_v2.info.nr_of_axes = response[8];
