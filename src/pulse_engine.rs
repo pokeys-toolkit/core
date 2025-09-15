@@ -1003,9 +1003,12 @@ impl AxisConfigBuilder {
             return Err(PoKeysError::Parameter("Axis index must be 0-7".to_string()));
         }
 
-        device.pulse_engine_v2.max_speed[self.axis] = self.max_speed as f32;
-        device.pulse_engine_v2.max_acceleration[self.axis] = self.max_acceleration as f32;
-        device.pulse_engine_v2.max_deceleration[self.axis] = self.max_deceleration as f32;
+        // Convert from pulses/second to timeslot units (divide by 1000)
+        device.pulse_engine_v2.max_speed[self.axis] = (self.max_speed as f32) / 1000.0;
+        device.pulse_engine_v2.max_acceleration[self.axis] =
+            (self.max_acceleration as f32) / 1000.0;
+        device.pulse_engine_v2.max_deceleration[self.axis] =
+            (self.max_deceleration as f32) / 1000.0;
         device.pulse_engine_v2.soft_limit_minimum[self.axis] = self.soft_limit_min;
         device.pulse_engine_v2.soft_limit_maximum[self.axis] = self.soft_limit_max;
 
