@@ -1,5 +1,6 @@
 use pokeys_lib::pulse_engine::step_setting;
 use pokeys_lib::*;
+use std::io::{self, Write};
 
 fn main() -> Result<()> {
     println!("PoKeys Pulse Engine Setup Example");
@@ -35,11 +36,11 @@ fn main() -> Result<()> {
     println!("Configuring axis 2...");
     device
         .configure_axis(2)
-        .max_speed(2500)
-        .max_acceleration(1000)
-        .max_deceleration(1000)
-        .soft_limit_min(-90)
-        .soft_limit_max(90)
+        .max_speed(5000)
+        .max_acceleration(2500)
+        .max_deceleration(2500)
+        .soft_limit_min(0)
+        .soft_limit_max(0)
         .build(&mut device)?;
 
     // Read back configuration to verify
@@ -94,6 +95,30 @@ fn main() -> Result<()> {
             .get(new_step_setting as usize)
             .unwrap_or(&"Unknown")
     );
+
+    // Interactive move command
+    println!("\n--- Interactive Move Command ---");
+    print!("Enter position for axis 2 (-180 to 180): ");
+    io::stdout().flush().unwrap();
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
+    let position: i32 = input.trim().parse().unwrap_or(0);
+
+    print!("Enter speed (0-100%): ");
+    io::stdout().flush().unwrap();
+    input.clear();
+    io::stdin().read_line(&mut input).unwrap();
+    let speed: u16 = input.trim().parse().unwrap_or(50);
+    let velocity = (speed as f32 / 100.0 * 65535.0) as u16;
+
+    println!(
+        "Moving axis 2 to position {} at {}% speed...",
+        position, speed
+    );
+    let mut positions = [0i32; 8];
+    positions[1] = position; // Axis 2 (0-indexed)
+    device.move_pv(0x02, &positions, velocity)?; // Axis mask bit 1 for axis 2
+    println!("✓ Move command sent");
 
     Ok(())
 }

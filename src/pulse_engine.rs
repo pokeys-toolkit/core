@@ -943,6 +943,25 @@ impl PoKeysDevice {
         AxisConfigBuilder::new(axis)
     }
 
+    /// Move PV (Set reference position and speed) (0x85/0x25)
+    pub fn move_pv(&mut self, axis_mask: u8, positions: &[i32; 8], velocity: u16) -> Result<()> {
+        let mut request = vec![0u8; 56]; // Data payload (protocol bytes 9-64)
+
+        // Bytes 0-31: Reference positions (8x 32-bit integers, LSB first)
+        for (i, &position) in positions.iter().enumerate() {
+            let pos_bytes = position.to_le_bytes();
+            let offset = i * 4;
+            request[offset..offset + 4].copy_from_slice(&pos_bytes);
+        }
+
+        // Bytes 32-47: Move velocity (16 bytes, but only first 2 used)
+        let vel_bytes = velocity.to_le_bytes();
+        request[32..34].copy_from_slice(&vel_bytes);
+
+        self.send_request_with_data(0x85, 0x25, axis_mask, 0, 0, &request)?;
+        Ok(())
+    }
+
     /// Create motor driver configuration builder
     pub fn configure_motor_drivers(&mut self) -> MotorDriverConfigBuilder {
         MotorDriverConfigBuilder::new()
