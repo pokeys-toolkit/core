@@ -145,8 +145,8 @@ fn main() -> Result<()> {
         .max_speed(10000)
         .max_acceleration(1000)
         .max_deceleration(1000)
-        .soft_limit_min(-1800)
-        .soft_limit_max(1800)
+        // .soft_limit_min(-1800)
+        // .soft_limit_max(1800)
         .build(&mut device)?;
 
     // Send configuration to device
@@ -192,7 +192,7 @@ fn main() -> Result<()> {
     println!("Setting axis 3 to 1/16 step setting...");
     device
         .configure_motor_drivers()
-        .axis_step_setting(2, step_setting::SIXTEENTH_STEP) // Axis 3 (index 2), 1/16
+        .axis_step_setting(2, step_setting::FULL_STEP) // Axis 3 (index 2), 1/16
         .build(&mut device)?;
 
     // Read back to verify
@@ -278,20 +278,7 @@ fn main() -> Result<()> {
         std::thread::sleep(std::time::Duration::from_millis(50));
     }
 
-    // Set initial position to 0
-    println!("Setting initial position to 0...");
-    device.move_axis_to_position(2, 0, 50.0)?;
-
     // Wait for move to complete
-    loop {
-        device.get_pulse_engine_status()?;
-        let current_pos = device.pulse_engine_v2.current_position[2];
-        if current_pos == 0 {
-            break;
-        }
-        std::thread::sleep(std::time::Duration::from_millis(100));
-    }
-    println!("✓ Initial position set to 0");
 
     loop {
         println!("\n--- Interactive Move Command ---");
@@ -350,11 +337,34 @@ fn main() -> Result<()> {
                 current_pos == target_position
             };
 
-            if close_enough || (state == "Stopped" && (current_pos - target_position).abs() <= 2) {
-                println!(
-                    "✓ Target position {} reached! (Final: {})",
-                    target_position, current_pos
-                );
+            // Check for overrun when no soft limits
+            let overrun = if !soft_limits_active {
+                if target_position > 0 && current_pos > target_position {
+                    true // Overran positive target
+                } else if target_position < 0 && current_pos < target_position {
+                    true // Overran negative target
+                } else {
+                    false
+                }
+            } else {
+                false
+            };
+
+            if close_enough
+                || overrun
+                || (state == "Stopped" && (current_pos - target_position).abs() <= 2)
+            {
+                if overrun {
+                    println!(
+                        "⚠ Warning: Overran target {} (Final: {})",
+                        target_position, current_pos
+                    );
+                } else {
+                    println!(
+                        "✓ Target position {} reached! (Final: {})",
+                        target_position, current_pos
+                    );
+                }
                 break;
             }
 
