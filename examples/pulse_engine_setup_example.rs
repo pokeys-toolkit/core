@@ -141,8 +141,8 @@ fn main() -> Result<()> {
     device
         .configure_axis(2)
         .max_speed(1000)
-        .max_acceleration(1000)
-        .max_deceleration(1000)
+        .max_acceleration(100)
+        .max_deceleration(100)
         // .soft_limit_min(-1800)
         // .soft_limit_max(1800)
         .build(&mut device)?;
@@ -161,8 +161,8 @@ fn main() -> Result<()> {
     println!(
         "✓ Axis 3 configured: speed={}, accel={}, decel={}, limits=[{}, {}]",
         (device.pulse_engine_v2.max_speed[2] * 1000.0) as u32,
-        (device.pulse_engine_v2.max_acceleration[2] * 1000.0) as u32,
-        (device.pulse_engine_v2.max_deceleration[2] * 1000.0) as u32,
+        (device.pulse_engine_v2.max_acceleration[2] * 500.0) as u32,
+        (device.pulse_engine_v2.max_deceleration[2] * 500.0) as u32,
         device.pulse_engine_v2.soft_limit_minimum[2],
         device.pulse_engine_v2.soft_limit_maximum[2]
     );
@@ -211,7 +211,7 @@ fn main() -> Result<()> {
 
     // Interactive move command
     println!("\n--- Interactive Move Command ---");
-    print!("Enter position for axis 3 (-180 to 180): ");
+    print!("Enter position for axis 3: ");
     io::stdout().flush().unwrap();
     let mut input = String::new();
     io::stdin().read_line(&mut input).unwrap();
