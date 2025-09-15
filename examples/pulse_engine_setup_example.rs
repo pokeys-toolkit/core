@@ -38,7 +38,15 @@ fn main() -> Result<()> {
         .max_acceleration(1000)
         .max_deceleration(1000)
         .build(&mut device)?;
-    println!("✓ Axis 2 configured: speed=1000, accel=1000, decel=1000");
+
+    // Read back configuration to verify
+    device.get_axis_configuration(2)?;
+    println!(
+        "✓ Axis 2 configured: speed={}, accel={}, decel={}",
+        device.pulse_engine_v2.max_speed[2] as u32,
+        device.pulse_engine_v2.max_acceleration[2] as u32,
+        device.pulse_engine_v2.max_deceleration[2] as u32
+    );
 
     Ok(())
 }
