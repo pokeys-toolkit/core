@@ -1110,11 +1110,11 @@ impl AxisConfigBuilder {
 
         // Convert from pulses/second to timeslot units (divide by 1000)
         device.pulse_engine_v2.max_speed[self.axis] = (self.max_speed as f32) / 1000.0;
-        // Convert from pulses/s^2 to timeslot units (divide by 1000000 = 1000^2)
+        // Convert from pulses/s^2 to timeslot units (divide by 1000)
         device.pulse_engine_v2.max_acceleration[self.axis] =
-            (self.max_acceleration as f32) / 1000000.0;
+            (self.max_acceleration as f32) / 1000.0;
         device.pulse_engine_v2.max_deceleration[self.axis] =
-            (self.max_deceleration as f32) / 1000000.0;
+            (self.max_deceleration as f32) / 1000.0;
         device.pulse_engine_v2.soft_limit_minimum[self.axis] = self.soft_limit_min;
         device.pulse_engine_v2.soft_limit_maximum[self.axis] = self.soft_limit_max;
 
