@@ -45,22 +45,22 @@ fn main() -> Result<()> {
     // Reboot pulse engine to reset state
     device.reboot_pulse_engine()?;
 
-    // Simple test - just try bit 0 with proper sequence
-    println!("Simple test - enabling bit 0...");
+    // Simple test - configure and enable axis 3 (index 2, bit 2)
+    println!("Simple test - enabling axis 3 (bit 2)...");
 
-    // Configure axis 1 (index 0)
+    // Configure axis 3 (index 2) - the one we're actually enabling
     device
-        .configure_axis(0)
-        .max_speed(10)
-        .max_acceleration(0)
-        .max_deceleration(0)
+        .configure_axis(2)
+        .max_speed(100)
+        .max_acceleration(50)
+        .max_deceleration(50)
         .soft_limit_min(-1800)
         .soft_limit_max(1800)
         .build(&mut device)?;
-    device.set_axis_configuration(0)?;
+    device.set_axis_configuration(2)?;
 
-    // Try to enable axis 1 (bit 0)
-    device.set_pulse_engine_state(0x02, 0x00, 0x01)?;
+    // Try to enable axis 3 (bit 2) - match what we set in setup
+    device.set_pulse_engine_state(0x02, 0x00, axis_enabled_mask)?;
     device.enable_pulse_engine(true)?;
     device.get_pulse_engine_status()?;
 

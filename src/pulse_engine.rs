@@ -766,18 +766,26 @@ impl PoKeysDevice {
         Ok(self.pulse_engine_v2.current_position[axis])
     }
 
-    /// Move axis to position
+    /// Move axis to position using 0x85/0x20 command
     pub fn move_axis_to_position(&mut self, axis: usize, position: i32, speed: f32) -> Result<()> {
         if axis >= 8 {
             return Err(PoKeysError::Parameter("Invalid axis number".to_string()));
         }
 
+        // Set the reference position for the axis
         self.pulse_engine_v2.reference_position_speed[axis] = position;
         self.pulse_engine_v2.reference_velocity_pv[axis] = speed;
 
-        // Use set_axis_position which properly implements 0x85/0x03
-        self.set_axis_position(axis, position)?;
+        // Execute the move using 0x85/0x20 command (like official PoKeysLib)
+        let mut request = vec![0u8; 56]; // Data payload bytes 9-64
 
+        // Copy all 8 axis positions (8 * 4 bytes = 32 bytes)
+        for i in 0..8 {
+            let pos_bytes = self.pulse_engine_v2.reference_position_speed[i].to_le_bytes();
+            request[i * 4..(i + 1) * 4].copy_from_slice(&pos_bytes);
+        }
+
+        self.send_request_with_data(0x85, 0x20, 0, 0, 0, &request)?;
         Ok(())
     }
 
