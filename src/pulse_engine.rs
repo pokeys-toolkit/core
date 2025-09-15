@@ -654,18 +654,15 @@ impl PoKeysDevice {
         request[7] = 0;
 
         // Bytes 17-20: Maximum speed (32-bit float)
-        let max_speed = 1000.0f32;
-        let speed_bytes = max_speed.to_le_bytes();
+        let speed_bytes = self.pulse_engine_v2.max_speed[axis].to_le_bytes();
         request[8..12].copy_from_slice(&speed_bytes);
 
         // Bytes 21-24: Maximum acceleration (32-bit float)
-        let max_accel = 100.0f32;
-        let accel_bytes = max_accel.to_le_bytes();
+        let accel_bytes = self.pulse_engine_v2.max_acceleration[axis].to_le_bytes();
         request[12..16].copy_from_slice(&accel_bytes);
 
         // Bytes 25-28: Maximum deceleration (32-bit float)
-        let max_decel = 100.0f32;
-        let decel_bytes = max_decel.to_le_bytes();
+        let decel_bytes = self.pulse_engine_v2.max_deceleration[axis].to_le_bytes();
         request[16..20].copy_from_slice(&decel_bytes);
 
         // Bytes 29-32: Soft-limit minimum position
