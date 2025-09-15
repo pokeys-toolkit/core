@@ -286,14 +286,29 @@ fn main() -> Result<()> {
         std::thread::sleep(std::time::Duration::from_millis(50));
     }
 
+    // Set initial position to 0
+    println!("Setting initial position to 0...");
+    device.move_axis_to_position(2, 0, 50.0)?;
+
+    // Wait for move to complete
+    loop {
+        device.get_pulse_engine_status()?;
+        let current_pos = device.pulse_engine_v2.current_position[2];
+        if current_pos == 0 {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+    println!("✓ Initial position set to 0");
+
     loop {
         println!("\n--- Interactive Move Command ---");
-        print!("Enter position for axis 3 (-180 to 180): ");
+        print!("Enter target position for axis 3: ");
         io::stdout().flush().unwrap();
 
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();
-        let position: i32 = match input.trim().parse() {
+        let target_position: i32 = match input.trim().parse() {
             Ok(pos) => pos,
             Err(_) => {
                 println!("Invalid input, please enter a number");
@@ -301,15 +316,11 @@ fn main() -> Result<()> {
             }
         };
 
-        println!("Setting axis 3 to position {}...", position);
+        println!("Moving to position {}...", target_position);
+        device.move_axis_to_position(2, target_position, 100.0)?;
 
-        // Use the existing move_axis_to_position method
-        device.move_axis_to_position(2, position, 50.0)?; // 50% speed
-        println!("✓ Move command sent");
-
-        // Monitor position while moving
-        println!("Monitoring position...");
-        for i in 0..20 {
+        // Monitor until target reached
+        loop {
             device.get_pulse_engine_status()?;
             let current_pos = device.pulse_engine_v2.current_position[2];
             let state = match device.pulse_engine_v2.axes_state[2] {
@@ -319,16 +330,24 @@ fn main() -> Result<()> {
                 3 => "Decelerating",
                 _ => "Unknown",
             };
+
             println!(
-                "  Step {}: Position = {}, State = {}",
-                i, current_pos, state
+                "Position: {}, Target: {}, State: {}",
+                current_pos, target_position, state
             );
 
-            if state == "Stopped" && i > 5 {
+            // Stop when target reached OR when stopped and close to target
+            if current_pos == target_position
+                || (state == "Stopped" && (current_pos - target_position).abs() <= 2)
+            {
+                println!(
+                    "✓ Target position {} reached! (Final: {})",
+                    target_position, current_pos
+                );
                 break;
             }
 
-            std::thread::sleep(std::time::Duration::from_millis(100));
+            std::thread::sleep(std::time::Duration::from_millis(50));
         }
     }
 }
