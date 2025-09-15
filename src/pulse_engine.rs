@@ -5,6 +5,19 @@ use crate::error::{PoKeysError, Result};
 use crate::types::{PulseEngineAxisState, PulseEngineState};
 use serde::{Deserialize, Serialize};
 
+/// Motor driver step setting constants
+pub mod step_setting {
+    pub const FULL_STEP: u8 = 0; // 1/1
+    pub const HALF_NON_CIRCULAR: u8 = 1; // 1/2 non-circular
+    pub const HALF_STEP: u8 = 2; // 1/2
+    pub const QUARTER_STEP: u8 = 3; // 1/4
+    pub const EIGHTH_STEP: u8 = 4; // 1/8
+    pub const SIXTEENTH_STEP: u8 = 5; // 1/16
+    pub const THIRTY_SECOND_STEP: u8 = 6; // 1/32
+    pub const STEP_128: u8 = 7; // 1/128
+    pub const STEP_256: u8 = 8; // 1/256
+}
+
 /// Pulse engine power states (bit-mapped)
 pub struct PulseEnginePowerState;
 

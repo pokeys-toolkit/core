@@ -1,3 +1,4 @@
+use pokeys_lib::pulse_engine::step_setting;
 use pokeys_lib::*;
 
 fn main() -> Result<()> {
@@ -81,7 +82,7 @@ fn main() -> Result<()> {
     println!("Setting axis 2 to 1/16 step setting...");
     device
         .configure_motor_drivers()
-        .axis_step_setting(1, 5) // Axis 2 (0-indexed), 1/16 = setting 5
+        .axis_step_setting(1, step_setting::SIXTEENTH_STEP) // Axis 2 (0-indexed), 1/16
         .build(&mut device)?;
 
     // Read back to verify
