@@ -906,6 +906,31 @@ impl PoKeysDevice {
         Ok(())
     }
 
+    /// Set internal motor drivers configuration (0x85/0x19)
+    pub fn set_motor_drivers_configuration(&mut self) -> Result<()> {
+        let mut request = vec![0u8; 56]; // Data payload (protocol bytes 9-64)
+
+        // Set motor driver settings for each axis
+        for axis in 0..4 {
+            let byte_offset = axis * 2; // Bytes 0-7 for axes 1-4
+            request[byte_offset] = self.pulse_engine_v2.motor_step_setting[axis];
+            request[byte_offset + 1] = self.pulse_engine_v2.motor_current_setting[axis];
+        }
+
+        let response = self.send_request_with_data(0x85, 0x19, 0, 0, 0, &request)?;
+
+        // Parse response to update local state
+        for axis in 0..4 {
+            let byte_offset = 8 + (axis * 2); // Bytes 9-16 for axes 1-4
+            if byte_offset + 1 < response.len() {
+                self.pulse_engine_v2.motor_step_setting[axis] = response[byte_offset];
+                self.pulse_engine_v2.motor_current_setting[axis] = response[byte_offset + 1];
+            }
+        }
+
+        Ok(())
+    }
+
     /// Get internal motor drivers configuration (0x85/0x18)
     pub fn get_motor_drivers_configuration(&mut self) -> Result<()> {
         let response = self.send_request(0x85, 0x18, 0, 0, 0)?;

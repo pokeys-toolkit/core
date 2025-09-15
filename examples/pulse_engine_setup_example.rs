@@ -77,5 +77,21 @@ fn main() -> Result<()> {
         current_amps
     );
 
+    // Set axis 2 to 1/16 step setting
+    println!("Setting axis 2 to 1/16 step setting...");
+    device.pulse_engine_v2.motor_step_setting[1] = 5; // 1/16 = setting 5
+    device.set_motor_drivers_configuration()?;
+
+    // Read back to verify
+    device.get_motor_drivers_configuration()?;
+    let new_step_setting = device.pulse_engine_v2.motor_step_setting[1];
+    println!(
+        "✓ Axis 2 motor driver updated: step={} ({})",
+        new_step_setting,
+        step_names
+            .get(new_step_setting as usize)
+            .unwrap_or(&"Unknown")
+    );
+
     Ok(())
 }
