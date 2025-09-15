@@ -23,8 +23,8 @@ fn main() -> Result<()> {
     let config = PulseEngineConfig::three_channel_internal(3, false).build();
     device.setup_pulse_engine(&config)?;
 
-    // Enable axis 2 specifically (bit 1 for axis 2, 0-indexed)
-    let axis_enabled_mask = 1 << 1; // Enable axis 2 (0-indexed)
+    // Enable axis 2 specifically (bit 2 for axis 2)
+    let axis_enabled_mask = 1 << 2; // Enable axis 2
 
     // Send the pulse engine state with axis 2 enabled
     device.set_pulse_engine_state(0x01, 0x00, axis_enabled_mask)?;
@@ -32,8 +32,11 @@ fn main() -> Result<()> {
     // Send axis configuration after pulse engine state
     device.set_axis_configuration(2)?;
 
-    // Read back the state to update local values
-    device.get_pulse_engine_state()?;
+    // Enable pulse engine AFTER configuration
+    device.enable_pulse_engine(true)?;
+
+    // Read back the status to update local values
+    device.get_pulse_engine_status()?;
 
     device.enable_pulse_engine(true)?;
 
