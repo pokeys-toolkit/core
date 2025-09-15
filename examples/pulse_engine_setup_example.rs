@@ -163,6 +163,12 @@ fn main() -> Result<()> {
     // Activate pulse engine for motion
     device.activate_pulse_engine(true)?;
 
+    // Set pulse engine state to Running before movement
+    match device.set_pulse_engine_state(3, 0, 0) {
+        Ok(_) => println!("✓ Pulse engine state set to Running"),
+        Err(e) => println!("✗ Failed to set pulse engine state: {}", e),
+    }
+
     // Verify configuration
     device.get_pulse_engine_status()?;
     device.get_axis_configuration(2)?;
