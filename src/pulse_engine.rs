@@ -612,6 +612,13 @@ impl PoKeysDevice {
         Ok(())
     }
 
+    /// Reboot pulse engine (0x85/0x05)
+    pub fn reboot_pulse_engine(&mut self) -> Result<()> {
+        let request = vec![0u8; 55]; // Reserved bytes 9-63
+        self.send_request_with_data(0x85, 0x05, 0, 0, 0, &request)?;
+        Ok(())
+    }
+
     /// Set axis configuration (0x85/0x11)
     pub fn set_axis_configuration(&mut self, axis: usize) -> Result<()> {
         if axis >= 8 {

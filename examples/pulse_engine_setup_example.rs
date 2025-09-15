@@ -23,20 +23,29 @@ fn main() -> Result<()> {
     let config = PulseEngineConfig::three_channel_internal(3, false).build();
     device.setup_pulse_engine(&config)?;
 
-    // Enable axis 2 specifically (bit 2 for axis 2)
-    let axis_enabled_mask = 1 << 2; // Enable axis 2
+    // Reboot pulse engine to reset state
+    device.reboot_pulse_engine()?;
+
+    // Enable axis 1 specifically (bit 1 for axis 1)
+    let axis_enabled_mask = 1 << 1; // Enable axis 1
 
     // Send the pulse engine state with axis 2 enabled
     device.set_pulse_engine_state(0x01, 0x00, axis_enabled_mask)?;
 
     // Send axis configuration after pulse engine state
-    device.set_axis_configuration(2)?;
+    device.set_axis_configuration(1)?;
 
     // Enable pulse engine AFTER configuration
     device.enable_pulse_engine(true)?;
 
     // Read back the status to update local values
     device.get_pulse_engine_status()?;
+
+    // Check if axis 1 is now enabled
+    println!(
+        "Axis 1 enabled after config: {}",
+        device.pulse_engine_v2.is_axis_enabled(1)
+    );
 
     device.enable_pulse_engine(true)?;
 
@@ -47,10 +56,10 @@ fn main() -> Result<()> {
         device.pulse_engine_v2.info.nr_of_axes, device.pulse_engine_v2.pulse_generator_type
     );
 
-    // Configure axis 2
-    println!("Configuring axis 2...");
+    // Configure axis 1
+    println!("Configuring axis 1...");
     device
-        .configure_axis(2)
+        .configure_axis(1)
         .max_speed(10000)
         .max_acceleration(5000)
         .max_deceleration(5000)
@@ -113,36 +122,47 @@ fn main() -> Result<()> {
 
     // Interactive move command
     println!("\n--- Interactive Move Command ---");
-    print!("Enter position for axis 2 (-180 to 180): ");
+    print!("Enter position for axis 0 (-180 to 180): ");
     io::stdout().flush().unwrap();
     let mut input = String::new();
     io::stdin().read_line(&mut input).unwrap();
     let position: i32 = input.trim().parse().unwrap_or(0);
 
-    println!("Setting axis 2 to position {}...", position);
+    println!("Setting axis 0 to position {}...", position);
 
     // Enable pulse engine before moving
     device.enable_pulse_engine(true)?;
 
-    // Check axis state before moving
-    let axis_state = device.get_axis_state(2)?;
-    println!("Axis 2 state before move: {:?}", axis_state);
+    // Check axis state before moving - try axis 0 instead of axis 2
+    let axis_state = device.get_axis_state(0)?;
+    println!("Axis 0 state before move: {:?}", axis_state);
     println!(
-        "Axis 2 enabled: {}",
-        device.pulse_engine_v2.is_axis_enabled(2)
+        "Axis 0 enabled: {}",
+        device.pulse_engine_v2.is_axis_enabled(0)
     );
 
-    // Get current position
-    let current_pos = device.get_axis_position(2)?;
-    println!("Current position: {}", current_pos);
+    // Get current position for axis 0
+    let current_pos = device.get_axis_position(0)?;
+    println!("Axis 0 current position: {}", current_pos);
+
+    // Also check axis 1
+    let axis_state_1 = device.get_axis_state(1)?;
+    println!("Axis 1 state before move: {:?}", axis_state_1);
+    println!(
+        "Axis 1 enabled: {}",
+        device.pulse_engine_v2.is_axis_enabled(1)
+    );
+
+    let current_pos_1 = device.get_axis_position(1)?;
+    println!("Axis 1 current position: {}", current_pos_1);
 
     // Use the existing move_axis_to_position method
-    device.move_axis_to_position(2, position, 50.0)?; // 50% speed
+    device.move_axis_to_position(1, position, 50.0)?; // 50% speed
     println!("✓ Move command sent");
 
     // Check state after move command
-    let axis_state_after = device.get_axis_state(2)?;
-    println!("Axis 2 state after move: {:?}", axis_state_after);
+    let axis_state_after = device.get_axis_state(0)?;
+    println!("Axis 0 state after move: {:?}", axis_state_after);
 
     Ok(())
 }
