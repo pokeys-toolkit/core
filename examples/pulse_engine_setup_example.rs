@@ -160,6 +160,9 @@ fn main() -> Result<()> {
     // Re-enable pulse engine
     device.enable_pulse_engine(true)?;
 
+    // Activate pulse engine for motion
+    device.activate_pulse_engine(true)?;
+
     // Verify configuration
     device.get_pulse_engine_status()?;
     device.get_axis_configuration(2)?;
@@ -174,13 +177,9 @@ fn main() -> Result<()> {
     loop {
         position += 10;
 
-        // Try to start/enable the axis first
-        println!("Starting axis 2...");
-        device.send_request(0x85, 0x05, 2, 1, 0)?; // Try axis start command
-
-        // Then move relative
-        println!("Moving axis 2 by 10 steps relative");
-        device.send_request(0x82, 2, 10, 0, 0)?;
+        // Use core library method for axis movement
+        println!("Moving axis 2 to position: {}", position);
+        device.move_axis_to_position(2, position, 5.0)?;
 
         std::thread::sleep(std::time::Duration::from_millis(200));
 
