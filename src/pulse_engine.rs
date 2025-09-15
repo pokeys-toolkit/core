@@ -5,8 +5,27 @@ use crate::error::{PoKeysError, Result};
 use crate::types::{PulseEngineAxisState, PulseEngineState};
 use serde::{Deserialize, Serialize};
 
-// Power state constants
-const POWER_STATE_ALL_ENABLED: u8 = 0x07; // Enable power for all states
+/// Pulse engine power states (bit-mapped)
+pub struct PulseEnginePowerState;
+
+impl PulseEnginePowerState {
+    // States with enabled power (bit-mapped)
+    pub const PE_STOPPED: u8 = 1 << 0;
+    pub const PE_STOP_LIMIT: u8 = 1 << 1;
+    pub const PE_STOP_EMERGENCY: u8 = 1 << 2;
+
+    // States with enabled charge pump (bit-mapped)
+    pub const PE_STOPPED_CHARGE_PUMP: u8 = 1 << 4;
+    pub const PE_STOP_LIMIT_CHARGE_PUMP: u8 = 1 << 5;
+    pub const PE_STOP_EMERGENCY_CHARGE_PUMP: u8 = 1 << 6;
+
+    // Common combinations
+    pub const ALL_POWER_ENABLED: u8 =
+        Self::PE_STOPPED | Self::PE_STOP_LIMIT | Self::PE_STOP_EMERGENCY;
+    pub const ALL_CHARGE_PUMP_ENABLED: u8 = Self::PE_STOPPED_CHARGE_PUMP
+        | Self::PE_STOP_LIMIT_CHARGE_PUMP
+        | Self::PE_STOP_EMERGENCY_CHARGE_PUMP;
+}
 
 /// Pulse engine setup configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,7 +47,7 @@ impl PulseEngineConfig {
             generator_type: if swap_step_dir { 0x41 } else { 0x01 },
             buffer_size: 0,
             emergency_switch_polarity: 1,
-            power_states: POWER_STATE_ALL_ENABLED,
+            power_states: PulseEnginePowerState::ALL_POWER_ENABLED,
         }
     }
 
@@ -40,7 +59,7 @@ impl PulseEngineConfig {
             generator_type: 0, // 8ch external
             buffer_size: 0,    // default
             emergency_switch_polarity: 1,
-            power_states: POWER_STATE_ALL_ENABLED,
+            power_states: PulseEnginePowerState::ALL_POWER_ENABLED,
         }
     }
 }
