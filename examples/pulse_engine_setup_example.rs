@@ -143,8 +143,8 @@ fn main() -> Result<()> {
         .max_speed(1000.0)
         .max_acceleration(100.0)
         .max_deceleration(100.0)
-        // .soft_limit_min(-1800)
-        // .soft_limit_max(1800)
+        .soft_limit_min(-1800)
+        .soft_limit_max(1800)
         .build(&mut device)?;
 
     // Send configuration to device
@@ -212,6 +212,11 @@ fn main() -> Result<()> {
             .get(new_step_setting as usize)
             .unwrap_or(&"Unknown")
     );
+
+    // Reset position to 0 on startup
+    println!("Resetting position to 0...");
+    device.set_axis_position(2, 0)?;
+    println!("✓ Position reset to 0");
 
     // Interactive move command
     println!("\n--- Interactive Move Command ---");
