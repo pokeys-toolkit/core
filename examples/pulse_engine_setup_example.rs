@@ -174,12 +174,13 @@ fn main() -> Result<()> {
     loop {
         position += 10;
 
-        // Use pulse engine axis 2 movement
-        println!("Moving axis 2 to position: {}", position);
-        device.set_axis_position(2, position)?;
+        // Try to start/enable the axis first
+        println!("Starting axis 2...");
+        device.send_request(0x85, 0x05, 2, 1, 0)?; // Try axis start command
 
-        // Trigger movement
-        device.send_request(0x83, 2, 1, 0, 0)?;
+        // Then move relative
+        println!("Moving axis 2 by 10 steps relative");
+        device.send_request(0x82, 2, 10, 0, 0)?;
 
         std::thread::sleep(std::time::Duration::from_millis(200));
 
