@@ -27,7 +27,7 @@ fn main() -> Result<()> {
     device.get_pulse_engine_status()?;
     println!(
         "✓ Pulse engine configured: {} axes, generator type 0x{:02X}",
-        device.pulse_engine_v2.pulse_engine_enabled, device.pulse_engine_v2.pulse_generator_type
+        device.pulse_engine_v2.info.nr_of_axes, device.pulse_engine_v2.pulse_generator_type
     );
 
     Ok(())
