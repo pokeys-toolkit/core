@@ -5,6 +5,9 @@ use crate::error::{PoKeysError, Result};
 use crate::types::{PulseEngineAxisState, PulseEngineState};
 use serde::{Deserialize, Serialize};
 
+// Power state constants
+const POWER_STATE_ALL_ENABLED: u8 = 0x07; // Enable power for all states
+
 /// Pulse engine setup configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PulseEngineConfig {
@@ -25,7 +28,7 @@ impl PulseEngineConfig {
             generator_type: if swap_step_dir { 0x41 } else { 0x01 }, // 3ch internal with/without swap
             buffer_size: 0,                                          // default
             emergency_switch_polarity: 1,
-            power_states: 0x07, // Enable power for all states
+            power_states: POWER_STATE_ALL_ENABLED,
         }
     }
 
@@ -37,7 +40,7 @@ impl PulseEngineConfig {
             generator_type: 0, // 8ch external
             buffer_size: 0,    // default
             emergency_switch_polarity: 1,
-            power_states: 0x07, // Enable power for all states
+            power_states: POWER_STATE_ALL_ENABLED,
         }
     }
 }
