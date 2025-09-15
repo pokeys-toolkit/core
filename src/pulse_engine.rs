@@ -1072,35 +1072,42 @@ impl AxisConfigBuilder {
 
 /// Motor driver configuration builder
 pub struct MotorDriverConfigBuilder {
-    step_settings: [u8; 4],
-    current_settings: [u8; 4],
+    step_settings: [Option<u8>; 4],
+    current_settings: [Option<u8>; 4],
 }
 
 impl MotorDriverConfigBuilder {
     pub fn new() -> Self {
         Self {
-            step_settings: [0; 4],
-            current_settings: [0; 4],
+            step_settings: [None; 4],
+            current_settings: [None; 4],
         }
     }
 
     pub fn axis_step_setting(mut self, axis: usize, step_setting: u8) -> Self {
         if axis < 4 {
-            self.step_settings[axis] = step_setting;
+            self.step_settings[axis] = Some(step_setting);
         }
         self
     }
 
     pub fn axis_current_setting(mut self, axis: usize, current_setting: u8) -> Self {
         if axis < 4 {
-            self.current_settings[axis] = current_setting;
+            self.current_settings[axis] = Some(current_setting);
         }
         self
     }
 
     pub fn build(self, device: &mut PoKeysDevice) -> Result<()> {
-        device.pulse_engine_v2.motor_step_setting = self.step_settings;
-        device.pulse_engine_v2.motor_current_setting = self.current_settings;
+        // Only update the values that were explicitly set
+        for axis in 0..4 {
+            if let Some(step_setting) = self.step_settings[axis] {
+                device.pulse_engine_v2.motor_step_setting[axis] = step_setting;
+            }
+            if let Some(current_setting) = self.current_settings[axis] {
+                device.pulse_engine_v2.motor_current_setting[axis] = current_setting;
+            }
+        }
         device.set_motor_drivers_configuration()
     }
 }
