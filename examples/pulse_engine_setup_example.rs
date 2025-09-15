@@ -23,6 +23,15 @@ fn main() -> Result<()> {
     let config = PulseEngineConfig::three_channel_internal(3, false).build();
     device.setup_pulse_engine(&config)?;
 
+    // Enable all axes (bits 0-7)
+    let axis_enabled_mask = 0xFF; // Enable all axes
+
+    // Send the pulse engine state with axis 2 enabled
+    device.set_pulse_engine_state(0x01, 0x00, axis_enabled_mask)?;
+
+    // Read back the state to update local values
+    device.get_pulse_engine_state()?;
+
     device.enable_pulse_engine(true)?;
 
     // Verify configuration
@@ -36,11 +45,11 @@ fn main() -> Result<()> {
     println!("Configuring axis 2...");
     device
         .configure_axis(2)
-        .max_speed(5000)
-        .max_acceleration(2500)
-        .max_deceleration(2500)
-        .soft_limit_min(-180)
-        .soft_limit_max(180)
+        .max_speed(10000)
+        .max_acceleration(5000)
+        .max_deceleration(5000)
+        .soft_limit_min(-1800)
+        .soft_limit_max(18000)
         .build(&mut device)?;
 
     // Read back configuration to verify
@@ -109,9 +118,25 @@ fn main() -> Result<()> {
     // Enable pulse engine before moving
     device.enable_pulse_engine(true)?;
 
+    // Check axis state before moving
+    let axis_state = device.get_axis_state(2)?;
+    println!("Axis 2 state before move: {:?}", axis_state);
+    println!(
+        "Axis 2 enabled: {}",
+        device.pulse_engine_v2.is_axis_enabled(2)
+    );
+
+    // Get current position
+    let current_pos = device.get_axis_position(2)?;
+    println!("Current position: {}", current_pos);
+
     // Use the existing move_axis_to_position method
     device.move_axis_to_position(2, position, 50.0)?; // 50% speed
     println!("✓ Move command sent");
+
+    // Check state after move command
+    let axis_state_after = device.get_axis_state(2)?;
+    println!("Axis 2 state after move: {:?}", axis_state_after);
 
     Ok(())
 }
