@@ -634,13 +634,11 @@ impl PoKeysDevice {
         request[16..20].copy_from_slice(&decel_bytes);
 
         // Bytes 29-32: Soft-limit minimum position
-        let min_pos = 0i32;
-        let min_bytes = min_pos.to_le_bytes();
+        let min_bytes = self.pulse_engine_v2.soft_limit_minimum[axis].to_le_bytes();
         request[20..24].copy_from_slice(&min_bytes);
 
         // Bytes 33-36: Soft-limit maximum position
-        let max_pos = 0i32;
-        let max_bytes = max_pos.to_le_bytes();
+        let max_bytes = self.pulse_engine_v2.soft_limit_maximum[axis].to_le_bytes();
         request[24..28].copy_from_slice(&max_bytes);
 
         // Bytes 37-38: MPG jog multiplier
@@ -953,6 +951,8 @@ pub struct AxisConfigBuilder {
     max_speed: u32,
     max_acceleration: u32,
     max_deceleration: u32,
+    soft_limit_min: i32,
+    soft_limit_max: i32,
 }
 
 impl AxisConfigBuilder {
@@ -962,6 +962,8 @@ impl AxisConfigBuilder {
             max_speed: 1000,
             max_acceleration: 100,
             max_deceleration: 100,
+            soft_limit_min: 0,
+            soft_limit_max: 0,
         }
     }
 
@@ -980,6 +982,16 @@ impl AxisConfigBuilder {
         self
     }
 
+    pub fn soft_limit_min(mut self, min: i32) -> Self {
+        self.soft_limit_min = min;
+        self
+    }
+
+    pub fn soft_limit_max(mut self, max: i32) -> Self {
+        self.soft_limit_max = max;
+        self
+    }
+
     pub fn build(self, device: &mut PoKeysDevice) -> Result<()> {
         if self.axis >= 8 {
             return Err(PoKeysError::Parameter("Axis index must be 0-7".to_string()));
@@ -988,6 +1000,8 @@ impl AxisConfigBuilder {
         device.pulse_engine_v2.max_speed[self.axis] = self.max_speed as f32;
         device.pulse_engine_v2.max_acceleration[self.axis] = self.max_acceleration as f32;
         device.pulse_engine_v2.max_deceleration[self.axis] = self.max_deceleration as f32;
+        device.pulse_engine_v2.soft_limit_minimum[self.axis] = self.soft_limit_min;
+        device.pulse_engine_v2.soft_limit_maximum[self.axis] = self.soft_limit_max;
 
         device.set_axis_configuration(self.axis)
     }
