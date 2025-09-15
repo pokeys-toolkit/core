@@ -620,8 +620,9 @@ impl PoKeysDevice {
 
         let mut request = vec![0u8; 56]; // Data payload (protocol bytes 9-64)
 
-        // Byte 9: Axis options - Enable axis with internal planner and soft limits
+        // Byte 9: Axis options - Enable axis with internal planner, soft limits, and masked enable
         let mut axis_options = 0x05; // aoENABLED | aoINTERNAL_PLANNER
+        axis_options |= 1 << 6; // aoENABLED_MASKED - required for output enable mask control
         if self.pulse_engine_v2.soft_limit_minimum[axis] != 0
             || self.pulse_engine_v2.soft_limit_maximum[axis] != 0
         {
