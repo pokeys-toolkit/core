@@ -141,8 +141,8 @@ fn main() -> Result<()> {
     device
         .configure_axis(2)
         .max_speed(12500.0)
-        .max_acceleration(5.0)
-        .max_deceleration(5.0)
+        .max_acceleration(10.0)
+        .max_deceleration(10.0)
         .soft_limit_min(-100000)
         .soft_limit_max(100000)
         .step_angle(1.8)
