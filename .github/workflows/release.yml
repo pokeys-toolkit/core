@@ -32,8 +32,13 @@ jobs:
         id: version
         run: |
           # Get commits since last tag
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          COMMITS=$(git log ${LAST_TAG}..HEAD --oneline)
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --oneline)
+            LAST_TAG="v0.0.0"
+          else
+            COMMITS=$(git log ${LAST_TAG}..HEAD --oneline)
+          fi
 
           echo "Last tag: $LAST_TAG"
           echo "Commits since last tag:"
