@@ -27,7 +27,7 @@ fn test_segment_mapping_creation() {
 fn test_uspibridge_config() {
     // Test default configuration
     let default_config = USPIBridgeConfig::default();
-    assert_eq!(default_config.device_count, 5);
+    assert_eq!(default_config.device_count, 8);
     assert_eq!(default_config.default_brightness, 8);
     assert_eq!(default_config.max_virtual_devices, 16);
     assert_eq!(default_config.segment_mappings.len(), 8);
