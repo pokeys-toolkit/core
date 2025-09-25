@@ -1107,6 +1107,117 @@ impl PoKeysDevice {
     }
 }
 
+/// Axis configuration builder
+pub struct AxisConfigBuilder {
+    axis: usize,
+    max_speed: f32,
+    max_acceleration: f32,
+    max_deceleration: f32,
+    soft_limit_min: i32,
+    soft_limit_max: i32,
+}
+
+impl AxisConfigBuilder {
+    pub fn new(axis: usize) -> Self {
+        Self {
+            axis,
+            max_speed: 1000.0,
+            max_acceleration: 100.0,
+            max_deceleration: 100.0,
+            soft_limit_min: 0,
+            soft_limit_max: 0,
+        }
+    }
+
+    pub fn max_speed(mut self, speed: f32) -> Self {
+        self.max_speed = speed;
+        self
+    }
+
+    pub fn max_acceleration(mut self, acceleration: f32) -> Self {
+        self.max_acceleration = acceleration;
+        self
+    }
+
+    pub fn max_deceleration(mut self, deceleration: f32) -> Self {
+        self.max_deceleration = deceleration;
+        self
+    }
+
+    pub fn soft_limit_min(mut self, min: i32) -> Self {
+        self.soft_limit_min = min;
+        self
+    }
+
+    pub fn soft_limit_max(mut self, max: i32) -> Self {
+        self.soft_limit_max = max;
+        self
+    }
+
+    pub fn build(self, device: &mut PoKeysDevice) -> Result<()> {
+        if self.axis >= 8 {
+            return Err(PoKeysError::Parameter("Axis index must be 0-7".to_string()));
+        }
+
+        // Store values directly as floats (no conversion needed)
+        device.pulse_engine_v2.max_speed[self.axis] = self.max_speed;
+        device.pulse_engine_v2.max_acceleration[self.axis] = self.max_acceleration;
+        device.pulse_engine_v2.max_deceleration[self.axis] = self.max_deceleration;
+        device.pulse_engine_v2.soft_limit_minimum[self.axis] = self.soft_limit_min;
+        device.pulse_engine_v2.soft_limit_maximum[self.axis] = self.soft_limit_max;
+
+        device.set_axis_configuration(self.axis)
+    }
+}
+
+/// Motor driver configuration builder
+pub struct MotorDriverConfigBuilder {
+    step_settings: [Option<u8>; 4],
+    current_settings: [Option<u8>; 4],
+}
+
+impl Default for MotorDriverConfigBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl MotorDriverConfigBuilder {
+    pub fn new() -> Self {
+        Self {
+            step_settings: [None; 4],
+            current_settings: [None; 4],
+        }
+    }
+
+    pub fn axis_step_setting(mut self, axis: usize, step_setting: u8) -> Self {
+        if axis < 4 {
+            self.step_settings[axis] = Some(step_setting);
+        }
+        self
+    }
+
+    pub fn axis_current_setting(mut self, axis: usize, current_setting: u8) -> Self {
+        if axis < 4 {
+            self.current_settings[axis] = Some(current_setting);
+        }
+        self
+    }
+
+    pub fn build(self, device: &mut PoKeysDevice) -> Result<()> {
+        // Only update the values that were explicitly set
+        for axis in 0..4 {
+            if let Some(step_setting) = self.step_settings[axis] {
+                device.pulse_engine_v2.motor_step_setting[axis] = step_setting;
+            }
+            if let Some(current_setting) = self.current_settings[axis] {
+                device.pulse_engine_v2.motor_current_setting[axis] = current_setting;
+            }
+        }
+        device.set_motor_drivers_configuration()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1147,154 +1258,5 @@ mod tests {
         assert!(pe.is_axis_enabled(0));
         assert!(pe.is_axis_enabled(1));
         assert!(!pe.is_axis_enabled(2));
-    }
-}
-
-/// Axis configuration builder
-pub struct AxisConfigBuilder {
-    axis: usize,
-    max_speed: f32,
-    max_acceleration: f32,
-    max_deceleration: f32,
-    soft_limit_min: i32,
-    soft_limit_max: i32,
-    step_angle: f32,
-    step_resolution: StepResolution,
-}
-
-impl AxisConfigBuilder {
-    pub fn new(axis: usize) -> Self {
-        Self {
-            axis,
-            max_speed: 1000.0,
-            max_acceleration: 100.0,
-            max_deceleration: 100.0,
-            soft_limit_min: 0,
-            soft_limit_max: 0,
-            step_angle: 1.8,
-            step_resolution: StepResolution::FullStep,
-        }
-    }
-
-    pub fn max_speed(mut self, speed: f32) -> Self {
-        self.max_speed = speed;
-        self
-    }
-
-    pub fn max_acceleration(mut self, acceleration: f32) -> Self {
-        self.max_acceleration = acceleration;
-        self
-    }
-
-    pub fn max_deceleration(mut self, deceleration: f32) -> Self {
-        self.max_deceleration = deceleration;
-        self
-    }
-
-    pub fn soft_limit_min(mut self, min: i32) -> Self {
-        self.soft_limit_min = min;
-        self
-    }
-
-    pub fn soft_limit_max(mut self, max: i32) -> Self {
-        self.soft_limit_max = max;
-        self
-    }
-
-    pub fn step_angle(mut self, angle: f32) -> Self {
-        self.step_angle = angle;
-        self
-    }
-
-    pub fn step_resolution(mut self, resolution: StepResolution) -> Self {
-        self.step_resolution = resolution;
-        self
-    }
-
-    pub fn encoder_ticks_per_rotation(&self) -> f32 {
-        360.0 / self.step_angle / self.step_resolution.multiplier()
-    }
-
-    pub fn build(self, device: &mut PoKeysDevice) -> Result<()> {
-        if self.axis >= 8 {
-            return Err(PoKeysError::Parameter("Axis index must be 0-7".to_string()));
-        }
-
-        // Store values directly as floats (no conversion needed)
-        device.pulse_engine_v2.max_speed[self.axis] = self.max_speed;
-        device.pulse_engine_v2.max_acceleration[self.axis] = self.max_acceleration;
-        device.pulse_engine_v2.max_deceleration[self.axis] = self.max_deceleration;
-        device.pulse_engine_v2.soft_limit_minimum[self.axis] = self.soft_limit_min;
-        device.pulse_engine_v2.soft_limit_maximum[self.axis] = self.soft_limit_max;
-
-        // Set motor driver step resolution (convert StepResolution to 0-based byte value for 0x85/0x19)
-        let step_setting = match self.step_resolution {
-            StepResolution::FullStep => 0,      // 1/1
-            StepResolution::HalfStep => 2,      // 1/2
-            StepResolution::QuarterStep => 3,   // 1/4
-            StepResolution::EighthStep => 4,    // 1/8
-            StepResolution::SixteenthStep => 5, // 1/16
-        };
-
-        // Set motor driver configuration for this axis (only for axes 0-3)
-        if self.axis < 4 {
-            device.pulse_engine_v2.motor_step_setting[self.axis] = step_setting;
-            device.pulse_engine_v2.motor_current_setting[self.axis] = 128; // Default 50% current (128/255)
-        }
-
-        // Initialize all reference positions to 0 to prevent garbage values on first move
-        for i in 0..8 {
-            device.pulse_engine_v2.reference_position_speed[i] = 0;
-        }
-
-        // Send axis configuration first
-        device.set_axis_configuration(self.axis)?;
-
-        // NOTE: Motor driver configuration (0x85/0x19) should be sent AFTER pulse engine setup
-        // Don't send it here - let the caller send it after setup_pulse_engine_with_axes
-
-        Ok(())
-    }
-}
-
-/// Motor driver configuration builder
-pub struct MotorDriverConfigBuilder {
-    step_settings: [Option<u8>; 4],
-    current_settings: [Option<u8>; 4],
-}
-
-impl MotorDriverConfigBuilder {
-    pub fn new() -> Self {
-        Self {
-            step_settings: [None; 4],
-            current_settings: [None; 4],
-        }
-    }
-
-    pub fn axis_step_setting(mut self, axis: usize, step_setting: u8) -> Self {
-        if axis < 4 {
-            self.step_settings[axis] = Some(step_setting);
-        }
-        self
-    }
-
-    pub fn axis_current_setting(mut self, axis: usize, current_setting: u8) -> Self {
-        if axis < 4 {
-            self.current_settings[axis] = Some(current_setting);
-        }
-        self
-    }
-
-    pub fn build(self, device: &mut PoKeysDevice) -> Result<()> {
-        // Only update the values that were explicitly set
-        for axis in 0..4 {
-            if let Some(step_setting) = self.step_settings[axis] {
-                device.pulse_engine_v2.motor_step_setting[axis] = step_setting;
-            }
-            if let Some(current_setting) = self.current_settings[axis] {
-                device.pulse_engine_v2.motor_current_setting[axis] = current_setting;
-            }
-        }
-        device.set_motor_drivers_configuration()
     }
 }
