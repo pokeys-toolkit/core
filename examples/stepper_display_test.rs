@@ -1,5 +1,5 @@
 use pokeys_lib::*;
-use std::{thread::current, time::Duration};
+use std::time::Duration;
 
 fn main() -> Result<()> {
     println!("=== Stepper Motor Display Test ===");
