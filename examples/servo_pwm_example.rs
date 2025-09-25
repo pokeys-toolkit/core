@@ -1,9 +1,6 @@
 use pokeys_lib::*;
 use std::io::{self, Write};
 
-#[cfg(unix)]
-use std::os::unix::io::AsRawFd;
-
 fn main() -> Result<()> {
     println!("PoKeys Servo Calibration Tool - Pin 22");
     println!("=====================================");

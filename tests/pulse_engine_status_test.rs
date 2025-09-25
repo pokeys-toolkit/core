@@ -1,7 +1,5 @@
 //! Test for Pulse Engine v2 status command (0x85/0x00)
 
-use pokeys_lib::*;
-
 #[test]
 fn test_pulse_engine_get_status() {
     // Mock device response for pulse engine status
