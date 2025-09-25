@@ -1,0 +1,291 @@
+---
+import { Code } from 'astro:components';
+
+const matrixKeyboardCode = `use pokeys_lib::*;
+use std::thread;
+use std::time::Duration;
+
+fn main() -> Result<()> {
+    println!("Matrix Keyboard Example");
+    
+    // Connect to first available device
+    let mut device = connect_to_device(0)?;
+    println!("Connected to PoKeys device");
+    
+    // Configure 4x4 matrix keyboard
+    let column_pins = [5, 6, 7, 8];  // Column pins 5-8
+    let row_pins = [1, 2, 3, 4];     // Row pins 1-4
+    
+    device.configure_matrix_keyboard(4, 4, &column_pins, &row_pins)?;
+    println!("Matrix keyboard configured successfully!");
+    
+    // Monitor for key presses
+    let mut previous_states = vec![vec![false; 4]; 4];
+    println!("Monitoring keyboard - press keys to see output...");
+    
+    loop {
+        // Read current keyboard state
+        device.read_matrix_keyboard()?;
+        
+        // Check each key position for changes
+        for row in 0..4 {
+            for col in 0..4 {
+                let current_state = device.matrix_keyboard.get_key_state(row, col);
+                
+                // Detect state changes
+                if current_state != previous_states[row][col] {
+                    if current_state {
+                        println!("Key PRESSED at position ({}, {})", row, col);
+                    } else {
+                        println!("Key RELEASED at position ({}, {})", row, col);
+                    }
+                    previous_states[row][col] = current_state;
+                }
+            }
+        }
+        
+        // Small delay to avoid overwhelming output
+        thread::sleep(Duration::from_millis(50));
+    }
+}`;
+
+const connectionCode = `let mut device = connect_to_device(0)?;`;
+
+const configCode = `let column_pins = [5, 6, 7, 8];  // Column pins
+let row_pins = [1, 2, 3, 4];     // Row pins
+device.configure_matrix_keyboard(4, 4, &column_pins, &row_pins)?;`;
+
+const readCode = `device.read_matrix_keyboard()?;
+let current_state = device.matrix_keyboard.get_key_state(row, col);`;
+
+const changeCode = `if current_state != previous_states[row][col] {
+    if current_state {
+        println!("Key PRESSED at position ({}, {})", row, col);
+    } else {
+        println!("Key RELEASED at position ({}, {})", row, col);
+    }
+}`;
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Matrix Keyboard - PoKeys Examples</title>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 w-full z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="flex justify-between items-center py-4">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="hover:text-blue-400 transition-colors">Home</a>
+						<a href="/core/examples" class="hover:text-blue-400 transition-colors">← Back to Examples</a>
+						<a href="https://github.com/pokeys-toolkit/core" class="hover:text-blue-400 transition-colors">GitHub</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Content -->
+		<div class="pt-20 min-h-screen bg-gray-900">
+			<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+				<!-- Header -->
+				<div class="mb-8">
+					<div class="flex items-center gap-2 mb-4">
+						<span class="px-3 py-1 bg-blue-600/20 text-blue-300 text-sm rounded-full">Beginner</span>
+						<span class="px-3 py-1 bg-green-600/20 text-green-300 text-sm rounded-full">Digital I/O</span>
+					</div>
+					<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						Matrix Keyboard
+					</h1>
+					<p class="text-xl text-gray-400">
+						Configure and monitor a 4x4 matrix keyboard with real-time key detection
+					</p>
+				</div>
+
+				<!-- Overview -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<p class="text-gray-300 mb-4">
+							This example demonstrates matrix keyboard configuration and monitoring using the PoKeys Core Library.
+							Matrix keyboards allow scanning multiple keys using fewer pins by organizing them in a row/column grid.
+						</p>
+						<ul class="text-gray-300 space-y-2">
+							<li>• <strong>Matrix configuration</strong> - Setting up 4x4 keyboard layout</li>
+							<li>• <strong>Pin assignment</strong> - Configuring row and column pins</li>
+							<li>• <strong>Real-time monitoring</strong> - Detecting key press/release events</li>
+							<li>• <strong>State tracking</strong> - Monitoring key state changes</li>
+						</ul>
+					</div>
+				</section>
+
+				<!-- Hardware Setup -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Hardware Setup</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-blue-400">Required Hardware</h3>
+								<ul class="text-gray-300 space-y-1">
+									<li>• PoKeys device (any model)</li>
+									<li>• LED with current-limiting resistor</li>
+									<li>• Breadboard and jumper wires</li>
+									<li>• USB cable for connection</li>
+								</ul>
+							</div>
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-green-400">Connections</h3>
+								<ul class="text-gray-300 space-y-1">
+									<li>• LED anode → Pin 1</li>
+									<li>• LED cathode → 220Ω resistor → GND</li>
+									<li>• PoKeys device → USB port</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Code Example -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Complete Example</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<div class="bg-gray-700 px-4 py-2 mb-4 rounded-t">
+							<span class="text-sm text-gray-300">matrix_keyboard.rs</span>
+						</div>
+						<Code code={matrixKeyboardCode} lang="rust" />
+					</div>
+				</section>
+
+				<!-- Code Explanation -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Code Explanation</h2>
+					<div class="space-y-6">
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-lg font-semibold mb-3 text-yellow-400">1. Device Connection</h3>
+							<div class="mb-3">
+								<Code code={connectionCode} lang="rust" />
+							</div>
+							<p class="text-gray-300">
+								Connects to the first available PoKeys device. The device object provides access to all matrix keyboard functions.
+								The <code class="bg-gray-700 px-2 py-1 rounded">mut</code> keyword is required for modifying device state.
+							</p>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-lg font-semibold mb-3 text-yellow-400">2. Matrix Configuration</h3>
+							<div class="mb-3">
+								<Code code={configCode} lang="rust" />
+							</div>
+							<p class="text-gray-300">
+								Configures a 4x4 matrix keyboard by specifying which pins control rows and columns.
+								Rows are outputs (driven by the device), columns are inputs (read by the device).
+							</p>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-lg font-semibold mb-3 text-yellow-400">3. State Monitoring</h3>
+							<div class="mb-3">
+								<Code code={readCode} lang="rust" />
+							</div>
+							<p class="text-gray-300">
+								Reads the current state of all keys in the matrix. Each key position (row, col) returns
+								<code class="bg-gray-700 px-2 py-1 rounded">true</code> when pressed, <code class="bg-gray-700 px-2 py-1 rounded">false</code> when released.
+							</p>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-lg font-semibold mb-3 text-yellow-400">4. Change Detection</h3>
+							<div class="mb-3">
+								<Code code={changeCode} lang="rust" />
+							</div>
+							<p class="text-gray-300">
+								Compares current key states with previous states to detect press and release events.
+								Only prints when a key state actually changes to avoid spam.
+							</p>
+						</div>
+					</div>
+				</section>
+
+				<!-- Error Handling -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Error Handling</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<p class="text-gray-300 mb-4">
+							The example uses Rust's <code class="bg-gray-700 px-2 py-1 rounded">?</code> operator for error handling.
+							Here's how to handle specific errors:
+						</p>
+						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">// More detailed error handling
+match enumerate_usb_devices() &#123;
+    Ok(count) if count == 0 =&gt; &#123;
+        eprintln!("No devices found. Check connections.");
+        return Ok(());
+    &#125;,
+    Ok(count) =&gt; println!("Found &#123;&#125; devices", count),
+    Err(e) =&gt; &#123;
+        eprintln!("Failed to enumerate devices: &#123;&#125;", e);
+        return Err(e.into());
+    &#125;
+&#125;</code></pre>
+					</div>
+				</section>
+
+				<!-- Troubleshooting -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Troubleshooting</h2>
+					<div class="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
+						<h3 class="text-lg font-semibold mb-3 text-red-400">Common Issues</h3>
+						<div class="space-y-4">
+							<div>
+								<h4 class="font-semibold text-white">No devices found</h4>
+								<ul class="text-gray-300 mt-1 space-y-1">
+									<li>• Check USB cable connection</li>
+									<li>• Verify device has power (LED indicators)</li>
+									<li>• Install PoKeys USB drivers</li>
+									<li>• Try a different USB port</li>
+								</ul>
+							</div>
+							<div>
+								<h4 class="font-semibold text-white">Connection failed</h4>
+								<ul class="text-gray-300 mt-1 space-y-1">
+									<li>• Device may be in use by another application</li>
+									<li>• Try unplugging and reconnecting the device</li>
+									<li>• Check device permissions on Linux</li>
+								</ul>
+							</div>
+							<div>
+								<h4 class="font-semibold text-white">LED doesn't blink</h4>
+								<ul class="text-gray-300 mt-1 space-y-1">
+									<li>• Verify LED polarity (anode to pin, cathode to GND)</li>
+									<li>• Check resistor value (220Ω recommended)</li>
+									<li>• Ensure pin 1 is available on your device model</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Next Steps -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Next Steps</h2>
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<a href="/core/examples/pwm-control" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-purple-500/50 transition-all duration-300">
+							<h3 class="text-lg font-semibold mb-2 text-white group-hover:text-purple-400">PWM Control →</h3>
+							<p class="text-gray-400 text-sm">Learn to generate PWM signals for motor control and LED dimming</p>
+						</a>
+						<a href="/core/examples/analog-input" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-green-500/50 transition-all duration-300">
+							<h3 class="text-lg font-semibold mb-2 text-white group-hover:text-green-400">Analog Input →</h3>
+							<p class="text-gray-400 text-sm">Read analog sensors and convert values to meaningful data</p>
+						</a>
+					</div>
+				</section>
+			</div>
+		</div>
+	</body>
+</html>

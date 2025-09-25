@@ -1,0 +1,303 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Getting Started - PoKeys Core Library</title>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 w-full z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="flex justify-between items-center py-4">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="hover:text-blue-400 transition-colors">Home</a>
+						<a href="/core/#features" class="hover:text-blue-400 transition-colors">Features</a>
+						<a href="/core/getting-started" class="text-blue-400">Getting Started</a>
+						<a href="https://github.com/pokeys-toolkit/core" class="hover:text-blue-400 transition-colors">GitHub</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Content -->
+		<div class="pt-20 min-h-screen">
+			<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+				<!-- Header -->
+				<div class="text-center mb-16">
+					<h1 class="text-5xl font-bold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+						Getting Started
+					</h1>
+					<p class="text-xl text-gray-400 max-w-2xl mx-auto">
+						Learn how to install and use the PoKeys Core Library in your Rust projects
+					</p>
+				</div>
+
+				<!-- Installation -->
+				<section class="mb-16">
+					<h2 class="text-3xl font-bold mb-6 text-white">Installation</h2>
+					<div class="bg-gray-800 rounded-lg p-6 mb-6">
+						<p class="text-gray-300 mb-4">Add PoKeys Core Library to your <code class="bg-gray-700 px-2 py-1 rounded">Cargo.toml</code>:</p>
+						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">[dependencies]
+pokeys-lib = "0.10.0"</code></pre>
+					</div>
+					<div class="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+						<p class="text-blue-300"><strong>💡 Tip:</strong> You can also install from git for the latest features:</p>
+						<pre class="bg-gray-900 p-3 rounded mt-2"><code class="text-green-400">pokeys-lib = &#123; git = "https://github.com/pokeys-toolkit/core" &#125;</code></pre>
+					</div>
+				</section>
+
+				<!-- System Requirements -->
+				<section class="mb-16">
+					<h2 class="text-3xl font-bold mb-6 text-white">System Requirements</h2>
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-xl font-semibold mb-3 text-green-400">Software</h3>
+							<ul class="space-y-2 text-gray-300">
+								<li>• Rust 1.70 or later</li>
+								<li>• Cargo package manager</li>
+								<li>• USB drivers (for USB devices)</li>
+							</ul>
+						</div>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-xl font-semibold mb-3 text-blue-400">Supported Platforms</h3>
+							<ul class="space-y-2 text-gray-300">
+								<li>• Windows 10/11</li>
+								<li>• macOS 10.15+</li>
+								<li>• Linux (Ubuntu, Debian, etc.)</li>
+							</ul>
+						</div>
+					</div>
+				</section>
+
+				<!-- Your First Program -->
+				<section class="mb-16">
+					<h2 class="text-3xl font-bold mb-6 text-white">Your First Program</h2>
+					<p class="text-gray-300 mb-6">Let's create a simple program that connects to a PoKeys device and controls a digital output pin.</p>
+
+					<div class="bg-gray-800 rounded-lg p-6 mb-6">
+						<h3 class="text-xl font-semibold mb-4 text-yellow-400">Step 1: Create a new Rust project</h3>
+						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">cargo new pokeys-example
+cd pokeys-example</code></pre>
+					</div>
+
+					<div class="bg-gray-800 rounded-lg p-6 mb-6">
+						<h3 class="text-xl font-semibold mb-4 text-yellow-400">Step 2: Add the dependency</h3>
+						<p class="text-gray-300 mb-3">Edit your <code class="bg-gray-700 px-2 py-1 rounded">Cargo.toml</code>:</p>
+						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">[dependencies]
+pokeys-lib = "0.10.0"</code></pre>
+					</div>
+
+					<div class="bg-gray-800 rounded-lg p-6 mb-6">
+						<h3 class="text-xl font-semibold mb-4 text-yellow-400">Step 3: Write your first program</h3>
+						<p class="text-gray-300 mb-3">Replace the contents of <code class="bg-gray-700 px-2 py-1 rounded">src/main.rs</code>:</p>
+						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">use pokeys_lib::*;
+
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#123;
+    println!("🚀 Starting PoKeys example...");
+
+    // Enumerate USB devices
+    let device_count = enumerate_usb_devices()?;
+    println!("📱 Found &#123;&#125; PoKeys devices", device_count);
+
+    if device_count == 0 &#123;
+        println!("❌ No PoKeys devices found. Please connect a device.");
+        return Ok(());
+    &#125;
+
+    // Connect to the first device
+    let mut device = connect_to_device(0)?;
+    println!("✅ Connected to device: &#123;&#125;", device.get_device_name()?);
+
+    // Configure pin 1 as digital output
+    device.set_pin_function(1, PinFunction::DigitalOutput)?;
+    println!("🔧 Configured pin 1 as digital output");
+
+    // Blink the LED 5 times
+    for i in 1..=5 &#123;
+        println!("💡 Blink &#123;&#125; - Turning pin 1 ON", i);
+        device.set_digital_output(1, true)?;
+        std::thread::sleep(std::time::Duration::from_millis(500));
+
+        println!("💡 Blink &#123;&#125; - Turning pin 1 OFF", i);
+        device.set_digital_output(1, false)?;
+        std::thread::sleep(std::time::Duration::from_millis(500));
+    &#125;
+
+    println!("🎉 Example completed successfully!");
+    Ok(())
+&#125;</code></pre>
+					</div>
+
+					<div class="bg-gray-800 rounded-lg p-6 mb-6">
+						<h3 class="text-xl font-semibold mb-4 text-yellow-400">Step 4: Run your program</h3>
+						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">cargo run</code></pre>
+						<p class="text-gray-300 mt-3">You should see output like:</p>
+						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto mt-2"><code class="text-blue-400">🚀 Starting PoKeys example...
+📱 Found 1 PoKeys devices
+✅ Connected to device: PoKeys56U
+🔧 Configured pin 1 as digital output
+💡 Blink 1 - Turning pin 1 ON
+💡 Blink 1 - Turning pin 1 OFF
+...</code></pre>
+					</div>
+				</section>
+
+				<!-- Understanding the Code -->
+				<section class="mb-16">
+					<h2 class="text-3xl font-bold mb-6 text-white">Understanding the Code</h2>
+					<div class="space-y-6">
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-xl font-semibold mb-3 text-purple-400">Device Enumeration</h3>
+							<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto mb-3"><code class="text-green-400">let device_count = enumerate_usb_devices()?;</code></pre>
+							<p class="text-gray-300">This function scans for connected PoKeys USB devices and returns the count. It's the first step in any PoKeys application.</p>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-xl font-semibold mb-3 text-purple-400">Device Connection</h3>
+							<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto mb-3"><code class="text-green-400">let mut device = connect_to_device(0)?;</code></pre>
+							<p class="text-gray-300">Connects to the device at index 0 (the first device found). Returns a <code class="bg-gray-700 px-2 py-1 rounded">Device</code> object for controlling the hardware.</p>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-xl font-semibold mb-3 text-purple-400">Pin Configuration</h3>
+							<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto mb-3"><code class="text-green-400">device.set_pin_function(1, PinFunction::DigitalOutput)?;</code></pre>
+							<p class="text-gray-300">Configures pin 1 as a digital output. PoKeys pins are versatile and can be configured for different functions like digital I/O, analog input, PWM, etc.</p>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-xl font-semibold mb-3 text-purple-400">Digital Output Control</h3>
+							<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto mb-3"><code class="text-green-400">device.set_digital_output(1, true)?;  // Turn ON
+device.set_digital_output(1, false)?; // Turn OFF</code></pre>
+							<p class="text-gray-300">Controls the digital output state. <code class="bg-gray-700 px-2 py-1 rounded">true</code> sets the pin HIGH (typically 3.3V or 5V), <code class="bg-gray-700 px-2 py-1 rounded">false</code> sets it LOW (0V).</p>
+						</div>
+					</div>
+				</section>
+
+				<!-- Common Pin Functions -->
+				<section class="mb-16">
+					<h2 class="text-3xl font-bold mb-6 text-white">Common Pin Functions</h2>
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-xl font-semibold mb-4 text-green-400">Digital I/O</h3>
+							<pre class="bg-gray-900 p-3 rounded text-sm overflow-x-auto"><code class="text-green-400">// Digital Output
+device.set_pin_function(1, PinFunction::DigitalOutput)?;
+device.set_digital_output(1, true)?;
+
+// Digital Input
+device.set_pin_function(2, PinFunction::DigitalInput)?;
+let state = device.get_digital_input(2)?;</code></pre>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">Analog Input</h3>
+							<pre class="bg-gray-900 p-3 rounded text-sm overflow-x-auto"><code class="text-green-400">// Configure as analog input
+device.set_pin_function(3, PinFunction::AnalogInput)?;
+
+// Read analog value (0-4095 for 12-bit ADC)
+let value = device.get_analog_input(3)?;
+let voltage = (value as f32 / 4095.0) * 3.3;</code></pre>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-xl font-semibold mb-4 text-purple-400">PWM Output</h3>
+							<pre class="bg-gray-900 p-3 rounded text-sm overflow-x-auto"><code class="text-green-400">// Configure PWM
+device.set_pin_function(4, PinFunction::PWMOutput)?;
+
+// Set PWM duty cycle (0-100%)
+device.set_pwm_duty_cycle(4, 50.0)?; // 50% duty cycle</code></pre>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-xl font-semibold mb-4 text-yellow-400">Encoder Input</h3>
+							<pre class="bg-gray-900 p-3 rounded text-sm overflow-x-auto"><code class="text-green-400">// Configure encoder on pins 5 & 6
+let options = EncoderOptions::with_4x_sampling();
+device.configure_encoder(0, 5, 6, options)?;
+
+// Read encoder position
+let position = device.get_encoder_value(0)?;</code></pre>
+						</div>
+					</div>
+				</section>
+
+				<!-- Error Handling -->
+				<section class="mb-16">
+					<h2 class="text-3xl font-bold mb-6 text-white">Error Handling</h2>
+					<p class="text-gray-300 mb-6">The PoKeys library uses Rust's <code class="bg-gray-700 px-2 py-1 rounded">Result</code> type for error handling. Here's how to handle common errors:</p>
+
+					<div class="bg-gray-800 rounded-lg p-6">
+						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">use pokeys_lib::*;
+
+fn main() &#123;
+    match run_pokeys_app() &#123;
+        Ok(()) =&gt; println!("✅ Application completed successfully"),
+        Err(e) =&gt; &#123;
+            eprintln!("❌ Error: &#123;&#125;", e);
+            std::process::exit(1);
+        &#125;
+    &#125;
+&#125;
+
+fn run_pokeys_app() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#123;
+    // Check if devices are available
+    let device_count = enumerate_usb_devices()?;
+    if device_count == 0 &#123;
+        return Err("No PoKeys devices found. Please connect a device.".into());
+    &#125;
+
+    // Try to connect
+    let mut device = match connect_to_device(0) &#123;
+        Ok(dev) =&gt; dev,
+        Err(e) =&gt; &#123;
+            return Err(format!("Failed to connect to device: &#123;&#125;", e).into());
+        &#125;
+    &#125;;
+
+    // Validate pin capabilities
+    if !device.is_pin_available(1)? &#123;
+        return Err("Pin 1 is not available on this device".into());
+    &#125;
+
+    // Your application logic here...
+    device.set_pin_function(1, PinFunction::DigitalOutput)?;
+    device.set_digital_output(1, true)?;
+
+    Ok(())
+&#125;</code></pre>
+					</div>
+				</section>
+
+				<!-- Next Steps -->
+				<section class="mb-16">
+					<h2 class="text-3xl font-bold mb-6 text-white">Next Steps</h2>
+					<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+						<a href="/core/examples" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-blue-500/50 transition-all duration-300 hover:transform hover:scale-105">
+							<div class="text-3xl mb-3">💡</div>
+							<h3 class="text-lg font-semibold mb-2 text-white group-hover:text-blue-400">View Examples</h3>
+							<p class="text-gray-400 text-sm">Explore practical examples for common use cases</p>
+						</a>
+
+						<a href="https://docs.rs/pokeys-lib" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-purple-500/50 transition-all duration-300 hover:transform hover:scale-105">
+							<div class="text-3xl mb-3">📖</div>
+							<h3 class="text-lg font-semibold mb-2 text-white group-hover:text-purple-400">API Reference</h3>
+							<p class="text-gray-400 text-sm">Complete documentation of all functions and types</p>
+						</a>
+
+						<a href="https://github.com/pokeys-toolkit/core" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-green-500/50 transition-all duration-300 hover:transform hover:scale-105">
+							<div class="text-3xl mb-3">🔧</div>
+							<h3 class="text-lg font-semibold mb-2 text-white group-hover:text-green-400">Source Code</h3>
+							<p class="text-gray-400 text-sm">Browse the source code and contribute</p>
+						</a>
+					</div>
+				</section>
+			</div>
+		</div>
+	</body>
+</html>

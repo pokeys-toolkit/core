@@ -1,0 +1,602 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Digital I/O API - PoKeys Core Library</title>
+		<style>
+			aside .sidebar-nav a {
+				display: block !important;
+				width: 100% !important;
+			}
+			aside .sidebar-nav {
+				display: flex !important;
+				flex-direction: column !important;
+			}
+		</style>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 left-0 right-0 z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800 h-16">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+				<div class="flex justify-between items-center h-full">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="text-gray-300 hover:text-white transition-colors">Home</a>
+						<a href="/core/getting-started" class="text-gray-300 hover:text-white transition-colors">Getting Started</a>
+						<a href="/core/examples/" class="text-gray-300 hover:text-white transition-colors">Examples</a>
+						<a href="/core/api/" class="text-white font-semibold">API Reference</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Main Content -->
+		<div class="flex min-h-screen pt-16">
+			<!-- Sidebar -->
+			<aside class="w-80 bg-gray-800/50 border-r border-gray-700 overflow-y-auto flex-shrink-0">
+				<div class="p-6">
+					<a href="/core/api/" class="text-blue-400 hover:text-blue-300 mb-4 inline-block">← Back to API Reference</a>
+					<h2 class="text-xl font-bold mb-6 text-white">API Reference</h2>
+					
+					<!-- Core APIs -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Core APIs</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/device" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Device Management
+							</a>
+							<a href="/core/api/connection" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Connection & Enumeration
+							</a>
+							<a href="/core/api/models" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Device Models
+							</a>
+						</div>
+					</div>
+
+					<!-- I/O Operations -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">I/O Operations</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/digital-io" class="block px-3 py-2 text-white bg-gray-700/50 rounded-md transition-colors">
+								Digital I/O
+							</a>
+							<a href="/core/api/analog-io" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Analog I/O
+							</a>
+							<a href="/core/api/pin-functions" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Pin Functions
+							</a>
+						</div>
+					</div>
+
+					<!-- Control Systems -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Control Systems</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/pwm" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								PWM Control
+							</a>
+							<a href="/core/api/encoders" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Encoders
+							</a>
+							<a href="/core/api/pulse-engine" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Pulse Engine v2
+							</a>
+							<a href="/core/api/servo-control" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Servo Control
+							</a>
+						</div>
+					</div>
+
+					<!-- Communication -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Communication</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/spi" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								SPI Protocol
+							</a>
+							<a href="/core/api/i2c" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								I2C Protocol
+							</a>
+							<a href="/core/api/uart" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								UART Serial
+							</a>
+							<a href="/core/api/can" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								CAN Bus
+							</a>
+							<a href="/core/api/onewire" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								1-Wire Protocol
+							</a>
+						</div>
+					</div>
+
+					<!-- Matrix Operations -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Matrix Operations</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/matrix-keyboard" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Matrix Keyboard
+							</a>
+							<a href="/core/api/led-matrix" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								LED Matrix
+							</a>
+						</div>
+					</div>
+
+					<!-- Display & Sensors -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Display & Sensors</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/lcd" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								LCD Display
+							</a>
+							<a href="/core/api/sensors" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								EasySensors
+							</a>
+							<a href="/core/api/rtc" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Real-Time Clock
+							</a>
+						</div>
+					</div>
+
+					<!-- Error Handling -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Error Handling</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/errors" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Error Types
+							</a>
+							<a href="/core/api/result-handling" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Result Handling
+							</a>
+						</div>
+					</div>
+
+					<!-- Types & Utilities -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Types & Utilities</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/types" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Core Types
+							</a>
+							<a href="/core/api/constants" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Constants
+							</a>
+						</div>
+					</div>
+				</div>
+			</aside>
+
+			<!-- Main Content Area -->
+			<main class="flex-1 p-8 min-h-screen">
+				<div class="max-w-4xl">
+					<!-- Header -->
+					<div class="mb-12">
+						<div class="flex items-center gap-4 mb-6">
+							<span class="px-3 py-1 bg-green-600/20 text-green-300 text-sm rounded-full">Digital I/O</span>
+						</div>
+						<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+							Digital I/O API
+						</h1>
+						<p class="text-xl text-gray-400">
+							Digital input/output operations and pin configuration for PoKeys devices
+						</p>
+					</div>
+
+					<!-- Overview -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<p class="text-gray-300 mb-4">
+								The Digital I/O API provides comprehensive control over digital pins, supporting input reading, 
+								output control, and digital counting functionality with both individual and bulk operations.
+							</p>
+							<div class="grid md:grid-cols-2 gap-6">
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-green-400">Key Features</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Individual pin control and reading</li>
+										<li>• Bulk operations for performance</li>
+										<li>• Digital counter functionality</li>
+										<li>• Pin function validation</li>
+										<li>• Thread-safe operations</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-blue-400">Pin Functions</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• <code>DigitalInput</code> - Read digital signals</li>
+										<li>• <code>DigitalOutput</code> - Control digital outputs</li>
+										<li>• <code>DigitalCounter</code> - Count digital pulses</li>
+										<li>• <code>AnalogInput</code> - Read analog values</li>
+										<li>• <code>PWM</code> - Generate PWM signals</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Pin Functions -->
+					<section id="pin-functions" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Pin Functions</h2>
+						
+						<!-- set_pin_function -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-green-400">set_pin_function</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn set_pin_function(&mut self, pin: u32, function: PinFunction) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Configures a pin for a specific function. The pin must support the requested capability.
+							</p>
+							<div class="grid md:grid-cols-2 gap-4 mb-4">
+								<div>
+									<h4 class="font-semibold text-blue-400 mb-2">Parameters</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>pin</code> - Pin number (1-55 depending on device)</li>
+										<li>• <code>function</code> - Desired pin function</li>
+									</ul>
+								</div>
+								<div>
+									<h4 class="font-semibold text-red-400 mb-2">Errors</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>PoKeysError::InvalidPin</code> - Pin out of range</li>
+										<li>• <code>PoKeysError::UnsupportedCapability</code> - Function not supported</li>
+									</ul>
+								</div>
+							</div>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Configure pin 1 as digital output
+device.set_pin_function(1, PinFunction::DigitalOutput)?;
+
+// Configure pin 2 as digital input
+device.set_pin_function(2, PinFunction::DigitalInput)?;</code></pre>
+							</div>
+						</div>
+
+						<!-- get_pin_function -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-green-400">get_pin_function</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn get_pin_function(&self, pin: u32) -> Result&lt;PinFunction&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Returns the current function configuration of a pin.
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>let function = device.get_pin_function(1)?;
+match function {`{`}
+    PinFunction::DigitalOutput => println!(\"Pin 1 is configured as output\"),
+    PinFunction::DigitalInput => println!(\"Pin 1 is configured as input\"),
+    _ => println!(\"Pin 1 has other function\"),
+{`}`}</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Digital Input -->
+					<section id="digital-input" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Digital Input</h2>
+						
+						<!-- get_digital_input -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-green-400">get_digital_input</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn get_digital_input(&mut self, pin: u32) -> Result&lt;bool&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Reads the current state of a digital input pin. Returns true for HIGH (3.3V/5V), false for LOW (0V).
+							</p>
+							<div class="grid md:grid-cols-2 gap-4 mb-4">
+								<div>
+									<h4 class="font-semibold text-green-400 mb-2">Returns</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>true</code> - Pin is HIGH</li>
+										<li>• <code>false</code> - Pin is LOW</li>
+									</ul>
+								</div>
+								<div>
+									<h4 class="font-semibold text-blue-400 mb-2">Requirements</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• Pin must be configured as DigitalInput</li>
+										<li>• Pin must support digital input capability</li>
+									</ul>
+								</div>
+							</div>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Read button state on pin 2
+let button_pressed = device.get_digital_input(2)?;
+if button_pressed {`{`}
+    println!(\"Button is pressed\");
+{`}`}</code></pre>
+							</div>
+						</div>
+
+						<!-- get_digital_inputs -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-green-400">get_digital_inputs</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn get_digital_inputs(&mut self) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Reads all digital input pins in a single operation. Results are stored in the device's pin data structure.
+							</p>
+							<div class="bg-blue-900/20 border border-blue-500/30 rounded p-4 mb-4">
+								<p class="text-blue-300 text-sm">
+									<strong>Performance:</strong> This bulk operation is significantly faster than reading pins individually.
+								</p>
+							</div>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Read all inputs at once
+device.get_digital_inputs()?;
+
+// Access individual pin states
+for pin in 1..=10 {`{`}
+    if device.pins[pin - 1].digital_input {`{`}
+        println!(\"Pin {`{`}{`}`} is HIGH\", pin);
+    {`}`}
+{`}`}</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Digital Output -->
+					<section id="digital-output" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Digital Output</h2>
+						
+						<!-- set_digital_output -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-green-400">set_digital_output</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn set_digital_output(&mut self, pin: u32, value: bool) -> Result&lt;bool&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Sets the state of a digital output pin. Returns the previous state.
+							</p>
+							<div class="grid md:grid-cols-2 gap-4 mb-4">
+								<div>
+									<h4 class="font-semibold text-blue-400 mb-2">Parameters</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>pin</code> - Pin number</li>
+										<li>• <code>value</code> - true for HIGH, false for LOW</li>
+									</ul>
+								</div>
+								<div>
+									<h4 class="font-semibold text-green-400 mb-2">Returns</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• Previous pin state</li>
+									</ul>
+								</div>
+							</div>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Turn on LED on pin 1
+device.set_digital_output(1, true)?;
+
+// Toggle pin state
+let current_state = device.get_digital_input(1)?;
+device.set_digital_output(1, !current_state)?;</code></pre>
+							</div>
+						</div>
+
+						<!-- write_digital_outputs -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-green-400">write_digital_outputs</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn write_digital_outputs(&mut self) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Writes all digital output states to the device in a single operation. Use this after modifying multiple pin states.
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Set multiple outputs
+device.pins[0].digital_output = true;  // Pin 1
+device.pins[1].digital_output = false; // Pin 2
+device.pins[2].digital_output = true;  // Pin 3
+
+// Write all changes at once
+device.write_digital_outputs()?;</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Bulk Operations -->
+					<section id="bulk-operations" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Bulk Operations</h2>
+						
+						<!-- read_all_pin_functions -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-green-400">read_all_pin_functions</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn read_all_pin_functions(&mut self) -> Result&lt;[PinFunction; 55]&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Reads all pin function configurations in a single operation. Provides 55x performance improvement over individual reads.
+							</p>
+							<div class="bg-green-900/20 border border-green-500/30 rounded p-4 mb-4">
+								<p class="text-green-300 text-sm">
+									<strong>Performance:</strong> 55x fewer commands compared to reading pins individually.
+								</p>
+							</div>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>let functions = device.read_all_pin_functions()?;
+for (pin, function) in functions.iter().enumerate() {`{`}
+    println!(\"Pin {`{`}{`}`}: {`{`}:?{`}`}\", pin + 1, function);
+{`}`}</code></pre>
+							</div>
+						</div>
+
+						<!-- set_all_pin_functions -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-green-400">set_all_pin_functions</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn set_all_pin_functions(&mut self, functions: &[PinFunction; 55]) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Sets all pin functions in a bulk operation. Ideal for device initialization and configuration restoration.
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>let mut functions = [PinFunction::Disabled; 55];
+functions[0] = PinFunction::DigitalOutput; // Pin 1
+functions[1] = PinFunction::DigitalInput;  // Pin 2
+functions[21] = PinFunction::PWM;          // Pin 22
+
+device.set_all_pin_functions(&functions)?;</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Digital Counters -->
+					<section id="digital-counters" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Digital Counters</h2>
+						
+						<!-- get_digital_counter -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-green-400">get_digital_counter</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn get_digital_counter(&mut self, pin: u32) -> Result&lt;u32&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Reads the current value of a digital counter. Counters increment on rising edges.
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Read pulse count on pin 3
+let pulse_count = device.get_digital_counter(3)?;
+println!(\"Received {`{`}{`}`} pulses\", pulse_count);</code></pre>
+							</div>
+						</div>
+
+						<!-- reset_digital_counter -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-green-400">reset_digital_counter</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn reset_digital_counter(&mut self, pin: u32) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Resets a digital counter to zero.
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Reset counter before measurement
+device.reset_digital_counter(3)?;
+
+// ... wait for pulses ...
+
+let new_count = device.get_digital_counter(3)?;</code></pre>
+							</div>
+						</div>
+
+						<!-- read_digital_counters -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-green-400">read_digital_counters</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn read_digital_counters(&mut self) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Reads all digital counters in a single operation for improved performance.
+							</p>
+						</div>
+					</section>
+
+					<!-- Performance Tips -->
+					<section id="performance" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Performance Tips</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<div class="space-y-6">
+								<div>
+									<h3 class="text-lg font-semibold mb-3 text-green-400">Bulk Operations</h3>
+									<div class="grid md:grid-cols-2 gap-4">
+										<div class="bg-gray-900 rounded p-4">
+											<h4 class="text-red-400 font-semibold mb-2">❌ Slow</h4>
+											<pre class="text-gray-300 text-xs"><code>// Individual operations
+for pin in 1..=10 {`{`}
+    device.set_pin_function(pin, 
+        PinFunction::DigitalInput)?;
+{`}`}</code></pre>
+										</div>
+										<div class="bg-gray-900 rounded p-4">
+											<h4 class="text-green-400 font-semibold mb-2">✅ Fast</h4>
+											<pre class="text-gray-300 text-xs"><code>// Bulk operation
+let mut functions = [PinFunction::Disabled; 55];
+for i in 0..10 {`{`}
+    functions[i] = PinFunction::DigitalInput;
+{`}`}
+device.set_all_pin_functions(&functions)?;</code></pre>
+										</div>
+									</div>
+								</div>
+								
+								<div>
+									<h3 class="text-lg font-semibold mb-3 text-blue-400">Reading Inputs</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Use <code>get_digital_inputs()</code> for reading multiple pins</li>
+										<li>• Cache pin states when possible to avoid repeated reads</li>
+										<li>• Use interrupts or polling strategies based on update frequency needs</li>
+									</ul>
+								</div>
+
+								<div>
+									<h3 class="text-lg font-semibold mb-3 text-purple-400">Pin Configuration</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Validate pin capabilities before configuration</li>
+										<li>• Group pin function changes and apply in bulk</li>
+										<li>• Save configuration after setup to persist across resets</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Best Practices -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Best Practices</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<div class="space-y-4">
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-green-400">Configuration</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Always validate pin capabilities before setting functions</li>
+										<li>• Use device model information to check supported features</li>
+										<li>• Configure all pins during initialization for predictable behavior</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-blue-400">Error Handling</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Handle pin range errors gracefully</li>
+										<li>• Check for unsupported capability errors</li>
+										<li>• Implement retry logic for critical operations</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-purple-400">Performance</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Use bulk operations for multiple pin operations</li>
+										<li>• Minimize individual pin reads in tight loops</li>
+										<li>• Consider using digital counters for pulse counting applications</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</section>
+				</div>
+			</main>
+		</div>
+	</body>
+</html>

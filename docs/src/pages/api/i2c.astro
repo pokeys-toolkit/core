@@ -1,0 +1,404 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>I2C Protocol API - PoKeys Core Library</title>
+		<style>
+			aside .sidebar-nav a {
+				display: block !important;
+				width: 100% !important;
+			}
+			aside .sidebar-nav {
+				display: flex !important;
+				flex-direction: column !important;
+			}
+		</style>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 left-0 right-0 z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800 h-16">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+				<div class="flex justify-between items-center h-full">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="text-gray-300 hover:text-white transition-colors">Home</a>
+						<a href="/core/getting-started" class="text-gray-300 hover:text-white transition-colors">Getting Started</a>
+						<a href="/core/examples/" class="text-gray-300 hover:text-white transition-colors">Examples</a>
+						<a href="/core/api/" class="text-white font-semibold">API Reference</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Main Content -->
+		<div class="flex min-h-screen pt-16">
+			<!-- Sidebar -->
+			<aside class="w-80 bg-gray-800/50 border-r border-gray-700 overflow-y-auto flex-shrink-0">
+				<div class="p-6">
+					<a href="/core/api/" class="text-blue-400 hover:text-blue-300 mb-4 inline-block">← Back to API Reference</a>
+					<h2 class="text-xl font-bold mb-6 text-white">API Reference</h2>
+					
+					<!-- Core APIs -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Core APIs</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/device" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Device Management
+							</a>
+							<a href="/core/api/connection" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Connection & Enumeration
+							</a>
+							<a href="/core/api/models" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Device Models
+							</a>
+						</div>
+					</div>
+
+					<!-- I/O Operations -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">I/O Operations</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/digital-io" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Digital I/O
+							</a>
+							<a href="/core/api/analog-io" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Analog I/O
+							</a>
+							<a href="/core/api/pin-functions" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Pin Functions
+							</a>
+						</div>
+					</div>
+
+					<!-- Control Systems -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Control Systems</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/pwm" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								PWM Control
+							</a>
+							<a href="/core/api/encoders" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Encoders
+							</a>
+							<a href="/core/api/pulse-engine" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Pulse Engine v2
+							</a>
+							<a href="/core/api/servo-control" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Servo Control
+							</a>
+						</div>
+					</div>
+
+					<!-- Communication -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Communication</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/spi" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								SPI Protocol
+							</a>
+							<a href="/core/api/i2c" class="block px-3 py-2 text-white bg-gray-700/50 rounded-md transition-colors">
+								I2C Protocol
+							</a>
+							<a href="/core/api/uart" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								UART Serial
+							</a>
+							<a href="/core/api/can" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								CAN Bus
+							</a>
+							<a href="/core/api/onewire" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								1-Wire Protocol
+							</a>
+						</div>
+					</div>
+
+					<!-- Matrix Operations -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Matrix Operations</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/matrix-keyboard" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Matrix Keyboard
+							</a>
+							<a href="/core/api/led-matrix" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								LED Matrix
+							</a>
+						</div>
+					</div>
+
+					<!-- Display & Sensors -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Display & Sensors</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/lcd" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								LCD Display
+							</a>
+							<a href="/core/api/sensors" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								EasySensors
+							</a>
+							<a href="/core/api/rtc" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Real-Time Clock
+							</a>
+						</div>
+					</div>
+
+					<!-- Error Handling -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Error Handling</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/errors" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Error Types
+							</a>
+							<a href="/core/api/result-handling" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Result Handling
+							</a>
+						</div>
+					</div>
+
+					<!-- Types & Utilities -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Types & Utilities</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/types" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Core Types
+							</a>
+							<a href="/core/api/constants" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Constants
+							</a>
+						</div>
+					</div>
+				</div>
+			</aside>
+
+			<!-- Main Content Area -->
+			<main class="flex-1 p-8 min-h-screen">
+				<div class="max-w-4xl">
+					<!-- Header -->
+					<div class="mb-12">
+						<div class="flex items-center gap-4 mb-6">
+							<span class="px-3 py-1 bg-cyan-600/20 text-cyan-300 text-sm rounded-full">I2C Protocol</span>
+						</div>
+						<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+							I2C Protocol API
+						</h1>
+						<p class="text-xl text-gray-400">
+							Enhanced I2C master operations with automatic fragmentation, intelligent retry, and health monitoring
+						</p>
+					</div>
+
+					<!-- Overview -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<p class="text-gray-300 mb-4">
+								The I2C Protocol API provides enhanced I2C master operations with automatic packet fragmentation, 
+								intelligent retry mechanisms, and real-time performance monitoring. Supports device scanning and 
+								configurable validation levels.
+							</p>
+							<div class="grid md:grid-cols-2 gap-6">
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-cyan-400">Enhanced Features</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Automatic packet fragmentation (>32 bytes)</li>
+										<li>• Intelligent retry with exponential backoff</li>
+										<li>• Real-time performance metrics</li>
+										<li>• Device scanning and discovery</li>
+										<li>• Configurable validation levels</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-blue-400">Reliability</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Circuit breaker pattern</li>
+										<li>• Error classification and recovery</li>
+										<li>• Health monitoring and diagnostics</li>
+										<li>• Configurable timeout handling</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Basic Operations -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Basic Operations</h2>
+						
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-cyan-400">i2c_init</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn i2c_init(&mut self) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">Initializes the I2C interface and configures the hardware.</p>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-cyan-400">i2c_write</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn i2c_write(&mut self, address: u8, data: &[u8]) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">Writes data to an I2C device at the specified address.</p>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-xl font-semibold mb-4 text-cyan-400">i2c_read</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn i2c_read(&mut self, address: u8, length: usize) -> Result&lt;Vec&lt;u8&gt;&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">Reads data from an I2C device at the specified address.</p>
+						</div>
+					</section>
+
+					<!-- Enhanced Features -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Enhanced Features</h2>
+						
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-cyan-400">i2c_write_fragmented</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn i2c_write_fragmented(&mut self, address: u8, data: &[u8]) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Automatically fragments large data transfers (>32 bytes) into smaller packets that fit within I2C limits.
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Write large data automatically fragmented
+let large_data = vec![0x42; 100]; // 100 bytes
+device.i2c_write_fragmented(0x50, &large_data)?;</code></pre>
+							</div>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-cyan-400">i2c_write_with_retry</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn i2c_write_with_retry(
+    &mut self, 
+    address: u8, 
+    data: &[u8], 
+    config: &RetryConfig
+) -> Result&lt;()&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Writes data with intelligent retry logic using exponential backoff and jitter.
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>let retry_config = RetryConfig {`{`}
+    max_attempts: 3,
+    base_delay_ms: 100,
+    backoff_multiplier: 2.0,
+    jitter: true,
+    ..Default::default()
+{`}`};
+
+device.i2c_write_with_retry(0x50, &data, &retry_config)?;</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Health Monitoring -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Health Monitoring</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Monitor I2C Performance</h4>
+								<pre class="text-gray-300"><code>// Get I2C performance metrics
+let metrics = device.get_i2c_metrics();
+println!(\"Success Rate: {`{`}:.1{`}`}%\", metrics.success_rate * 100.0);
+println!(\"Total Operations: {`{`}{`}`}\", metrics.total_operations);
+println!(\"Failed Operations: {`{`}{`}`}\", metrics.failed_operations);
+
+// Perform health check
+let health = device.health_check();
+println!(\"I2C Health: {`{`}:?{`}`}\", health.connectivity);
+
+// Reset metrics if needed
+device.reset_i2c_metrics();</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Device Scanning -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Device Scanning</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Scan for I2C Devices</h4>
+								<pre class="text-gray-300"><code>// Initialize I2C
+device.i2c_init()?;
+
+// Scan for devices on the I2C bus
+println!(\"Scanning I2C bus...\");
+for address in 0x08..=0x77 {`{`}
+    match device.i2c_write(address, &[]) {`{`}
+        Ok(_) => println!(\"Device found at address 0x{`{`}:02X{`}`}\", address),
+        Err(_) => {`{`} /* No device at this address */ {`}`}
+    {`}`}
+{`}`}</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Configuration -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Configuration</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<div class="bg-gray-900 rounded p-4">
+								<pre class="text-gray-300"><code>// Configure I2C settings
+let i2c_config = I2cConfig {`{`}
+    clock_speed: 100000, // 100kHz
+    timeout_ms: 1000,
+    enable_pullups: true,
+    ..Default::default()
+{`}`};
+
+device.set_i2c_config(i2c_config);
+
+// Set validation level
+device.set_validation_level(ValidationLevel::Strict);</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Best Practices -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Best Practices</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<div class="space-y-4">
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-green-400">Reliability</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Use retry mechanisms for critical operations</li>
+										<li>• Monitor I2C health and performance metrics</li>
+										<li>• Handle fragmentation automatically for large transfers</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-blue-400">Performance</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Use appropriate clock speeds for your devices</li>
+										<li>• Minimize bus traffic with efficient protocols</li>
+										<li>• Consider using bulk operations when possible</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-purple-400">Hardware</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Ensure proper pull-up resistors (4.7kΩ typical)</li>
+										<li>• Keep bus wires short and properly shielded</li>
+										<li>• Verify device addresses don't conflict</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</section>
+				</div>
+			</main>
+		</div>
+	</body>
+</html>

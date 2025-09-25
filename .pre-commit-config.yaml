@@ -1,0 +1,89 @@
+# Working Pre-commit hooks configuration for PoKeys Rust Library
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # Rust-specific hooks
+  - repo: local
+    hooks:
+      # Rust formatting
+      - id: cargo-fmt
+        name: cargo fmt
+        entry: cargo fmt
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      # Rust dependency check
+      - id: cargo-check
+        name: cargo check
+        entry: bash -c 'cargo check --all-targets --all-features'
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      # Rust security audit
+      - id: cargo-audit
+        name: cargo audit
+        entry: bash -c 'cargo audit --deny warnings'
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      # Run unit tests
+      - id: cargo-test-unit
+        name: cargo test (unit)
+        entry: bash -c 'cargo test --test unit_tests'
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      # Run protocol tests
+      - id: cargo-test-protocol
+        name: cargo test (protocol)
+        entry: bash -c 'cargo test --test protocol_tests'
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      # Run integration tests
+      - id: cargo-test-integration
+        name: cargo test (integration)
+        entry: bash -c 'cargo test --test integration_tests'
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      # Run documentation tests
+      - id: cargo-test-doc
+        name: cargo test (doc)
+        entry: bash -c 'cargo test --doc'
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+      # Check documentation builds
+      - id: cargo-doc
+        name: cargo doc
+        entry: bash -c 'cargo doc --no-deps --document-private-items'
+        language: system
+        types: [rust]
+        pass_filenames: false
+
+# Configuration
+default_stages: [pre-commit]
+fail_fast: false

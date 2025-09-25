@@ -1,0 +1,112 @@
+name: "PoKeys56E"
+pins:
+  1:
+    capabilities: ["DigitalInput", "DigitalOutput", "Encoder_1A"]
+  2:
+    capabilities: ["DigitalInput", "DigitalOutput", "Encoder_1B"]
+  3:
+    capabilities: ["DigitalInput", "DigitalOutput", "Encoder_2A"]
+  4:
+    capabilities: ["DigitalInput", "DigitalOutput", "Encoder_2B"]
+  5:
+    capabilities: ["DigitalInput", "DigitalOutput", "Encoder_3A", "PWM_1"]
+  6:
+    capabilities: ["DigitalInput", "DigitalOutput", "Encoder_3B", "PWM_2"]
+  7:
+    capabilities: ["DigitalInput", "DigitalOutput", "Encoder_4A", "PWM_3"]
+  8:
+    capabilities: ["DigitalInput", "DigitalOutput", "Encoder_4B", "PWM_4"]
+  9:
+    capabilities: ["DigitalInput", "DigitalOutput", "Encoder_5A", "PWM_5"]
+  10:
+    capabilities: ["DigitalInput", "DigitalOutput", "Encoder_5B", "PWM_6"]
+  11:
+    capabilities: ["DigitalInput", "DigitalOutput", "Encoder_6A", "PWM_7"]
+  12:
+    capabilities: ["DigitalInput", "DigitalOutput", "Encoder_6B", "PWM_8"]
+  13:
+    capabilities: ["DigitalInput", "DigitalOutput", "Encoder_7A", "MatrixKeyboard_Row1"]
+  14:
+    capabilities: ["DigitalInput", "DigitalOutput", "Encoder_7B", "MatrixKeyboard_Row2"]
+  15:
+    capabilities: ["DigitalInput", "DigitalOutput", "Encoder_8A", "MatrixKeyboard_Row3"]
+  16:
+    capabilities: ["DigitalInput", "DigitalOutput", "Encoder_8B", "MatrixKeyboard_Row4"]
+  17:
+    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Row5", "PwmOutput"]  # PWM6
+  18:
+    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Row6", "PwmOutput"]  # PWM5
+  19:
+    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Row7", "PwmOutput"]  # PWM4
+  20:
+    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Row8", "PwmOutput"]  # PWM3
+  21:
+    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Col1", "PwmOutput"]  # PWM2
+  22:
+    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Col2", "PwmOutput"]  # PWM1
+  23:
+    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Col3", "SpiMosi"]
+  24:
+    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Col4", "SpiChipSelect"]
+  25:
+    capabilities: ["DigitalInput", "DigitalOutput", "MatrixKeyboard_Col5", "SpiClock"]
+  26:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "MatrixKeyboard_Col6", "SpiChipSelect"]
+  27:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "MatrixKeyboard_Col7", "SpiChipSelect"]
+  28:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "MatrixKeyboard_Col8", "SpiChipSelect"]
+  29:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  30:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  31:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  32:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  33:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  34:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  35:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  36:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  37:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  38:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  39:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  40:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  41:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  42:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  43:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  44:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  45:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  46:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  47:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  48:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  49:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  50:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  51:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  52:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  53:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  54:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]
+  55:
+    capabilities: ["DigitalInput", "DigitalOutput", "AnalogInput", "SpiChipSelect"]

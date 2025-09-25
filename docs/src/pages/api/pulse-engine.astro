@@ -1,0 +1,346 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Pulse Engine v2 API - PoKeys Core Library</title>
+		<style>
+			aside .sidebar-nav a {
+				display: block !important;
+				width: 100% !important;
+			}
+			aside .sidebar-nav {
+				display: flex !important;
+				flex-direction: column !important;
+			}
+		</style>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 left-0 right-0 z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800 h-16">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+				<div class="flex justify-between items-center h-full">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="text-gray-300 hover:text-white transition-colors">Home</a>
+						<a href="/core/getting-started" class="text-gray-300 hover:text-white transition-colors">Getting Started</a>
+						<a href="/core/examples/" class="text-gray-300 hover:text-white transition-colors">Examples</a>
+						<a href="/core/api/" class="text-white font-semibold">API Reference</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Main Content -->
+		<div class="flex min-h-screen pt-16">
+			<!-- Sidebar -->
+			<aside class="w-80 bg-gray-800/50 border-r border-gray-700 overflow-y-auto flex-shrink-0">
+				<div class="p-6">
+					<h2 class="text-xl font-bold mb-6 text-white">API Reference</h2>
+					
+					<!-- Core APIs -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Core APIs</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Overview
+							</a>
+							<a href="/core/api/device" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Device Management
+							</a>
+							<a href="/core/api/connection" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Connection & Enumeration
+							</a>
+							<a href="/core/api/digital-io" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Digital I/O
+							</a>
+							<a href="/core/api/analog-io" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Analog I/O
+							</a>
+							<a href="/core/api/pwm" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								PWM Control
+							</a>
+							<a href="/core/api/pulse-engine" class="block px-3 py-2 text-white bg-blue-600 rounded-md">
+								Pulse Engine v2
+							</a>
+							<a href="/core/api/encoders" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Encoders
+							</a>
+							<a href="/core/api/servo-control" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Servo Control
+							</a>
+						</div>
+					</div>
+
+					<!-- Communication -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Communication</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/spi" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								SPI Protocol
+							</a>
+							<a href="/core/api/i2c" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								I2C Protocol
+							</a>
+						</div>
+					</div>
+
+					<!-- Interface -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Interface</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/matrix-keyboard" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Matrix Keyboard
+							</a>
+							<a href="/core/api/led-matrix" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								LED Matrix
+							</a>
+						</div>
+					</div>
+
+					<!-- System -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">System</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/pin-functions" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Pin Functions
+							</a>
+							<a href="/core/api/models" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Device Models
+							</a>
+							<a href="/core/api/errors" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Error Types
+							</a>
+							<a href="/core/api/result-handling" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Result Handling
+							</a>
+							<a href="/core/api/types" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Core Types
+							</a>
+							<a href="/core/api/constants" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Constants
+							</a>
+						</div>
+					</div>
+				</div>
+			</aside>
+
+			<!-- Main Content -->
+			<main class="flex-1 p-8 overflow-y-auto">
+				<div class="max-w-4xl">
+					<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						Pulse Engine v2
+					</h1>
+					<p class="text-xl text-gray-300 mb-8">
+						Advanced stepper motor control with precision pulse generation, multi-axis coordination, and comprehensive motion control features.
+					</p>
+
+					<!-- Overview -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
+						<p class="text-gray-300 mb-6">
+							The Pulse Engine v2 provides sophisticated motion control capabilities for CNC machines, 3D printers, and robotic systems. It supports up to 8 axes with hardware-accelerated pulse generation, advanced homing sequences, limit switch monitoring, and coordinated multi-axis movements.
+						</p>
+
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+							<div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+								<h3 class="text-lg font-semibold mb-2 text-blue-400">Multi-Axis Control</h3>
+								<p class="text-gray-300">Up to 8 independent stepper motor axes with individual configuration</p>
+							</div>
+							<div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+								<h3 class="text-lg font-semibold mb-2 text-blue-400">Hardware Acceleration</h3>
+								<p class="text-gray-300">Dedicated pulse generation hardware for precise timing and high-speed operation</p>
+							</div>
+							<div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+								<h3 class="text-lg font-semibold mb-2 text-blue-400">Safety Features</h3>
+								<p class="text-gray-300">Limit switches, emergency stops, soft limits, and homing sequences</p>
+							</div>
+							<div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+								<h3 class="text-lg font-semibold mb-2 text-blue-400">Advanced Motion</h3>
+								<p class="text-gray-300">Coordinated movements, acceleration control, and motion buffering</p>
+							</div>
+						</div>
+					</section>
+
+					<!-- Core Functions -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Core Functions</h2>
+
+						<div class="space-y-8">
+							<div>
+								<h3 class="text-xl font-semibold mb-4 text-purple-400">Engine Control</h3>
+								<div class="space-y-4">
+									<div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+										<h4 class="text-lg font-mono mb-2 text-green-400">enable_pulse_engine(enable: bool) -> Result&lt;()&gt;</h4>
+										<p class="text-gray-300 mb-3">Enable or disable the pulse engine system.</p>
+										<div class="text-sm text-gray-400">
+											<strong>Parameters:</strong>
+											<ul class="list-disc list-inside ml-4 mt-1">
+												<li><code class="text-yellow-400">enable</code> - True to enable, false to disable</li>
+											</ul>
+										</div>
+									</div>
+
+									<div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+										<h4 class="text-lg font-mono mb-2 text-green-400">activate_pulse_engine(activate: bool) -> Result&lt;()&gt;</h4>
+										<p class="text-gray-300 mb-3">Activate or deactivate pulse generation. Engine must be enabled first.</p>
+										<div class="text-sm text-gray-400">
+											<strong>Parameters:</strong>
+											<ul class="list-disc list-inside ml-4 mt-1">
+												<li><code class="text-yellow-400">activate</code> - True to activate, false to deactivate</li>
+											</ul>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<div>
+								<h3 class="text-xl font-semibold mb-4 text-purple-400">Axis Configuration</h3>
+								<div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+									<h4 class="text-lg font-mono mb-2 text-green-400">configure_axis(axis: usize, enabled: bool, inverted: bool, max_speed: f32, max_acceleration: f32) -> Result&lt;()&gt;</h4>
+									<p class="text-gray-300 mb-3">Configure basic axis parameters including direction, speed, and acceleration limits.</p>
+									<div class="text-sm text-gray-400">
+										<strong>Parameters:</strong>
+										<ul class="list-disc list-inside ml-4 mt-1">
+											<li><code class="text-yellow-400">axis</code> - Axis number (0-7)</li>
+											<li><code class="text-yellow-400">enabled</code> - Enable this axis</li>
+											<li><code class="text-yellow-400">inverted</code> - Invert direction signals</li>
+											<li><code class="text-yellow-400">max_speed</code> - Maximum speed in steps/second</li>
+											<li><code class="text-yellow-400">max_acceleration</code> - Maximum acceleration in steps/second²</li>
+										</ul>
+									</div>
+								</div>
+							</div>
+
+							<div>
+								<h3 class="text-xl font-semibold mb-4 text-purple-400">Position Control</h3>
+								<div class="space-y-4">
+									<div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+										<h4 class="text-lg font-mono mb-2 text-green-400">move_axis_to_position(axis: usize, position: i32, speed: f32) -> Result&lt;()&gt;</h4>
+										<p class="text-gray-300 mb-3">Move an axis to a specific position at the specified speed.</p>
+										<div class="text-sm text-gray-400">
+											<strong>Parameters:</strong>
+											<ul class="list-disc list-inside ml-4 mt-1">
+												<li><code class="text-yellow-400">axis</code> - Axis number (0-7)</li>
+												<li><code class="text-yellow-400">position</code> - Target position in steps</li>
+												<li><code class="text-yellow-400">speed</code> - Movement speed in steps/second</li>
+											</ul>
+										</div>
+									</div>
+
+									<div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+										<h4 class="text-lg font-mono mb-2 text-green-400">get_axis_position(axis: usize) -> Result&lt;i32&gt;</h4>
+										<p class="text-gray-300 mb-3">Get the current position of an axis.</p>
+										<div class="text-sm text-gray-400">
+											<strong>Returns:</strong> Current position in steps
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Usage Example -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Usage Example</h2>
+						<div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+							<h3 class="text-lg font-semibold mb-4 text-purple-400">Basic Stepper Motor Control</h3>
+							<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-sm text-gray-300">{`use pokeys_lib::*;
+
+fn main() -> Result<()> {
+    let mut device = connect_to_device(0)?;
+
+    // Enable and activate pulse engine
+    device.enable_pulse_engine(true)?;
+    device.activate_pulse_engine(true)?;
+
+    // Configure X-axis (axis 0)
+    device.configure_axis(
+        0,           // axis number
+        true,        // enabled
+        false,       // not inverted
+        1000.0,      // max speed: 1000 steps/sec
+        500.0        // max acceleration: 500 steps/sec²
+    )?;
+
+    // Set current position to zero
+    device.set_axis_position(0, 0)?;
+
+    // Move to position 1000 at 500 steps/sec
+    device.move_axis_to_position(0, 1000, 500.0)?;
+
+    // Wait for movement to complete (10 second timeout)
+    device.wait_for_axis(0, 10000)?;
+
+    println!("Movement complete!");
+    Ok(())
+}`}</code></pre>
+						</div>
+					</section>
+
+					<!-- State Enumerations -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">State Enumerations</h2>
+						
+						<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+							<div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+								<h3 class="text-lg font-semibold mb-4 text-purple-400">PulseEngineState</h3>
+								<ul class="space-y-2 text-sm text-gray-300">
+									<li><code class="text-yellow-400">Stopped</code> - Engine is stopped</li>
+									<li><code class="text-yellow-400">Running</code> - Normal operation</li>
+									<li><code class="text-yellow-400">Homing</code> - Homing in progress</li>
+									<li><code class="text-yellow-400">StopLimit</code> - Stopped due to limit switch</li>
+									<li><code class="text-yellow-400">StopEmergency</code> - Emergency stop activated</li>
+								</ul>
+							</div>
+
+							<div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+								<h3 class="text-lg font-semibold mb-4 text-purple-400">PulseEngineAxisState</h3>
+								<ul class="space-y-2 text-sm text-gray-300">
+									<li><code class="text-yellow-400">Stopped</code> - Axis is stopped</li>
+									<li><code class="text-yellow-400">Ready</code> - Axis is ready for commands</li>
+									<li><code class="text-yellow-400">Running</code> - Axis is moving</li>
+									<li><code class="text-yellow-400">Homing</code> - Homing in progress</li>
+									<li><code class="text-yellow-400">Error</code> - Axis error state</li>
+								</ul>
+							</div>
+						</div>
+					</section>
+
+					<!-- Best Practices -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Best Practices</h2>
+						
+						<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+							<div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+								<h3 class="text-lg font-semibold mb-4 text-blue-400">Safety Considerations</h3>
+								<ul class="space-y-2 text-sm text-gray-300 list-disc list-inside">
+									<li>Always configure limit switches before enabling high-speed movements</li>
+									<li>Implement emergency stop functionality in your application</li>
+									<li>Use software limits as a backup to hardware limit switches</li>
+									<li>Test homing sequences at low speeds before production use</li>
+								</ul>
+							</div>
+
+							<div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+								<h3 class="text-lg font-semibold mb-4 text-blue-400">Performance Optimization</h3>
+								<ul class="space-y-2 text-sm text-gray-300 list-disc list-inside">
+									<li>Use appropriate acceleration values to prevent motor stalling</li>
+									<li>Batch multiple axis movements for coordinated motion</li>
+									<li>Monitor pulse engine state to avoid command conflicts</li>
+									<li>Use motion buffering for complex path following</li>
+								</ul>
+							</div>
+						</div>
+					</section>
+				</div>
+			</main>
+		</div>
+	</body>
+</html>

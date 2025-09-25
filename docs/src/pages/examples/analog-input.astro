@@ -1,0 +1,350 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Analog Input Reading - PoKeys Examples</title>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 w-full z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="flex justify-between items-center py-4">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="hover:text-blue-400 transition-colors">Home</a>
+						<a href="/core/examples" class="hover:text-blue-400 transition-colors">← Back to Examples</a>
+						<a href="https://github.com/pokeys-toolkit/core" class="hover:text-blue-400 transition-colors">GitHub</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Content -->
+		<div class="pt-20 min-h-screen bg-gray-900">
+			<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+				<!-- Header -->
+				<div class="mb-8">
+					<div class="flex items-center gap-2 mb-4">
+						<span class="px-3 py-1 bg-blue-600/20 text-blue-300 text-sm rounded-full">Beginner</span>
+						<span class="px-3 py-1 bg-green-600/20 text-green-300 text-sm rounded-full">Analog</span>
+					</div>
+					<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+						Analog Input Reading
+					</h1>
+					<p class="text-xl text-gray-400">
+						Read analog sensors and convert raw values to meaningful measurements
+					</p>
+				</div>
+
+				<!-- Overview -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<p class="text-gray-300 mb-4">
+							Analog inputs allow you to read continuously varying signals from sensors like potentiometers, 
+							temperature sensors, light sensors, and pressure sensors. This example covers:
+						</p>
+						<ul class="text-gray-300 space-y-2">
+							<li>• <strong>ADC configuration</strong> - Setting up pins for analog input</li>
+							<li>• <strong>Raw value reading</strong> - Getting 12-bit ADC values (0-4095)</li>
+							<li>• <strong>Voltage conversion</strong> - Converting to actual voltage</li>
+							<li>• <strong>Sensor calibration</strong> - Converting to physical units</li>
+							<li>• <strong>Filtering and averaging</strong> - Reducing noise</li>
+						</ul>
+					</div>
+				</section>
+
+				<!-- Hardware Setup -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Hardware Setup</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-green-400">Potentiometer</h3>
+								<ul class="text-gray-300 space-y-1 text-sm">
+									<li>• 10kΩ linear potentiometer</li>
+									<li>• Pin 1 → +3.3V</li>
+									<li>• Pin 2 → PoKeys analog pin 3</li>
+									<li>• Pin 3 → GND</li>
+								</ul>
+							</div>
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-blue-400">Temperature Sensor</h3>
+								<ul class="text-gray-300 space-y-1 text-sm">
+									<li>• LM35 temperature sensor</li>
+									<li>• VCC → +3.3V</li>
+									<li>• OUT → PoKeys analog pin 7</li>
+									<li>• GND → GND</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Basic Example -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Basic Analog Reading</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">use pokeys_lib::*;
+use std::&#123;thread, time::Duration&#125;;
+
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#123;
+    println!("📊 PoKeys Analog Input Example");
+    println!("==============================");
+    
+    // Connect to device
+    let device_count = enumerate_usb_devices()?;
+    if device_count == 0 &#123;
+        println!("❌ No PoKeys devices found!");
+        return Ok(());
+    &#125;
+    
+    let mut device = connect_to_device(0)?;
+    println!("✅ Connected to: &#123;&#125;", device.get_device_name()?);
+    
+    // Configure pins for analog input
+    device.set_pin_function(3, PinFunction::AnalogInput)?;
+    device.set_pin_function(7, PinFunction::AnalogInput)?;
+    println!("⚙️  Configured pins 3 and 7 for analog input");
+    
+    // Set ADC reference voltage (3.3V for most PoKeys devices)
+    device.set_analog_reference_voltage(3.3)?;
+    
+    println!("📈 Starting continuous reading (Ctrl+C to stop)...");
+    println!("Pin 3 (Pot) | Pin 7 (Temp) | Voltage | Temperature");
+    println!("------------|--------------|---------|------------");
+    
+    loop &#123;
+        // Read raw ADC values (0-4095 for 12-bit ADC)
+        let pot_raw = device.get_analog_input(3)?;
+        let temp_raw = device.get_analog_input(7)?;
+        
+        // Convert to voltage (0-3.3V)
+        let pot_voltage = raw_to_voltage(pot_raw, 3.3);
+        let temp_voltage = raw_to_voltage(temp_raw, 3.3);
+        
+        // Convert temperature sensor voltage to Celsius (LM35: 10mV/°C)
+        let temperature_c = temp_voltage * 100.0;
+        
+        println!("&#123;:>11&#125; | &#123;:>12&#125; | &#123;:>7.3&#125;V | &#123;:>8.1&#125;°C", 
+                 pot_raw, temp_raw, pot_voltage, temperature_c);
+        
+        thread::sleep(Duration::from_millis(500));
+    &#125;
+&#125;
+
+/// Convert raw ADC value to voltage
+fn raw_to_voltage(raw_value: u16, reference_voltage: f32) -&gt; f32 &#123;
+    (raw_value as f32 / 4095.0) * reference_voltage
+&#125;</code></pre>
+					</div>
+				</section>
+
+				<!-- Advanced Example -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Advanced Sensor Reading with Filtering</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">use pokeys_lib::*;
+use std::&#123;collections::VecDeque, thread, time::Duration&#125;;
+
+struct AnalogSensor &#123;
+    pin: u8,
+    name: String,
+    samples: VecDeque&lt;u16&gt;,
+    max_samples: usize,
+    calibration_offset: f32,
+    calibration_scale: f32,
+&#125;
+
+impl AnalogSensor &#123;
+    fn new(pin: u8, name: &str, max_samples: usize) -&gt; Self &#123;
+        Self &#123;
+            pin,
+            name: name.to_string(),
+            samples: VecDeque::new(),
+            max_samples,
+            calibration_offset: 0.0,
+            calibration_scale: 1.0,
+        &#125;
+    &#125;
+    
+    /// Add a new sample and maintain rolling average
+    fn add_sample(&mut self, raw_value: u16) &#123;
+        self.samples.push_back(raw_value);
+        if self.samples.len() &gt; self.max_samples &#123;
+            self.samples.pop_front();
+        &#125;
+    &#125;
+    
+    /// Get filtered (averaged) raw value
+    fn get_filtered_raw(&self) -&gt; f32 &#123;
+        if self.samples.is_empty() &#123;
+            return 0.0;
+        &#125;
+        let sum: u32 = self.samples.iter().map(|&x| x as u32).sum();
+        sum as f32 / self.samples.len() as f32
+    &#125;
+    
+    /// Get calibrated value in physical units
+    fn get_calibrated_value(&self, reference_voltage: f32) -&gt; f32 &#123;
+        let voltage = (self.get_filtered_raw() / 4095.0) * reference_voltage;
+        (voltage + self.calibration_offset) * self.calibration_scale
+    &#125;
+    
+    /// Set calibration parameters
+    fn set_calibration(&mut self, offset: f32, scale: f32) &#123;
+        self.calibration_offset = offset;
+        self.calibration_scale = scale;
+    &#125;
+&#125;
+
+fn advanced_sensor_reading() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#123;
+    let mut device = connect_to_device(0)?;
+    
+    // Configure analog inputs
+    device.set_pin_function(3, PinFunction::AnalogInput)?;
+    device.set_pin_function(7, PinFunction::AnalogInput)?;
+    device.set_pin_function(8, PinFunction::AnalogInput)?;
+    device.set_analog_reference_voltage(3.3)?;
+    
+    // Create sensor objects with filtering
+    let mut potentiometer = AnalogSensor::new(3, "Potentiometer", 10);
+    let mut temperature = AnalogSensor::new(7, "Temperature", 20);
+    let mut light_sensor = AnalogSensor::new(8, "Light Level", 15);
+    
+    // Set calibrations
+    temperature.set_calibration(0.0, 100.0); // LM35: 10mV/°C
+    light_sensor.set_calibration(0.0, 100.0); // Convert to percentage
+    potentiometer.set_calibration(0.0, 100.0); // Convert to percentage
+    
+    println!("🔬 Advanced Sensor Reading with Filtering");
+    println!("==========================================");
+    
+    // Collect initial samples for filtering
+    println!("📊 Collecting initial samples...");
+    for _ in 0..25 &#123;
+        potentiometer.add_sample(device.get_analog_input(3)?);
+        temperature.add_sample(device.get_analog_input(7)?);
+        light_sensor.add_sample(device.get_analog_input(8)?);
+        thread::sleep(Duration::from_millis(50));
+    &#125;
+    
+    println!("📈 Filtered sensor readings:");
+    println!("Time     | Pot (%) | Temp (°C) | Light (%)");
+    println!("---------|---------|-----------|----------");
+    
+    for i in 0..100 &#123;
+        // Read new samples
+        potentiometer.add_sample(device.get_analog_input(3)?);
+        temperature.add_sample(device.get_analog_input(7)?);
+        light_sensor.add_sample(device.get_analog_input(8)?);
+        
+        // Get calibrated values
+        let pot_percent = potentiometer.get_calibrated_value(3.3);
+        let temp_celsius = temperature.get_calibrated_value(3.3);
+        let light_percent = light_sensor.get_calibrated_value(3.3);
+        
+        println!("&#123;:>8&#125; | &#123;:>7.1&#125; | &#123;:>9.1&#125; | &#123;:>8.1&#125;", 
+                 i, pot_percent, temp_celsius, light_percent);
+        
+        thread::sleep(Duration::from_millis(200));
+    &#125;
+    
+    Ok(())
+&#125;</code></pre>
+					</div>
+				</section>
+
+				<!-- Calibration -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Sensor Calibration</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<p class="text-gray-300 mb-4">Different sensors require different calibration approaches:</p>
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-blue-400">Linear Sensors</h3>
+								<pre class="bg-gray-900 p-3 rounded text-sm"><code class="text-green-400">// LM35 Temperature: 10mV/°C
+let temp_c = voltage * 100.0;
+
+// Pressure sensor: 0.5-4.5V = 0-100 PSI
+let pressure = (voltage - 0.5) * (100.0 / 4.0);
+
+// Potentiometer: 0-3.3V = 0-100%
+let percentage = (voltage / 3.3) * 100.0;</code></pre>
+							</div>
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-purple-400">Non-Linear Sensors</h3>
+								<pre class="bg-gray-900 p-3 rounded text-sm"><code class="text-green-400">// Thermistor (requires lookup table)
+let resistance = 10000.0 * voltage / (3.3 - voltage);
+let temp_k = 1.0 / (A + B * resistance.ln() + 
+                    C * resistance.ln().powi(3));
+let temp_c = temp_k - 273.15;
+
+// Light sensor (logarithmic response)
+let lux = 10.0_f32.powf((voltage - 1.0) * 2.0);</code></pre>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Troubleshooting -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Troubleshooting</h2>
+					<div class="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
+						<div class="space-y-4">
+							<div>
+								<h4 class="font-semibold text-white">Noisy readings</h4>
+								<ul class="text-gray-300 mt-1 space-y-1">
+									<li>• Use averaging/filtering (moving average)</li>
+									<li>• Add capacitor across sensor (10-100nF)</li>
+									<li>• Keep analog wires short and shielded</li>
+									<li>• Use twisted pair cables for long runs</li>
+								</ul>
+							</div>
+							<div>
+								<h4 class="font-semibold text-white">Readings stuck at 0 or 4095</h4>
+								<ul class="text-gray-300 mt-1 space-y-1">
+									<li>• Check sensor power supply connections</li>
+									<li>• Verify sensor output voltage range</li>
+									<li>• Ensure pin is configured as analog input</li>
+									<li>• Check for short circuits</li>
+								</ul>
+							</div>
+							<div>
+								<h4 class="font-semibold text-white">Inaccurate readings</h4>
+								<ul class="text-gray-300 mt-1 space-y-1">
+									<li>• Calibrate with known reference values</li>
+									<li>• Check ADC reference voltage setting</li>
+									<li>• Account for sensor temperature drift</li>
+									<li>• Use proper sensor excitation voltage</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Next Steps -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Next Steps</h2>
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<a href="/core/examples/pwm-control" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-purple-500/50 transition-all duration-300">
+							<h3 class="text-lg font-semibold mb-2 text-white group-hover:text-purple-400">PWM Control →</h3>
+							<p class="text-gray-400 text-sm">Use analog input to control PWM output (sensor-controlled dimming)</p>
+						</a>
+						<a href="/core/examples/encoder-reading" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-yellow-500/50 transition-all duration-300">
+							<h3 class="text-lg font-semibold mb-2 text-white group-hover:text-yellow-400">Encoder Reading →</h3>
+							<p class="text-gray-400 text-sm">Learn digital position sensing with quadrature encoders</p>
+						</a>
+					</div>
+				</section>
+			</div>
+		</div>
+	</body>
+</html>

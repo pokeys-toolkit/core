@@ -1,0 +1,495 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Connection & Enumeration API - PoKeys Core Library</title>
+		<style>
+			aside .sidebar-nav a {
+				display: block !important;
+				width: 100% !important;
+			}
+			aside .sidebar-nav {
+				display: flex !important;
+				flex-direction: column !important;
+			}
+		</style>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 left-0 right-0 z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800 h-16">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+				<div class="flex justify-between items-center h-full">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="text-gray-300 hover:text-white transition-colors">Home</a>
+						<a href="/core/getting-started" class="text-gray-300 hover:text-white transition-colors">Getting Started</a>
+						<a href="/core/examples/" class="text-gray-300 hover:text-white transition-colors">Examples</a>
+						<a href="/core/api/" class="text-white font-semibold">API Reference</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Main Content -->
+		<div class="flex min-h-screen pt-16">
+			<!-- Sidebar -->
+			<aside class="w-80 bg-gray-800/50 border-r border-gray-700 overflow-y-auto flex-shrink-0">
+				<div class="p-6">
+					<a href="/core/api/" class="text-blue-400 hover:text-blue-300 mb-4 inline-block">← Back to API Reference</a>
+					<h2 class="text-xl font-bold mb-6 text-white">API Reference</h2>
+					
+					<!-- Core APIs -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Core APIs</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/device" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Device Management
+							</a>
+							<a href="/core/api/connection" class="block px-3 py-2 text-white bg-gray-700/50 rounded-md transition-colors">
+								Connection & Enumeration
+							</a>
+							<a href="/core/api/models" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Device Models
+							</a>
+						</div>
+					</div>
+
+					<!-- I/O Operations -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">I/O Operations</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/digital-io" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Digital I/O
+							</a>
+							<a href="/core/api/analog-io" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Analog I/O
+							</a>
+							<a href="/core/api/pin-functions" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Pin Functions
+							</a>
+						</div>
+					</div>
+
+					<!-- Control Systems -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Control Systems</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/pwm" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								PWM Control
+							</a>
+							<a href="/core/api/encoders" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Encoders
+							</a>
+							<a href="/core/api/pulse-engine" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Pulse Engine v2
+							</a>
+							<a href="/core/api/servo-control" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Servo Control
+							</a>
+						</div>
+					</div>
+
+					<!-- Communication -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Communication</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/spi" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								SPI Protocol
+							</a>
+							<a href="/core/api/i2c" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								I2C Protocol
+							</a>
+							<a href="/core/api/uart" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								UART Serial
+							</a>
+							<a href="/core/api/can" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								CAN Bus
+							</a>
+							<a href="/core/api/onewire" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								1-Wire Protocol
+							</a>
+						</div>
+					</div>
+
+					<!-- Matrix Operations -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Matrix Operations</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/matrix-keyboard" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Matrix Keyboard
+							</a>
+							<a href="/core/api/led-matrix" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								LED Matrix
+							</a>
+						</div>
+					</div>
+
+					<!-- Display & Sensors -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Display & Sensors</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/lcd" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								LCD Display
+							</a>
+							<a href="/core/api/sensors" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								EasySensors
+							</a>
+							<a href="/core/api/rtc" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Real-Time Clock
+							</a>
+						</div>
+					</div>
+
+					<!-- Error Handling -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Error Handling</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/errors" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Error Types
+							</a>
+							<a href="/core/api/result-handling" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Result Handling
+							</a>
+						</div>
+					</div>
+
+					<!-- Types & Utilities -->
+					<div class="mb-6">
+						<h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Types & Utilities</h3>
+						<div class="space-y-1 sidebar-nav">
+							<a href="/core/api/types" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Core Types
+							</a>
+							<a href="/core/api/constants" class="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors">
+								Constants
+							</a>
+						</div>
+					</div>
+				</div>
+			</aside>
+
+			<!-- Main Content Area -->
+			<main class="flex-1 p-8 min-h-screen">
+				<div class="max-w-4xl">
+					<!-- Header -->
+					<div class="mb-12">
+						<div class="flex items-center gap-4 mb-6">
+							<span class="px-3 py-1 bg-blue-600/20 text-blue-300 text-sm rounded-full">Connection & Enumeration</span>
+						</div>
+						<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+							Connection & Enumeration API
+						</h1>
+						<p class="text-xl text-gray-400">
+							Device discovery, connection management, and enumeration functions for USB and network devices
+						</p>
+					</div>
+
+					<!-- Overview -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<p class="text-gray-300 mb-4">
+								The Connection & Enumeration API provides functions for discovering, connecting to, and managing PoKeys devices 
+								across USB and network interfaces. It handles device discovery, connection establishment, and connection type detection.
+							</p>
+							<div class="grid md:grid-cols-2 gap-6">
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-blue-400">Key Features</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• USB device enumeration and connection</li>
+										<li>• Network device discovery with timeout control</li>
+										<li>• Serial number-based device targeting</li>
+										<li>• Automatic connection type detection</li>
+										<li>• Multi-device concurrent management</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-purple-400">Connection Types</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• <code>UsbDevice</code> - Direct USB connection</li>
+										<li>• <code>NetworkDevice</code> - Ethernet/WiFi connection</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- USB Enumeration -->
+					<section id="usb-enumeration" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">USB Enumeration</h2>
+						
+						<!-- enumerate_usb_devices -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">enumerate_usb_devices</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn enumerate_usb_devices() -> Result&lt;i32&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Discovers and enumerates all connected USB PoKeys devices. Returns the total count of available devices.
+							</p>
+							<div class="grid md:grid-cols-2 gap-4 mb-4">
+								<div>
+									<h4 class="font-semibold text-green-400 mb-2">Returns</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>Result&lt;i32&gt;</code> - Number of USB devices found</li>
+									</ul>
+								</div>
+								<div>
+									<h4 class="font-semibold text-red-400 mb-2">Errors</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>PoKeysError::DeviceNotFound</code> - No USB devices found</li>
+										<li>• <code>PoKeysError::SystemError</code> - USB enumeration failed</li>
+									</ul>
+								</div>
+							</div>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>let device_count = enumerate_usb_devices()?;
+println!(\"Found {`{`}{`}`} USB PoKeys devices\", device_count);
+
+if device_count > 0 {`{`}
+    // Connect to first device
+    let device = connect_to_device(0)?;
+{`}`}</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Network Discovery -->
+					<section id="network-discovery" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Network Discovery</h2>
+						
+						<!-- enumerate_network_devices -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">enumerate_network_devices</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn enumerate_network_devices(timeout_ms: u32) -> Result&lt;Vec&lt;NetworkDeviceSummary&gt;&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Discovers PoKeys devices on the network using broadcast discovery with configurable timeout.
+							</p>
+							<div class="grid md:grid-cols-2 gap-4 mb-4">
+								<div>
+									<h4 class="font-semibold text-blue-400 mb-2">Parameters</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>timeout_ms</code> - Discovery timeout in milliseconds</li>
+									</ul>
+								</div>
+								<div>
+									<h4 class="font-semibold text-green-400 mb-2">Returns</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>Vec&lt;NetworkDeviceSummary&gt;</code> - List of discovered devices</li>
+									</ul>
+								</div>
+							</div>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Discover network devices with 5 second timeout
+let devices = enumerate_network_devices(5000)?;
+
+for device in &devices {`{`}
+    println!(\"Found device: {`{`}{`}`} at {`{`}{`}`}\", 
+        device.device_name, device.ip_address);
+{`}`}</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Device Connection -->
+					<section id="device-connection" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">Device Connection</h2>
+						
+						<!-- connect_to_device -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">connect_to_device</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn connect_to_device(device_index: u32) -> Result&lt;PoKeysDevice&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Connects to a USB PoKeys device by its enumeration index. The device must be enumerated first.
+							</p>
+							<div class="grid md:grid-cols-2 gap-4 mb-4">
+								<div>
+									<h4 class="font-semibold text-blue-400 mb-2">Parameters</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>device_index</code> - Zero-based device index from enumeration</li>
+									</ul>
+								</div>
+								<div>
+									<h4 class="font-semibold text-red-400 mb-2">Errors</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>PoKeysError::InvalidIndex</code> - Index out of range</li>
+										<li>• <code>PoKeysError::ConnectionFailed</code> - Connection failed</li>
+									</ul>
+								</div>
+							</div>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Connect to first enumerated device
+let mut device = connect_to_device(0)?;
+
+// Get device information
+device.get_device_data()?;
+println!(\"Connected to: {`{`}{`}`}\", device.device_data.device_name);</code></pre>
+							</div>
+						</div>
+
+						<!-- connect_to_device_with_serial -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">connect_to_device_with_serial</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn connect_to_device_with_serial(
+    serial_number: u32,
+    check_network: bool,
+) -> Result&lt;PoKeysDevice&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Connects to a specific PoKeys device using its serial number. Can search both USB and network devices.
+							</p>
+							<div class="grid md:grid-cols-2 gap-4 mb-4">
+								<div>
+									<h4 class="font-semibold text-blue-400 mb-2">Parameters</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>serial_number</code> - Device serial number</li>
+										<li>• <code>check_network</code> - Also search network devices</li>
+									</ul>
+								</div>
+								<div>
+									<h4 class="font-semibold text-green-400 mb-2">Benefits</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• Connects to specific device regardless of enumeration order</li>
+										<li>• Works across USB and network interfaces</li>
+									</ul>
+								</div>
+							</div>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Connect to device with specific serial number
+let device = connect_to_device_with_serial(12345, true)?;
+
+// This will find the device whether it's connected via USB or network</code></pre>
+							</div>
+						</div>
+
+						<!-- connect_to_network_device -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6">
+							<h3 class="text-xl font-semibold mb-4 text-blue-400">connect_to_network_device</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn connect_to_network_device(device_summary: &NetworkDeviceSummary) -> Result&lt;PoKeysDevice&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Connects to a network PoKeys device using information from network discovery.
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>let devices = enumerate_network_devices(5000)?;
+if let Some(device_info) = devices.first() {`{`}
+    let device = connect_to_network_device(device_info)?;
+    println!(\"Connected to network device: {`{`}{`}`}\", device_info.device_name);
+{`}`}</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- NetworkDeviceSummary -->
+					<section id="network-device-summary" class="mb-12">
+						<h2 class="text-2xl font-bold mb-6 text-white">NetworkDeviceSummary</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<p class="text-gray-300 mb-4">
+								Contains information about a discovered network device.
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Fields</h4>
+								<pre class="text-gray-300"><code>pub struct NetworkDeviceSummary {`{`}
+    pub device_name: String,        // Device name
+    pub ip_address: String,         // IP address
+    pub serial_number: u32,         // Device serial number
+    pub device_type: u8,            // Device type identifier
+    pub firmware_version: String,   // Firmware version
+    pub mac_address: String,        // MAC address
+{`}`}</code></pre>
+							</div>
+						</div>
+					</section>
+
+					<!-- Best Practices -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Best Practices</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<div class="space-y-4">
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-green-400">Device Discovery</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Always enumerate devices before attempting to connect</li>
+										<li>• Use appropriate timeouts for network discovery (3-10 seconds)</li>
+										<li>• Handle cases where no devices are found gracefully</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-blue-400">Connection Management</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Use serial number connection for production systems</li>
+										<li>• Implement connection retry logic for network devices</li>
+										<li>• Check device capabilities after connection</li>
+									</ul>
+								</div>
+								<div>
+									<h3 class="text-lg font-semibold mb-2 text-purple-400">Error Handling</h3>
+									<ul class="text-gray-300 space-y-1 text-sm">
+										<li>• Handle device disconnection gracefully</li>
+										<li>• Implement timeout handling for network operations</li>
+										<li>• Provide user feedback during discovery operations</li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Complete Example -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">Complete Example</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<p class="text-gray-300 mb-4">
+								Comprehensive example showing device discovery and connection:
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<pre class="text-gray-300"><code>use pokeys_lib::*;
+
+fn main() -> Result&lt;()&gt; {`{`}
+    // Try USB devices first
+    let usb_count = enumerate_usb_devices()?;
+    if usb_count > 0 {`{`}
+        println!(\"Found {`{`}{`}`} USB devices\", usb_count);
+        let device = connect_to_device(0)?;
+        return Ok(());
+    {`}`}
+    
+    // Try network devices
+    println!(\"No USB devices found, searching network...\");
+    let network_devices = enumerate_network_devices(5000)?;
+    
+    if let Some(device_info) = network_devices.first() {`{`}
+        println!(\"Connecting to {`{`}{`}`} at {`{`}{`}`}\", 
+            device_info.device_name, device_info.ip_address);
+        let device = connect_to_network_device(device_info)?;
+        return Ok(());
+    {`}`}
+    
+    println!(\"No PoKeys devices found\");
+    Ok(())
+{`}`}</code></pre>
+							</div>
+						</div>
+					</section>
+				</div>
+			</main>
+		</div>
+	</body>
+</html>

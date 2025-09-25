@@ -1,0 +1,264 @@
+---
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Basic Device Control - PoKeys Examples</title>
+	</head>
+	<body class="bg-gray-900 text-white">
+		<!-- Navigation -->
+		<nav class="fixed top-0 w-full z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="flex justify-between items-center py-4">
+					<a href="/core/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						PoKeys
+					</a>
+					<div class="hidden md:flex space-x-8">
+						<a href="/core/" class="hover:text-blue-400 transition-colors">Home</a>
+						<a href="/core/examples" class="hover:text-blue-400 transition-colors">← Back to Examples</a>
+						<a href="https://github.com/pokeys-toolkit/core" class="hover:text-blue-400 transition-colors">GitHub</a>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Content -->
+		<div class="pt-20 min-h-screen bg-gray-900">
+			<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+				<!-- Header -->
+				<div class="mb-8">
+					<div class="flex items-center gap-2 mb-4">
+						<span class="px-3 py-1 bg-blue-600/20 text-blue-300 text-sm rounded-full">Beginner</span>
+						<span class="px-3 py-1 bg-green-600/20 text-green-300 text-sm rounded-full">Digital I/O</span>
+					</div>
+					<h1 class="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+						Basic Device Control
+					</h1>
+					<p class="text-xl text-gray-400">
+						Learn how to connect to a PoKeys device and control digital outputs
+					</p>
+				</div>
+
+				<!-- Overview -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Overview</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<p class="text-gray-300 mb-4">
+							This example demonstrates the fundamental operations of the PoKeys Core Library:
+						</p>
+						<ul class="text-gray-300 space-y-2">
+							<li>• <strong>Device enumeration</strong> - Finding connected PoKeys devices</li>
+							<li>• <strong>Device connection</strong> - Establishing communication</li>
+							<li>• <strong>Pin configuration</strong> - Setting up pins as digital outputs</li>
+							<li>• <strong>Digital output control</strong> - Turning pins on and off</li>
+						</ul>
+					</div>
+				</section>
+
+				<!-- Hardware Setup -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Hardware Setup</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-blue-400">Required Hardware</h3>
+								<ul class="text-gray-300 space-y-1">
+									<li>• PoKeys device (any model)</li>
+									<li>• LED with current-limiting resistor</li>
+									<li>• Breadboard and jumper wires</li>
+									<li>• USB cable for connection</li>
+								</ul>
+							</div>
+							<div>
+								<h3 class="text-lg font-semibold mb-3 text-green-400">Connections</h3>
+								<ul class="text-gray-300 space-y-1">
+									<li>• LED anode → Pin 1</li>
+									<li>• LED cathode → 220Ω resistor → GND</li>
+									<li>• PoKeys device → USB port</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Code Example -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Complete Example</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">use pokeys_lib::*;
+use std::&#123;thread, time::Duration&#125;;
+
+fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; &#123;
+    println!("🚀 PoKeys Basic Device Control Example");
+    println!("=====================================");
+
+    // Step 1: Enumerate connected devices
+    println!("📡 Scanning for PoKeys devices...");
+    let device_count = enumerate_usb_devices()?;
+    println!("✅ Found &#123;&#125; device(s)", device_count);
+
+    if device_count == 0 &#123;
+        println!("❌ No PoKeys devices found!");
+        println!("💡 Please check:");
+        println!("   - Device is connected via USB");
+        println!("   - USB drivers are installed");
+        println!("   - Device has power");
+        return Ok(());
+    &#125;
+
+    // Step 2: Connect to the first device
+    println!("🔌 Connecting to device...");
+    let mut device = connect_to_device(0)?;
+
+    // Get device information
+    let device_name = device.get_device_name()?;
+    println!("✅ Connected to: &#123;&#125;", device_name);
+
+    // Step 3: Configure pin 1 as digital output
+    println!("⚙️  Configuring pin 1 as digital output...");
+    device.set_pin_function(1, PinFunction::DigitalOutput)?;
+    println!("✅ Pin 1 configured successfully");
+
+    // Step 4: Blink the LED 10 times
+    println!("💡 Starting LED blink sequence...");
+    for i in 1..=10 &#123;
+        println!("   Blink &#123;&#125;/10 - LED ON", i);
+        device.set_digital_output(1, true)?;
+        thread::sleep(Duration::from_millis(500));
+
+        println!("   Blink &#123;&#125;/10 - LED OFF", i);
+        device.set_digital_output(1, false)?;
+        thread::sleep(Duration::from_millis(500));
+    &#125;
+
+    println!("🎉 Example completed successfully!");
+    println!("💡 The LED should have blinked 10 times");
+
+    Ok(())
+&#125;</code></pre>
+					</div>
+				</section>
+
+				<!-- Code Explanation -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Code Explanation</h2>
+					<div class="space-y-6">
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-lg font-semibold mb-3 text-blue-400">1. Device Enumeration</h3>
+							<pre class="bg-gray-900 p-3 rounded mb-3"><code class="text-green-400">let device_count = enumerate_usb_devices()?;</code></pre>
+							<p class="text-gray-300">
+								This function scans all USB ports for connected PoKeys devices. It returns the number of devices found.
+								Always check this count before attempting to connect.
+							</p>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-lg font-semibold mb-3 text-blue-400">2. Device Connection</h3>
+							<pre class="bg-gray-900 p-3 rounded mb-3"><code class="text-green-400">let mut device = connect_to_device(0)?;</code></pre>
+							<p class="text-gray-300">
+								Connects to the device at index 0 (the first device found). The device object provides all control functions.
+								The <code class="bg-gray-700 px-2 py-1 rounded">mut</code> keyword is required because we'll be modifying device state.
+							</p>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-lg font-semibold mb-3 text-blue-400">3. Pin Configuration</h3>
+							<pre class="bg-gray-900 p-3 rounded mb-3"><code class="text-green-400">device.set_pin_function(1, PinFunction::DigitalOutput)?;</code></pre>
+							<p class="text-gray-300">
+								Configures pin 1 as a digital output. PoKeys pins are versatile and can serve different functions.
+								Always configure the pin function before using it.
+							</p>
+						</div>
+
+						<div class="bg-gray-800 rounded-lg p-6">
+							<h3 class="text-lg font-semibold mb-3 text-blue-400">4. Digital Output Control</h3>
+							<pre class="bg-gray-900 p-3 rounded mb-3"><code class="text-green-400">device.set_digital_output(1, true)?;  // Turn ON (HIGH)
+device.set_digital_output(1, false)?; // Turn OFF (LOW)</code></pre>
+							<p class="text-gray-300">
+								Controls the digital output state. <code class="bg-gray-700 px-2 py-1 rounded">true</code> sets the pin to HIGH (typically 3.3V),
+								<code class="bg-gray-700 px-2 py-1 rounded">false</code> sets it to LOW (0V).
+							</p>
+						</div>
+					</div>
+				</section>
+
+				<!-- Error Handling -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Error Handling</h2>
+					<div class="bg-gray-800 rounded-lg p-6">
+						<p class="text-gray-300 mb-4">
+							The example uses Rust's <code class="bg-gray-700 px-2 py-1 rounded">?</code> operator for error handling.
+							Here's how to handle specific errors:
+						</p>
+						<pre class="bg-gray-900 p-4 rounded-lg overflow-x-auto"><code class="text-green-400">// More detailed error handling
+match enumerate_usb_devices() &#123;
+    Ok(count) if count == 0 =&gt; &#123;
+        eprintln!("No devices found. Check connections.");
+        return Ok(());
+    &#125;,
+    Ok(count) =&gt; println!("Found &#123;&#125; devices", count),
+    Err(e) =&gt; &#123;
+        eprintln!("Failed to enumerate devices: &#123;&#125;", e);
+        return Err(e.into());
+    &#125;
+&#125;</code></pre>
+					</div>
+				</section>
+
+				<!-- Troubleshooting -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Troubleshooting</h2>
+					<div class="bg-red-900/20 border border-red-500/30 rounded-lg p-6">
+						<h3 class="text-lg font-semibold mb-3 text-red-400">Common Issues</h3>
+						<div class="space-y-4">
+							<div>
+								<h4 class="font-semibold text-white">No devices found</h4>
+								<ul class="text-gray-300 mt-1 space-y-1">
+									<li>• Check USB cable connection</li>
+									<li>• Verify device has power (LED indicators)</li>
+									<li>• Install PoKeys USB drivers</li>
+									<li>• Try a different USB port</li>
+								</ul>
+							</div>
+							<div>
+								<h4 class="font-semibold text-white">Connection failed</h4>
+								<ul class="text-gray-300 mt-1 space-y-1">
+									<li>• Device may be in use by another application</li>
+									<li>• Try unplugging and reconnecting the device</li>
+									<li>• Check device permissions on Linux</li>
+								</ul>
+							</div>
+							<div>
+								<h4 class="font-semibold text-white">LED doesn't blink</h4>
+								<ul class="text-gray-300 mt-1 space-y-1">
+									<li>• Verify LED polarity (anode to pin, cathode to GND)</li>
+									<li>• Check resistor value (220Ω recommended)</li>
+									<li>• Ensure pin 1 is available on your device model</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- Next Steps -->
+				<section class="mb-12">
+					<h2 class="text-2xl font-bold mb-4 text-white">Next Steps</h2>
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<a href="/core/examples/pwm-control" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-purple-500/50 transition-all duration-300">
+							<h3 class="text-lg font-semibold mb-2 text-white group-hover:text-purple-400">PWM Control →</h3>
+							<p class="text-gray-400 text-sm">Learn to generate PWM signals for motor control and LED dimming</p>
+						</a>
+						<a href="/core/examples/analog-input" class="group bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-gray-700/50 rounded-lg p-6 hover:border-green-500/50 transition-all duration-300">
+							<h3 class="text-lg font-semibold mb-2 text-white group-hover:text-green-400">Analog Input →</h3>
+							<p class="text-gray-400 text-sm">Read analog sensors and convert values to meaningful data</p>
+						</a>
+					</div>
+				</section>
+			</div>
+		</div>
+	</body>
+</html>
