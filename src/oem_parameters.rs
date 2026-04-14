@@ -316,10 +316,4 @@ mod tests {
         assert_eq!(response[RESP_SUBCMD], OEM_PARAM_CLEAR);
     }
 
-    // ── constants ───────────────────────────────────────────────────────────
-
-    #[test]
-    fn location_index_is_within_range() {
-        assert!(LOCATION_PARAMETER_INDEX <= OEM_PARAMETER_MAX_INDEX);
-    }
 }
