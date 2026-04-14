@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.19.2] - 2026-04-14
+
+- fix(oem): remove trailing blank line to satisfy rustfmt
+- fix(oem): remove always-true constant assertion flagged by clippy
+- fix(oem): add OEM parameter read/write/clear and device location support
+
 ## [0.19.1] - 2025-09-25
 
 
