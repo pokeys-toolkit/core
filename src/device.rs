@@ -586,8 +586,58 @@ impl PoKeysDevice {
             additional_network_options: response.get(27).copied().unwrap_or(0),
         };
 
-        //print the config
         Ok((discovery_info, config))
+    }
+
+    /// Set network configuration on the device.
+    ///
+    /// Sends command `0xE0` with option `10`, which writes **and saves** the
+    /// configuration to non-volatile storage in one operation — no separate
+    /// [`save_configuration`](PoKeysDevice::save_configuration) call is needed.
+    ///
+    /// # Field mapping
+    ///
+    /// | `NetworkDeviceInfo` field      | Protocol byte (doc) | Notes |
+    /// |-------------------------------|---------------------|-------|
+    /// | `dhcp`                        | 9                   | 0 = fixed IP, 1 = DHCP |
+    /// | `ip_address_setup`            | 10–13               | Applied when `dhcp == 0` |
+    /// | `tcp_timeout` (ms)            | 18–19               | Stored in units of 100 ms |
+    /// | `gateway_ip`                  | 20–23               | Applied when non-zero |
+    /// | `subnet_mask`                 | 24–27               | Applied when non-zero |
+    /// | `additional_network_options`  | 29                  | Upper nibble forced to `0xA` |
+    ///
+    /// `ip_address_current` is read-only (assigned by DHCP) and is ignored here.
+    pub fn set_network_configuration(&mut self, config: &NetworkDeviceInfo) -> Result<()> {
+        // TCP timeout is stored in units of 100 ms; NetworkDeviceInfo holds ms.
+        let timeout_units = (config.tcp_timeout / 100).max(1);
+        let timeout_bytes = timeout_units.to_le_bytes();
+
+        // Set gateway/subnet flag: tell the device to apply those fields too.
+        let gateway_subnet_set: u8 =
+            if config.gateway_ip != [0, 0, 0, 0] || config.subnet_mask != [0, 0, 0, 0] {
+                1
+            } else {
+                0
+            };
+
+        // Upper nibble of the options byte must always be 0xA (protocol requirement).
+        let options = (config.additional_network_options & 0x0F) | 0xA0;
+
+        // Build the data payload (doc bytes 9–29, 0-based bytes 8–28).
+        let mut data = [0u8; 21];
+        data[0] = config.dhcp; // doc byte  9: IP setup
+        data[1..5].copy_from_slice(&config.ip_address_setup); // doc bytes 10-13: fixed IP
+        // data[5..9] = reserved (zeros)               // doc bytes 14-17
+        data[9] = timeout_bytes[0]; // doc bytes 18-19: TCP timeout (LE)
+        data[10] = timeout_bytes[1];
+        data[11..15].copy_from_slice(&config.gateway_ip); // doc bytes 20-23
+        data[15..19].copy_from_slice(&config.subnet_mask); // doc bytes 24-27
+        data[19] = gateway_subnet_set; // doc byte  28: apply gateway/subnet
+        data[20] = options; // doc byte  29: additional options
+
+        // option = 10 triggers write + save (per spec footnote 17 and 18).
+        self.send_request_with_data(0xE0, 10, 0, 0, 0, &data)?;
+        Ok(())
     }
 
     // Internal methods
