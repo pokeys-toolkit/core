@@ -315,5 +315,4 @@ mod tests {
 
         assert_eq!(response[RESP_SUBCMD], OEM_PARAM_CLEAR);
     }
-
 }
