@@ -94,6 +94,7 @@ pub mod matrix;
 pub mod model_manager;
 pub mod models;
 pub mod network;
+pub mod oem_parameters;
 pub mod protocols;
 pub mod pulse_engine;
 pub mod pwm;
@@ -111,6 +112,9 @@ pub use io::{PinCapability, PinFunction};
 pub use keyboard_matrix::MatrixKeyboard;
 pub use model_manager::ModelManager;
 pub use models::{DeviceModel, PinModel};
+
+// Re-export OEM parameter constants
+pub use oem_parameters::{LOCATION_PARAMETER_INDEX, OEM_PARAMETER_MAX_INDEX};
 
 // Re-export LED matrix functionality
 pub use matrix::{
