@@ -359,21 +359,35 @@ impl PoKeysDevice {
         Ok(())
     }
 
-    /// Write all analog outputs
+    /// Write analog outputs for every pin currently configured as an analog output.
+    ///
+    /// Sends one "Analog outputs settings" request (`0x41`) per pin, carrying the pin's
+    /// `analog_value` as a 10-bit DAC value (0–1023). Values larger than 10 bits are
+    /// clamped by masking.
     pub fn write_analog_outputs(&mut self) -> Result<()> {
-        // Prepare analog output data
-        let mut request_data = Vec::new();
+        let targets: Vec<(u8, u32)> = self
+            .pins
+            .iter()
+            .enumerate()
+            .filter_map(|(i, p)| {
+                if p.is_analog_output() {
+                    Some(((i + 1) as u8, p.analog_value))
+                } else {
+                    None
+                }
+            })
+            .collect();
 
-        for pin in &self.pins {
-            if pin.is_analog_output() {
-                request_data.extend_from_slice(&pin.analog_value.to_le_bytes());
+        for (pin_id, value) in targets {
+            let (msb, lsb) = encode_analog_output_10bit(value);
+            let response = self.send_request(0x41, pin_id, msb, lsb, 0)?;
+            // Response byte 3 (0-based index 2): 0 = OK, non-zero = error ID
+            if response[2] != 0 {
+                return Err(PoKeysError::Protocol(format!(
+                    "Analog output write failed for pin {}: error code {}",
+                    pin_id, response[2]
+                )));
             }
-        }
-
-        // Send analog outputs to device (may require multiple requests)
-        if !request_data.is_empty() {
-            self.send_request(0x21, 0, 0, 0, 0)?;
-            // Additional implementation needed for multi-part data transfer
         }
 
         Ok(())
@@ -481,6 +495,78 @@ impl PoKeysDevice {
 
         Ok(())
     }
+
+    /// Read combined device status (digital inputs, analog inputs, and encoder values)
+    /// in a single round-trip using protocol command `0xCC`
+    /// ("Get device status (IO, analog, encoders)").
+    ///
+    /// Updates `self.pins[*].digital_value_get`, `self.pins[*].analog_value` (for up to 5
+    /// analog-input pins), and `self.encoders[*].encoder_value` (up to 25 channels).
+    ///
+    /// Matrix keyboard rows and ultra-fast encoder data from the response are not
+    /// applied here — use the dedicated methods for those when needed.
+    pub fn get_device_status(&mut self) -> Result<()> {
+        let response = self.send_request(0xCC, 0, 0, 0, 0)?;
+        apply_device_status_response(&response, &mut self.pins, &mut self.encoders);
+        Ok(())
+    }
+}
+
+/// Pack a 10-bit analog output value into the `(MSB, LSB)` pair expected by
+/// protocol command `0x41`. Byte 4 holds the top 8 bits; the upper 2 bits of
+/// byte 5 hold the low 2 bits of the value. Values wider than 10 bits are
+/// truncated.
+fn encode_analog_output_10bit(value: u32) -> (u8, u8) {
+    let v = value & 0x3FF;
+    let msb = ((v >> 2) & 0xFF) as u8;
+    let lsb = ((v & 0x03) << 6) as u8;
+    (msb, lsb)
+}
+
+/// Apply a `0xCC` ("Get device status") response to the caller-owned pin and
+/// encoder arrays. Split out from [`PoKeysDevice::get_device_status`] so the
+/// parsing can be unit-tested without a live device.
+fn apply_device_status_response(
+    response: &[u8],
+    pins: &mut [PinData],
+    encoders: &mut [crate::encoders::EncoderData],
+) {
+    // Digital inputs: doc bytes 9-15 (0-based 8-14), bit-mapped pin 1..=55.
+    for i in 0..pins.len().min(55) {
+        let byte_index = 8 + (i / 8);
+        let bit_index = i % 8;
+        if byte_index < response.len() {
+            pins[i].digital_value_get = if (response[byte_index] & (1 << bit_index)) != 0 {
+                1
+            } else {
+                0
+            };
+        }
+    }
+
+    // Analog inputs: doc bytes 16-25 (0-based 15-24), 5 channels × (MSB, LSB).
+    let mut data_index = 15;
+    let mut channels_consumed = 0;
+    for pin in pins.iter_mut() {
+        if channels_consumed >= 5 {
+            break;
+        }
+        if pin.is_analog_input() && data_index + 1 < response.len() {
+            let msb = response[data_index] as u32;
+            let lsb = response[data_index + 1] as u32;
+            pin.analog_value = (msb << 8) | lsb;
+            data_index += 2;
+            channels_consumed += 1;
+        }
+    }
+
+    // Encoders: doc bytes 26-50 (0-based 25-49), 25 × 8-bit signed RAW values.
+    for i in 0..encoders.len().min(25) {
+        let idx = 25 + i;
+        if idx < response.len() {
+            encoders[i].encoder_value = response[idx] as i8 as i32;
+        }
+    }
 }
 
 #[cfg(test)]
@@ -511,5 +597,62 @@ mod tests {
             (PinFunction::DigitalInput as u8) | (PinFunction::DigitalOutput as u8);
         assert!(pin_data.is_digital_input());
         assert!(pin_data.is_digital_output());
+    }
+
+    #[test]
+    fn test_encode_analog_output_10bit() {
+        assert_eq!(encode_analog_output_10bit(0), (0x00, 0x00));
+        assert_eq!(encode_analog_output_10bit(1023), (0xFF, 0xC0));
+        assert_eq!(encode_analog_output_10bit(512), (0x80, 0x00));
+        // low two bits land in LSB byte's upper two bits
+        assert_eq!(encode_analog_output_10bit(3), (0x00, 0xC0));
+        assert_eq!(encode_analog_output_10bit(1), (0x00, 0x40));
+        // values wider than 10 bits are truncated
+        assert_eq!(encode_analog_output_10bit(0xFFFF), (0xFF, 0xC0));
+    }
+
+    #[test]
+    fn test_apply_device_status_response() {
+        use crate::encoders::EncoderData;
+
+        let mut response = [0u8; 64];
+
+        // Digital inputs: set pins 1, 9, and 55 high.
+        response[8] = 0b0000_0001; // pin 1
+        response[9] = 0b0000_0001; // pin 9
+        response[14] = 0b0100_0000; // pin 55 = bit (55-1) % 8 = 6 of byte 14
+
+        // Analog channel 1 → 0x1234 (MSB=0x12, LSB=0x34) at doc bytes 16-17 (0-based 15-16)
+        response[15] = 0x12;
+        response[16] = 0x34;
+        // Analog channel 2 → 0xABCD (MSB=0xAB, LSB=0xCD) at doc bytes 18-19 (0-based 17-18)
+        response[17] = 0xAB;
+        response[18] = 0xCD;
+
+        // Encoder 1 raw = -1 (0xFF signed), encoder 2 raw = 5
+        response[25] = 0xFF;
+        response[26] = 0x05;
+
+        let mut pins = vec![PinData::new(); 55];
+        pins[0].pin_function = PinFunction::DigitalInput as u8; // pin 1 digital
+        pins[8].pin_function = PinFunction::DigitalInput as u8; // pin 9 digital
+        pins[40].pin_function = PinFunction::AnalogInput as u8; // first analog-capable pin
+        pins[41].pin_function = PinFunction::AnalogInput as u8; // second analog-capable pin
+
+        let mut encoders = vec![EncoderData::new(); 25];
+
+        apply_device_status_response(&response, &mut pins, &mut encoders);
+
+        assert_eq!(pins[0].digital_value_get, 1);
+        assert_eq!(pins[1].digital_value_get, 0);
+        assert_eq!(pins[8].digital_value_get, 1);
+        assert_eq!(pins[54].digital_value_get, 1);
+
+        assert_eq!(pins[40].analog_value, 0x1234);
+        assert_eq!(pins[41].analog_value, 0xABCD);
+
+        assert_eq!(encoders[0].encoder_value, -1);
+        assert_eq!(encoders[1].encoder_value, 5);
+        assert_eq!(encoders[2].encoder_value, 0);
     }
 }
