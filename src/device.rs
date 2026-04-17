@@ -231,6 +231,16 @@ impl PoKeysDevice {
         Ok(())
     }
 
+    /// Get the device's current system load as a percentage (0–100).
+    ///
+    /// Sends the "Get system load status" command (`0x05`) defined in the
+    /// PoKeys protocol specification. The device replies with the current
+    /// CPU/system load in byte 3 of the response.
+    pub fn get_system_load(&mut self) -> Result<u8> {
+        let response = self.send_request(0x05, 0, 0, 0, 0)?;
+        Ok(parse_system_load_response(&response))
+    }
+
     /// Set device name (up to 20 bytes for long device name)
     pub fn set_device_name(&mut self, name: &str) -> Result<()> {
         // Based on official documentation:
@@ -1642,6 +1652,13 @@ fn connect_usb_device_windows(_path: &str) -> Result<StubUsbInterface> {
     Err(PoKeysError::NotSupported)
 }
 
+/// Parse the "Get system load status" (0x05) response payload.
+///
+/// Protocol byte 3 (0-based index 2) holds the system load percentage.
+fn parse_system_load_response(response: &[u8]) -> u8 {
+    response[2]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1651,6 +1668,20 @@ mod tests {
         let device = PoKeysDevice::new(DeviceConnectionType::UsbDevice);
         assert_eq!(device.connection_type, DeviceConnectionType::UsbDevice);
         assert_eq!(device.pins.len(), 0); // Not initialized yet
+    }
+
+    #[test]
+    fn test_parse_system_load_response() {
+        let mut response = [0u8; RESPONSE_BUFFER_SIZE];
+        response[1] = 0x05; // echo of command ID in byte 2
+        response[2] = 42; // system load % in byte 3
+        assert_eq!(parse_system_load_response(&response), 42);
+
+        response[2] = 0;
+        assert_eq!(parse_system_load_response(&response), 0);
+
+        response[2] = 100;
+        assert_eq!(parse_system_load_response(&response), 100);
     }
 
     #[test]
