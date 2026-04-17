@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.20.0] - 2026-04-17
+
+- feat: expose device system load status (command 0x05) (#10)
+- fix(network): implement set_network_configuration (command 0xE0, option 10) (#9)
+
 ## [0.19.3] - 2026-04-14
 
 - fix(network): implement set_network_configuration (command 0xE0, option 10)
