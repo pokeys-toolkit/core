@@ -462,35 +462,41 @@ impl PoKeysDevice {
 
     /// Set all pin functions at once using extended mode (0xC0)
     /// This is much more efficient than setting pins individually
-    /// Performance improvement: 55x fewer commands
-    ///
-    /// Note: This implementation uses individual calls as a fallback since
-    /// the bulk operation requires access to private device fields.
-    /// Future optimization: Move this to device.rs for direct hardware access.
+    /// Performance improvement: 55x fewer commands — the 55-byte function
+    /// array is sent in a single request instead of one request per pin.
     pub fn set_all_pin_functions(&mut self, functions: &[PinFunction; 55]) -> Result<()> {
-        // For now, implement using individual pin operations
-        // This is still better than the original code since it's batched
-        // and can be optimized later with proper hardware access
+        use crate::io::private::Command;
 
-        let mut changes_made = 0;
+        // Payload: 55 pin-function bytes that land at protocol bytes 8..63
+        // (prepare_request_with_data copies payload starting at request[8]).
+        let payload: [u8; 55] = std::array::from_fn(|i| functions[i] as u8);
 
-        for (i, &desired_function) in functions.iter().enumerate() {
-            let pin_number = (i + 1) as u32;
+        let response = self.send_request_with_data(
+            Command::InputOutputExtended as u8,
+            1, // option1: 1 = set all pin functions
+            0, // option2: 0 = pin functions (not additional settings)
+            0, // reserved
+            0, // request ID will be set by send_request_with_data
+            &payload,
+        )?;
 
-            // Check if change is needed
-            let current_function = self.get_pin_function(pin_number)?;
-            if current_function != desired_function {
-                // Apply the change
-                self.set_pin_function(pin_number, desired_function)?;
-                changes_made += 1;
-            }
+        if response.len() < 64 {
+            return Err(PoKeysError::Protocol(
+                "Response too short for bulk pin write".to_string(),
+            ));
         }
 
-        if changes_made > 0 {
-            log::info!(
-                "Applied {} pin function changes using optimized batch operations",
-                changes_made
-            );
+        if response[1] != Command::InputOutputExtended as u8 {
+            return Err(PoKeysError::Protocol(
+                "Invalid response command".to_string(),
+            ));
+        }
+
+        // Update local pin cache to reflect the values we just wrote.
+        for (i, &function) in functions.iter().enumerate() {
+            if i < self.pins.len() {
+                self.pins[i].pin_function = function as u8;
+            }
         }
 
         Ok(())
