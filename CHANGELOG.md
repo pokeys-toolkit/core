@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.20.0] - 2026-04-18
+
+- perf(io): bulk set_all_pin_functions via 0xC0 (set) (#13)
+- feat(device): implement reboot operation (command 0xF3) (#12)
+- feat(io): bulk device-status read (0xCC) and complete analog-output writes (0x41) (#11)
+
 ## [0.19.4] - 2026-04-17
 
 - feat: expose device system load status (command 0x05) (#10)
