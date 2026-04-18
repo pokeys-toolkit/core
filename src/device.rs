@@ -324,6 +324,26 @@ impl PoKeysDevice {
         Ok(())
     }
 
+    /// Reboot the device (command `0xF3`).
+    ///
+    /// Sends the "Reboot system" command defined in the PoKeys protocol
+    /// specification. The device may reboot before a response reaches the
+    /// host; transfer-level failures caused by the interrupted response are
+    /// treated as success, as the request was already delivered.
+    ///
+    /// After a successful reboot the active connection is effectively
+    /// invalidated — callers should re-enumerate and reconnect before issuing
+    /// further commands.
+    pub fn reboot_device(&mut self) -> Result<()> {
+        match self.send_request(0xF3, 0, 0, 0, 0) {
+            Ok(_) => Ok(()),
+            // The device typically reboots before responding, so a transfer
+            // error after the request was sent is expected and not fatal.
+            Err(PoKeysError::Transfer(_)) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
     /// Send custom request to device
     pub fn custom_request(
         &mut self,
