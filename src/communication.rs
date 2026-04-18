@@ -522,4 +522,30 @@ mod tests {
         response[7] = 0xFF; // Wrong checksum
         assert!(protocol.validate_response(&response, 1).is_err());
     }
+
+    #[test]
+    fn test_reboot_request_format() {
+        // "Reboot system" command, per PoKeys protocol spec:
+        //   byte 1 (header) = 0xBB
+        //   byte 2 (CMD)    = 0xF3
+        //   bytes 3-6       = reserved (0)
+        //   byte 7          = request ID
+        //   byte 8          = checksum of bytes 1-7
+        let mut protocol = Protocol::new();
+        let request = protocol.prepare_request(0xF3, 0, 0, 0, 0, None);
+
+        assert_eq!(request[0], REQUEST_HEADER);
+        assert_eq!(request[1], 0xF3);
+        assert_eq!(request[2], 0);
+        assert_eq!(request[3], 0);
+        assert_eq!(request[4], 0);
+        assert_eq!(request[5], 0);
+        assert_eq!(request[6], 1);
+        assert_eq!(request[7], Protocol::calculate_checksum(&request));
+
+        // Payload bytes (9-64 in 1-based spec numbering) are unused.
+        for i in 8..REQUEST_BUFFER_SIZE {
+            assert_eq!(request[i], 0);
+        }
+    }
 }
