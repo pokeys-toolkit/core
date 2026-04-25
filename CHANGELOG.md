@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.21.0] - 2026-04-25
+
+- feat(device): expose set_device_name and set_network_configuration (#14)
+
 ## [0.20.0] - 2026-04-18
 
 - perf(io): bulk set_all_pin_functions via 0xC0 (set) (#13)
