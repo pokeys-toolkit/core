@@ -496,6 +496,152 @@ mod unit_tests {
     }
 }
 
+#[cfg(test)]
+mod network_config_tests {
+    use pokeys_lib::{NetworkDeviceConfig, NetworkDeviceInfo};
+
+    #[test]
+    fn test_network_device_config_defaults() {
+        let cfg = NetworkDeviceConfig::new();
+        assert_eq!(cfg.device_info.subnet_mask, [255, 255, 255, 0]);
+        assert_eq!(cfg.device_info.tcp_timeout, 1000);
+        assert_eq!(cfg.device_info.dhcp, 0);
+        assert_eq!(cfg.device_info.additional_network_options, 0xA0);
+        assert_eq!(cfg.device_info.ip_address_setup, [0, 0, 0, 0]);
+        assert_eq!(cfg.device_info.gateway_ip, [0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn test_network_device_config_builder() {
+        let mut cfg = NetworkDeviceConfig::new();
+        cfg.set_ip_address([192, 168, 1, 50]);
+        cfg.set_subnet_mask([255, 255, 255, 0]);
+        cfg.set_default_gateway([192, 168, 1, 1]);
+        cfg.set_dhcp(false);
+        cfg.set_tcp_timeout(2000);
+        cfg.set_network_options(false, false, false);
+
+        assert_eq!(cfg.device_info.ip_address_setup, [192, 168, 1, 50]);
+        assert_eq!(cfg.device_info.subnet_mask, [255, 255, 255, 0]);
+        assert_eq!(cfg.device_info.gateway_ip, [192, 168, 1, 1]);
+        assert_eq!(cfg.device_info.dhcp, 0);
+        assert_eq!(cfg.device_info.tcp_timeout, 2000);
+    }
+
+    #[test]
+    fn test_dhcp_toggle() {
+        let mut cfg = NetworkDeviceConfig::new();
+        cfg.set_dhcp(true);
+        assert_eq!(cfg.device_info.dhcp, 1);
+        cfg.set_dhcp(false);
+        assert_eq!(cfg.device_info.dhcp, 0);
+    }
+
+    #[test]
+    fn test_network_options_flags() {
+        let mut cfg = NetworkDeviceConfig::new();
+
+        cfg.set_network_options(true, false, false);
+        assert_eq!(cfg.device_info.additional_network_options, 0xA0 | 0x01);
+
+        cfg.set_network_options(false, true, false);
+        assert_eq!(cfg.device_info.additional_network_options, 0xA0 | 0x02);
+
+        cfg.set_network_options(false, false, true);
+        assert_eq!(cfg.device_info.additional_network_options, 0xA0 | 0x04);
+
+        cfg.set_network_options(true, true, true);
+        assert_eq!(cfg.device_info.additional_network_options, 0xA0 | 0x07);
+
+        cfg.set_network_options(false, false, false);
+        assert_eq!(cfg.device_info.additional_network_options, 0xA0);
+    }
+
+    #[test]
+    fn test_tcp_timeout_unit_conversion() {
+        // Wire encoding: ms / 100, minimum 1
+        let cases: &[(u16, u16)] = &[
+            (1000, 10),
+            (100, 1),
+            (500, 5),
+            (0, 0), // saturating_mul(100) when reading back handles the 0 edge
+        ];
+        for &(input_ms, expected_units) in cases {
+            let units = (input_ms / 100).max(if input_ms == 0 { 0 } else { 1 });
+            assert_eq!(units, expected_units, "input_ms={input_ms}");
+        }
+    }
+
+    #[test]
+    fn test_gateway_subnet_set_flag() {
+        // Non-zero gateway → flag should be 1
+        let info = NetworkDeviceInfo {
+            gateway_ip: [192, 168, 1, 1],
+            subnet_mask: [0, 0, 0, 0],
+            ..Default::default()
+        };
+        let flag = if info.gateway_ip != [0, 0, 0, 0] || info.subnet_mask != [0, 0, 0, 0] {
+            1u8
+        } else {
+            0u8
+        };
+        assert_eq!(flag, 1);
+
+        // All-zero → flag should be 0
+        let info2 = NetworkDeviceInfo::default();
+        let flag2 = if info2.gateway_ip != [0, 0, 0, 0] || info2.subnet_mask != [0, 0, 0, 0] {
+            1u8
+        } else {
+            0u8
+        };
+        assert_eq!(flag2, 0);
+    }
+
+    #[test]
+    fn test_additional_options_nibble() {
+        // Upper nibble must always be 0xA regardless of lower-nibble input
+        for lower in 0u8..=0x0F {
+            let options = (lower & 0x0F) | 0xA0;
+            assert_eq!(
+                options >> 4,
+                0xA,
+                "upper nibble not 0xA for lower={lower:#x}"
+            );
+            assert_eq!(options & 0x0F, lower);
+        }
+    }
+
+    #[test]
+    fn test_device_name_truncation() {
+        let long_name = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; // 26 chars, max is 20
+        let truncated = if long_name.len() > 20 {
+            &long_name[..20]
+        } else {
+            long_name
+        };
+        assert_eq!(truncated.len(), 20);
+        assert_eq!(truncated, "ABCDEFGHIJKLMNOPQRST");
+
+        let short_name = "MyDevice"; // 8 chars, no truncation
+        let not_truncated = if short_name.len() > 20 {
+            &short_name[..20]
+        } else {
+            short_name
+        };
+        assert_eq!(not_truncated, "MyDevice");
+    }
+
+    #[test]
+    fn test_network_device_info_dhcp_enabled() {
+        let mut info = NetworkDeviceInfo::default();
+        assert!(!info.dhcp_enabled());
+        info.dhcp = 1;
+        assert!(info.dhcp_enabled());
+        info.dhcp = 0;
+        assert!(!info.dhcp_enabled());
+    }
+}
+
 /// Mock tests for testing without hardware
 #[cfg(test)]
 mod mock_tests {

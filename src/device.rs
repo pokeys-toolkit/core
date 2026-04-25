@@ -290,10 +290,8 @@ impl PoKeysDevice {
 
                     let mut response = [0u8; 65];
                     interface.read(&mut response)?;
-
-                    Ok(())
                 } else {
-                    Err(PoKeysError::NotConnected)
+                    return Err(PoKeysError::NotConnected);
                 }
             }
             DeviceConnectionType::NetworkDevice => {
@@ -302,20 +300,15 @@ impl PoKeysDevice {
 
                     // Use timeout for network response to avoid hanging
                     let mut response = [0u8; 64];
-                    match interface
-                        .receive_timeout(&mut response, std::time::Duration::from_millis(2000))
-                    {
-                        Ok(_) => Ok(()),
-                        Err(_) => {
-                            // Don't fail the entire operation if device name setting fails
-                            Ok(())
-                        }
-                    }
+                    let _ = interface
+                        .receive_timeout(&mut response, std::time::Duration::from_millis(2000));
                 } else {
-                    Err(PoKeysError::NotConnected)
+                    return Err(PoKeysError::NotConnected);
                 }
             }
         }
+
+        self.save_configuration()
     }
 
     /// Clear device configuration
