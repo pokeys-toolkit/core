@@ -122,6 +122,9 @@ pub use matrix::{
     SEVEN_SEGMENT_LETTERS, SevenSegmentDisplay, get_seven_segment_pattern,
 };
 
+// Re-export network configuration helpers
+pub use network::NetworkDeviceConfig;
+
 // Re-export protocol convenience functions
 pub use protocols::{
     can_send_standard, i2c_read_simple, i2c_write_simple, spi_configure_simple, spi_read_simple,
