@@ -96,9 +96,9 @@ impl PoKeysDevice {
     /// Read digital input from device
     pub(crate) fn read_digital_input(&mut self, pin: u32) -> Result<u8> {
         match self.check_pin_range(pin) {
-            Ok(pin_index) => {
+            Ok(_) => {
                 let res =
-                    self.send_request(Command::ReadDigitalInput as u8, pin_index as u8, 0, 0, 0)?;
+                    self.send_request(Command::ReadDigitalInput as u8, pin as u8, 0, 0, 0)?;
 
                 if res[2] != 0 {
                     Err(PoKeysError::InternalError(
@@ -115,10 +115,10 @@ impl PoKeysDevice {
     /// Write digital output to device
     pub(crate) fn write_digital_output(&mut self, pin: u32, value: bool) -> Result<bool> {
         match self.check_pin_range(pin) {
-            Ok(pin_index) => {
+            Ok(_) => {
                 let res = self.send_request(
                     Command::SetPinOutput as u8,
-                    pin_index as u8,
+                    pin as u8,
                     if value { 1 } else { 0 },
                     0,
                     0,
