@@ -266,32 +266,39 @@ impl PoKeysDevice {
         Ok(self.pins[pin_index].digital_counter_value)
     }
 
-    /// Reset digital counter
-    pub fn reset_digital_counter(&mut self, pin: u32) -> Result<()> {
-        if pin == 0 || pin as usize > self.pins.len() {
-            return Err(PoKeysError::Parameter("Invalid pin number".to_string()));
-        }
-
-        let pin_index = (pin - 1) as usize;
-        if self.pins[pin_index].digital_counter_available == 0 {
-            return Err(PoKeysError::NotSupported);
-        }
-        // Send counter reset command
-        self.send_request(0x30, pin_index as u8, 0, 0, 0)?;
+    /// Reset all digital counter values (protocol command `0x1D`).
+    ///
+    /// The PoKeys protocol does not support per-pin counter resets — `0x1D`
+    /// clears all digital counters at once.
+    pub fn reset_all_digital_counters(&mut self) -> Result<()> {
+        self.send_request(0x1D, 0, 0, 0, 0)?;
         Ok(())
     }
 
-    /// Read all digital inputs
+    /// Read all digital inputs.
+    ///
+    /// Uses two protocol commands:
+    /// - `0x31` "Block inputs reading" — pins 1–32 packed into response bytes 3–6 (0-based 2–5)
+    /// - `0x32` "Block inputs reading – part 2" — pins 33–55 packed into response bytes 3–5 (0-based 2–4)
     pub fn get_digital_inputs(&mut self) -> Result<()> {
-        let response = self.send_request(0x10, 0, 0, 0, 0)?;
-
-        // Parse digital input data from response
-        for i in 0..self.pins.len().min(55) {
-            let byte_index = 8 + (i / 8);
+        let resp1 = self.send_request(0x31, 0, 0, 0, 0)?;
+        for i in 0..self.pins.len().min(32) {
+            let byte_index = 2 + (i / 8);
             let bit_index = i % 8;
+            self.pins[i].digital_value_get = if (resp1[byte_index] & (1 << bit_index)) != 0 {
+                1
+            } else {
+                0
+            };
+        }
 
-            if byte_index < response.len() {
-                self.pins[i].digital_value_get = if (response[byte_index] & (1 << bit_index)) != 0 {
+        if self.pins.len() > 32 {
+            let resp2 = self.send_request(0x32, 0, 0, 0, 0)?;
+            for i in 32..self.pins.len().min(55) {
+                let rel = i - 32;
+                let byte_index = 2 + (rel / 8);
+                let bit_index = rel % 8;
+                self.pins[i].digital_value_get = if (resp2[byte_index] & (1 << bit_index)) != 0 {
                     1
                 } else {
                     0
@@ -363,7 +370,8 @@ impl PoKeysDevice {
     ///
     /// Sends one "Analog outputs settings" request (`0x41`) per pin, carrying the pin's
     /// `analog_value` as a 10-bit DAC value (0–1023). Values larger than 10 bits are
-    /// clamped by masking.
+    /// clamped by masking. The `pin ID` sent to the device is the 0-based pin code
+    /// per the protocol spec (pin 43 → pin code 42).
     pub fn write_analog_outputs(&mut self) -> Result<()> {
         let targets: Vec<(u8, u32)> = self
             .pins
@@ -371,21 +379,21 @@ impl PoKeysDevice {
             .enumerate()
             .filter_map(|(i, p)| {
                 if p.is_analog_output() {
-                    Some(((i + 1) as u8, p.analog_value))
+                    Some((i as u8, p.analog_value))
                 } else {
                     None
                 }
             })
             .collect();
 
-        for (pin_id, value) in targets {
+        for (pin_code, value) in targets {
             let (msb, lsb) = encode_analog_output_10bit(value);
-            let response = self.send_request(0x41, pin_id, msb, lsb, 0)?;
+            let response = self.send_request(0x41, pin_code, msb, lsb, 0)?;
             // Response byte 3 (0-based index 2): 0 = OK, non-zero = error ID
             if response[2] != 0 {
                 return Err(PoKeysError::Protocol(format!(
-                    "Analog output write failed for pin {}: error code {}",
-                    pin_id, response[2]
+                    "Analog output write failed for pin code {}: error code {}",
+                    pin_code, response[2]
                 )));
             }
         }
@@ -393,21 +401,37 @@ impl PoKeysDevice {
         Ok(())
     }
 
-    /// Read all digital counters
+    /// Read digital counter values via protocol command `0xD8`.
+    ///
+    /// The request carries up to 13 pin IDs at spec bytes 9–21 (0-based 8–20)
+    /// identifying which counters to return. The response packs thirteen 32-bit
+    /// LE counter values at spec bytes 9–60 (0-based 8–59).
     pub fn read_digital_counters(&mut self) -> Result<()> {
-        let response = self.send_request(0x31, 0, 0, 0, 0)?;
+        // Collect up to 13 counter-capable pin IDs (0-based pin codes per spec).
+        let mut pin_ids = [0u8; 13];
+        let mut selected: Vec<usize> = Vec::with_capacity(13);
+        for (i, pin) in self.pins.iter().enumerate() {
+            if selected.len() == 13 {
+                break;
+            }
+            if pin.digital_counter_available != 0 {
+                pin_ids[selected.len()] = i as u8;
+                selected.push(i);
+            }
+        }
 
-        // Parse digital counter data from response
-        let mut data_index = 8;
-        for i in 0..self.pins.len() {
-            if self.pins[i].digital_counter_available != 0 && data_index + 3 < response.len() {
-                self.pins[i].digital_counter_value = u32::from_le_bytes([
-                    response[data_index],
-                    response[data_index + 1],
-                    response[data_index + 2],
-                    response[data_index + 3],
+        let response = self.send_request_with_data(0xD8, 0, 0, 0, 0, &pin_ids)?;
+
+        // Response: 13 × 4-byte LE counter values starting at 0-based byte 8.
+        for (slot, pin_index) in selected.iter().enumerate() {
+            let start = 8 + slot * 4;
+            if start + 4 <= response.len() {
+                self.pins[*pin_index].digital_counter_value = u32::from_le_bytes([
+                    response[start],
+                    response[start + 1],
+                    response[start + 2],
+                    response[start + 3],
                 ]);
-                data_index += 4;
             }
         }
 
