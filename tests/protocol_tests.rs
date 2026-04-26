@@ -679,3 +679,104 @@ mod communication_tests {
         assert_eq!(result, empty_response);
     }
 }
+
+#[cfg(test)]
+mod device_name_tests {
+    /// Build the 64-byte request packet for set_device_name, mirroring the
+    /// logic in `PoKeysDevice::set_device_name`.
+    fn build_set_device_name_packet(name: &str, request_id: u8) -> [u8; 64] {
+        let mut name_bytes = [0u8; 20];
+        let name_str = if name.len() > 20 { &name[..20] } else { name };
+        name_bytes[..name_str.len()].copy_from_slice(name_str.as_bytes());
+
+        let mut request = [0u8; 64];
+        request[0] = 0xBB;
+        request[1] = 0x06;
+        request[2] = 0x01;
+        request[3] = 0x01;
+        request[4] = 0x00;
+        request[5] = 0x00;
+        request[6] = request_id;
+        request[35..55].copy_from_slice(&name_bytes);
+
+        let mut checksum: u8 = 0;
+        for i in 0..7 {
+            checksum = checksum.wrapping_add(request[i]);
+        }
+        request[7] = checksum;
+
+        request
+    }
+
+    #[test]
+    fn test_packet_header_bytes() {
+        let pkt = build_set_device_name_packet("Test", 1);
+        assert_eq!(pkt[0], 0xBB, "header byte");
+        assert_eq!(pkt[1], 0x06, "command byte");
+        assert_eq!(pkt[2], 0x01, "write-flag byte");
+        assert_eq!(pkt[3], 0x01, "long-name flag");
+        assert_eq!(pkt[4], 0x00);
+        assert_eq!(pkt[5], 0x00);
+    }
+
+    #[test]
+    fn test_checksum_calculation() {
+        let pkt = build_set_device_name_packet("Hello", 42);
+        // Checksum = wrapping sum of bytes 0..6
+        let expected: u8 = pkt[0..7].iter().fold(0u8, |acc, &b| acc.wrapping_add(b));
+        assert_eq!(pkt[7], expected);
+    }
+
+    #[test]
+    fn test_checksum_changes_with_request_id() {
+        let pkt1 = build_set_device_name_packet("Hello", 1);
+        let pkt2 = build_set_device_name_packet("Hello", 2);
+        assert_ne!(pkt1[7], pkt2[7]);
+    }
+
+    #[test]
+    fn test_name_placed_at_correct_offset() {
+        let name = "MyDevice";
+        let pkt = build_set_device_name_packet(name, 1);
+        let name_field = &pkt[35..55];
+        assert_eq!(&name_field[..name.len()], name.as_bytes());
+        // Bytes after the name must be zero-padded
+        for &b in &name_field[name.len()..] {
+            assert_eq!(b, 0);
+        }
+    }
+
+    #[test]
+    fn test_name_truncated_to_20_bytes() {
+        let long_name = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; // 26 chars
+        let pkt = build_set_device_name_packet(long_name, 1);
+        let name_field = &pkt[35..55];
+        assert_eq!(name_field, b"ABCDEFGHIJKLMNOPQRST");
+    }
+
+    #[test]
+    fn test_exact_20_char_name_not_truncated() {
+        let name = "01234567890123456789"; // exactly 20 chars
+        let pkt = build_set_device_name_packet(name, 1);
+        assert_eq!(&pkt[35..55], name.as_bytes());
+    }
+
+    #[test]
+    fn test_empty_name_produces_zero_name_field() {
+        let pkt = build_set_device_name_packet("", 1);
+        assert_eq!(&pkt[35..55], &[0u8; 20]);
+    }
+
+    #[test]
+    fn test_bytes_outside_name_field_are_zero() {
+        let pkt = build_set_device_name_packet("Test", 1);
+        // Bytes 8..35 must be zero (unused)
+        for (i, &b) in pkt[8..35].iter().enumerate() {
+            assert_eq!(b, 0, "byte {} should be zero", i + 8);
+        }
+        // Bytes 55..64 must be zero
+        for (i, &b) in pkt[55..64].iter().enumerate() {
+            assert_eq!(b, 0, "byte {} should be zero", i + 55);
+        }
+    }
+}
