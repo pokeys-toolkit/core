@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.22.1] - 2026-04-26
+
+- fix(io): use 0x10 uniformly for all pins; revert erroneous 0xC0 workaround (#20)
+
 ## [0.22.0] - 2026-04-26
 
 - feat(device): network config & device name examples; fix 1-based pin in set_pin_function (#15)
