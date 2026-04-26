@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.22.2] - 2026-04-26
+
+- fix(protocol): align I/O command bytes and response parsing with spec v14.3.2025 (#21)
+
 ## [0.22.1] - 2026-04-26
 
 - fix(io): use 0x10 uniformly for all pins; revert erroneous 0xC0 workaround (#20)
