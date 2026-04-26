@@ -66,18 +66,10 @@ impl PoKeysDevice {
                     ));
                 }
 
-                // pin_index == 0 (pin 1) is ambiguous on 0x10: the device
-                // cannot distinguish "set pin 1" from the bulk-read form
-                // (all params zero). Use a read-modify-write via 0xC0 instead,
-                // which sets all 55 pins atomically and has no such ambiguity.
-                if pin_index == 0 {
-                    let mut functions = self.read_all_pin_functions()?;
-                    functions[0] = pin_function;
-                    self.set_all_pin_functions(&functions)?;
-                    return Ok((pin, pin_function));
-                }
-
-                // All other pins: use the single-pin 0x10 command.
+                // 0x10 is unambiguous even for pin_index=0 because byte 4
+                // (pin_settings) is always non-zero for a real function write.
+                // The bulk-read form has all bytes zero; the firmware dispatches
+                // on byte 4, not byte 3 alone.
                 let res = self.send_request(
                     Command::SetInputOutput as u8,
                     pin_index as u8,
@@ -102,9 +94,9 @@ impl PoKeysDevice {
     /// Read digital input from device
     pub(crate) fn read_digital_input(&mut self, pin: u32) -> Result<u8> {
         match self.check_pin_range(pin) {
-            Ok(_) => {
+            Ok(pin_index) => {
                 let res =
-                    self.send_request(Command::ReadDigitalInput as u8, pin as u8, 0, 0, 0)?;
+                    self.send_request(Command::ReadDigitalInput as u8, pin_index as u8, 0, 0, 0)?;
 
                 if res[2] != 0 {
                     Err(PoKeysError::InternalError(
@@ -121,10 +113,10 @@ impl PoKeysDevice {
     /// Write digital output to device
     pub(crate) fn write_digital_output(&mut self, pin: u32, value: bool) -> Result<bool> {
         match self.check_pin_range(pin) {
-            Ok(_) => {
+            Ok(pin_index) => {
                 let res = self.send_request(
                     Command::SetPinOutput as u8,
-                    pin as u8,
+                    pin_index as u8,
                     if value { 1 } else { 0 },
                     0,
                     0,
