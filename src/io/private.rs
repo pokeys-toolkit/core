@@ -69,7 +69,7 @@ impl PoKeysDevice {
                 // Send the request to the device
                 let res = self.send_request(
                     Command::SetInputOutput as u8,
-                    pin as u8,
+                    pin_index as u8,
                     pin_function as u8,
                     self.pins[pin_index].counter_options,
                     0,
