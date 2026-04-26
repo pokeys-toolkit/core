@@ -277,7 +277,7 @@ impl PoKeysDevice {
             return Err(PoKeysError::NotSupported);
         }
         // Send counter reset command
-        self.send_request(0x30, pin as u8, 0, 0, 0)?;
+        self.send_request(0x30, pin_index as u8, 0, 0, 0)?;
         Ok(())
     }
 
