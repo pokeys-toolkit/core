@@ -723,9 +723,7 @@ mod device_name_tests {
     fn test_checksum_calculation() {
         let pkt = build_set_device_name_packet("Hello", 42);
         // Checksum = wrapping sum of bytes 0..6
-        let expected: u8 = pkt[0..7]
-            .iter()
-            .fold(0u8, |acc, &b| acc.wrapping_add(b));
+        let expected: u8 = pkt[0..7].iter().fold(0u8, |acc, &b| acc.wrapping_add(b));
         assert_eq!(pkt[7], expected);
     }
 

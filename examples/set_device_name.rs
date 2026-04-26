@@ -24,9 +24,7 @@ fn main() -> Result<()> {
     let new_name: String = std::env::args()
         .nth(1)
         .unwrap_or_else(|| "PoKeys-Test".to_string());
-    let target_serial: Option<u32> = std::env::args()
-        .nth(2)
-        .and_then(|s| s.parse().ok());
+    let target_serial: Option<u32> = std::env::args().nth(2).and_then(|s| s.parse().ok());
 
     if new_name.len() > 20 {
         eprintln!(
@@ -63,16 +61,21 @@ fn main() -> Result<()> {
 
     // Pick target device
     let target = match target_serial {
-        Some(serial) => {
-            devices.iter().find(|d| d.serial_number == serial).ok_or_else(|| {
+        Some(serial) => devices
+            .iter()
+            .find(|d| d.serial_number == serial)
+            .ok_or_else(|| {
                 eprintln!("Device with serial {serial} not found.");
                 PoKeysError::NotConnected
-            })?
-        }
+            })?,
         None => &devices[0],
     };
 
-    println!("\nUsing device serial={} ip={}", target.serial_number, format_ip(target.ip_address));
+    println!(
+        "\nUsing device serial={} ip={}",
+        target.serial_number,
+        format_ip(target.ip_address)
+    );
 
     // Connect
     let mut device = connect_to_device_with_serial(target.serial_number, true, 3000)?;

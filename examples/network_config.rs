@@ -20,16 +20,26 @@ fn fmt_ip(ip: [u8; 4]) -> String {
 }
 
 fn fmt_options(opts: u8) -> String {
-    let discovery = if opts & 0x01 != 0 { "disabled" } else { "enabled" };
-    let auto_cfg = if opts & 0x02 != 0 { "disabled" } else { "enabled" };
-    let udp_cfg = if opts & 0x04 != 0 { "disabled" } else { "enabled" };
+    let discovery = if opts & 0x01 != 0 {
+        "disabled"
+    } else {
+        "enabled"
+    };
+    let auto_cfg = if opts & 0x02 != 0 {
+        "disabled"
+    } else {
+        "enabled"
+    };
+    let udp_cfg = if opts & 0x04 != 0 {
+        "disabled"
+    } else {
+        "enabled"
+    };
     format!("discovery={discovery}, auto-config={auto_cfg}, udp-config={udp_cfg}")
 }
 
 fn main() -> Result<()> {
-    let target_serial: Option<u32> = std::env::args()
-        .nth(1)
-        .and_then(|s| s.parse().ok());
+    let target_serial: Option<u32> = std::env::args().nth(1).and_then(|s| s.parse().ok());
 
     // Discover
     println!("Discovering PoKeys57E devices on the network (5s timeout)...");
@@ -56,12 +66,13 @@ fn main() -> Result<()> {
     }
 
     let target = match target_serial {
-        Some(serial) => {
-            devices.iter().find(|d| d.serial_number == serial).ok_or_else(|| {
+        Some(serial) => devices
+            .iter()
+            .find(|d| d.serial_number == serial)
+            .ok_or_else(|| {
                 eprintln!("Device with serial {serial} not found.");
                 pokeys_lib::PoKeysError::NotConnected
-            })?
-        }
+            })?,
         None => &devices[0],
     };
 
@@ -71,20 +82,26 @@ fn main() -> Result<()> {
         fmt_ip(target.ip_address)
     );
 
-    let mut device =
-        pokeys_lib::connect_to_device_with_serial(target.serial_number, true, 3000)?;
+    let mut device = pokeys_lib::connect_to_device_with_serial(target.serial_number, true, 3000)?;
     device.get_device_data()?;
 
     // ── Step 1: read current config ──────────────────────────────────────────
     println!("\n── Current network configuration ──────────────────────────────");
     let (_, cfg) = device.get_network_configuration(3000)?;
-    println!("  DHCP:          {}", if cfg.dhcp_enabled() { "on" } else { "off" });
+    println!(
+        "  DHCP:          {}",
+        if cfg.dhcp_enabled() { "on" } else { "off" }
+    );
     println!("  Setup IP:      {}", fmt_ip(cfg.ip_address_setup));
     println!("  Current IP:    {}", fmt_ip(cfg.ip_address_current));
     println!("  Subnet mask:   {}", fmt_ip(cfg.subnet_mask));
     println!("  Gateway:       {}", fmt_ip(cfg.gateway_ip));
     println!("  TCP timeout:   {}ms", cfg.tcp_timeout);
-    println!("  Options (raw): {:#04x} ({})", cfg.additional_network_options, fmt_options(cfg.additional_network_options));
+    println!(
+        "  Options (raw): {:#04x} ({})",
+        cfg.additional_network_options,
+        fmt_options(cfg.additional_network_options)
+    );
 
     // ── Step 2: set static IP ────────────────────────────────────────────────
     println!("\n── Step 2: set static IP 10.0.1.103 ───────────────────────────");
@@ -98,7 +115,10 @@ fn main() -> Result<()> {
     println!("  Sent. Reading back...");
 
     let (_, cfg) = device.get_network_configuration(3000)?;
-    println!("  DHCP:        {}", if cfg.dhcp_enabled() { "on" } else { "off" });
+    println!(
+        "  DHCP:        {}",
+        if cfg.dhcp_enabled() { "on" } else { "off" }
+    );
     println!("  Setup IP:    {}", fmt_ip(cfg.ip_address_setup));
     println!("  Subnet mask: {}", fmt_ip(cfg.subnet_mask));
     println!("  Gateway:     {}", fmt_ip(cfg.gateway_ip));
