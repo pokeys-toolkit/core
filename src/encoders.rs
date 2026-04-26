@@ -846,9 +846,9 @@ impl PoKeysDevice {
             0,                                // Reserved
         )?;
 
-        // Check response status
-        if response.len() > 3 {
-            let status = response[3];
+        // Response spec: byte 3 is status (0-based index 2).
+        if response.len() > 2 {
+            let status = response[2];
             if status != 0 {
                 return Err(PoKeysError::Protocol(format!(
                     "Fast encoder configuration failed: status {}",

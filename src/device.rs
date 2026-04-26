@@ -241,7 +241,19 @@ impl PoKeysDevice {
         Ok(parse_system_load_response(&response))
     }
 
-    /// Set device name (up to 20 bytes for long device name)
+    /// Set the device name (up to 20 bytes for the long device name).
+    ///
+    /// Sends protocol command `0x06` with "write long device name" flags set.
+    /// After the write succeeds, [`save_configuration`](PoKeysDevice::save_configuration)
+    /// is called to persist the value to non-volatile storage — `0x06` alone
+    /// does not auto-save.
+    ///
+    /// # Side effect
+    ///
+    /// The request packet includes fields for the joystick device name
+    /// (spec bytes 19–34) and the product-ID offset (byte 35) that this
+    /// implementation always sends as zero. If the target device was using
+    /// those fields, they will be cleared as a side effect of this call.
     pub fn set_device_name(&mut self, name: &str) -> Result<()> {
         // Based on official documentation:
         // - byte 2: 0x06
@@ -311,9 +323,11 @@ impl PoKeysDevice {
         self.save_configuration()
     }
 
-    /// Clear device configuration
+    /// Reset device configuration to defaults (protocol command `0x52`
+    /// "Disable lock and reset configuration"). Requires the magic bytes
+    /// `0xAA, 0x55` to match the spec and the upstream PoKeysLib behaviour.
     pub fn clear_configuration(&mut self) -> Result<()> {
-        self.send_request(0x02, 0, 0, 0, 0)?;
+        self.send_request(0x52, 0xAA, 0x55, 0, 0)?;
         Ok(())
     }
 
