@@ -857,7 +857,9 @@ impl PoKeysDevice {
             }
         }
 
-        Ok(())
+        // Commit to EEPROM so the firmware treats affected pins as truly free
+        // before any subsequent pin-function writes happen.
+        self.save_configuration()
     }
 
     /// Read fast encoder values
