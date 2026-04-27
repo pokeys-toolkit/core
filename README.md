@@ -69,7 +69,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-pokeys-lib = "0.3.0"
+pokeys-lib = "0.21.8"
 ```
 
 Or install from git:
@@ -99,6 +99,33 @@ fn main() -> Result<()> {
 
         println!("Pin 1 is now HIGH");
     }
+    Ok(())
+}
+```
+
+### Hardware-Inverted Inputs and Outputs
+
+Use the firmware's built-in invert flag for active-low switches, LEDs, or relay
+coils — no software inversion needed. See `set_pin_function_with_invert` for the
+full list of pin functions that honor the flag.
+
+```rust
+use pokeys_lib::*;
+
+fn main() -> Result<()> {
+    let mut device = connect_to_device(0)?;
+
+    // Active-low switch on pin 5: firmware reports `true` when pin is pulled LOW.
+    device.set_pin_function_with_invert(5, PinFunction::DigitalInput, true)?;
+    let switch_pressed = device.get_digital_input(5)?;
+
+    // Active-low LED on pin 10: `set_digital_output(.., true)` drives pin LOW.
+    device.set_pin_function_with_invert(10, PinFunction::DigitalOutput, true)?;
+    device.set_digital_output(10, true)?;
+
+    // Read the invert flag back from the cache.
+    assert!(device.get_pin_invert(5)?);
+
     Ok(())
 }
 ```

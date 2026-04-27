@@ -232,10 +232,11 @@
 						<div class="bg-gray-800 rounded-lg p-6 mb-6">
 							<h3 class="text-xl font-semibold mb-4 text-green-400">set_pin_function</h3>
 							<div class="mb-4">
-								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn set_pin_function(&mut self, pin: u32, function: PinFunction) -> Result&lt;()&gt;</code></pre>
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn set_pin_function(&mut self, pin: u32, function: PinFunction) -> Result&lt;(u32, PinFunction)&gt;</code></pre>
 							</div>
 							<p class="text-gray-300 mb-4">
 								Configures a pin for a specific function. The pin must support the requested capability.
+								Thin wrapper around <code class="bg-gray-700 px-1 rounded">set_pin_function_with_invert</code> with <code class="bg-gray-700 px-1 rounded">inverted = false</code>.
 							</p>
 							<div class="grid md:grid-cols-2 gap-4 mb-4">
 								<div>
@@ -248,8 +249,8 @@
 								<div>
 									<h4 class="font-semibold text-red-400 mb-2">Errors</h4>
 									<ul class="text-gray-300 text-sm space-y-1">
-										<li>• <code>PoKeysError::InvalidPin</code> - Pin out of range</li>
-										<li>• <code>PoKeysError::UnsupportedCapability</code> - Function not supported</li>
+										<li>• <code>PoKeysError::Parameter</code> - Pin out of range</li>
+										<li>• <code>PoKeysError::UnsupportedPinCapability</code> - Function not supported on this pin</li>
 									</ul>
 								</div>
 							</div>
@@ -263,6 +264,59 @@ device.set_pin_function(2, PinFunction::DigitalInput)?;</code></pre>
 							</div>
 						</div>
 
+						<!-- set_pin_function_with_invert -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6 border border-blue-500/30">
+							<h3 class="text-xl font-semibold mb-4 text-green-400">
+								set_pin_function_with_invert
+								<span class="text-xs text-blue-300 bg-blue-900/40 px-2 py-0.5 rounded ml-2 align-middle">since 0.21.8</span>
+							</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn set_pin_function_with_invert(
+    &mut self,
+    pin: u32,
+    function: PinFunction,
+    inverted: bool,
+) -> Result&lt;(u32, PinFunction)&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Configures a pin with an optional hardware invert flag. When
+								<code class="bg-gray-700 px-1 rounded">inverted = true</code>, bit 7
+								(<code class="bg-gray-700 px-1 rounded">0x80</code>) of protocol byte 4 is set, so the firmware
+								reports/drives the logical complement of the electrical state at no CPU cost.
+							</p>
+							<div class="grid md:grid-cols-2 gap-4 mb-4">
+								<div>
+									<h4 class="font-semibold text-green-400 mb-2">Honors invert flag</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>DigitalInput</code></li>
+										<li>• <code>DigitalOutput</code></li>
+										<li>• <code>TriggeredInput</code></li>
+									</ul>
+								</div>
+								<div>
+									<h4 class="font-semibold text-gray-400 mb-2">Ignores invert flag (firmware drops bit 7)</h4>
+									<ul class="text-gray-300 text-sm space-y-1">
+										<li>• <code>AnalogInput</code>, <code>AnalogOutput</code></li>
+										<li>• <code>DigitalCounter</code></li>
+										<li>• <code>PinRestricted</code>, <code>Reserved</code></li>
+									</ul>
+								</div>
+							</div>
+							<p class="text-gray-300 text-sm mb-4">
+								When <code class="bg-gray-700 px-1 rounded">inverted = true</code> is combined with a function
+								the firmware ignores, the method emits a <code class="bg-gray-700 px-1 rounded">log::warn!</code>
+								and still sends the byte.
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>// Active-low switch: get_digital_input(5) returns `true` when pin is LOW
+device.set_pin_function_with_invert(5, PinFunction::DigitalInput, true)?;
+
+// Active-low LED: set_digital_output(10, true) drives pin LOW electrically
+device.set_pin_function_with_invert(10, PinFunction::DigitalOutput, true)?;</code></pre>
+							</div>
+						</div>
+
 						<!-- get_pin_function -->
 						<div class="bg-gray-800 rounded-lg p-6 mb-6">
 							<h3 class="text-xl font-semibold mb-4 text-green-400">get_pin_function</h3>
@@ -270,16 +324,39 @@ device.set_pin_function(2, PinFunction::DigitalInput)?;</code></pre>
 								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn get_pin_function(&self, pin: u32) -> Result&lt;PinFunction&gt;</code></pre>
 							</div>
 							<p class="text-gray-300 mb-4">
-								Returns the current function configuration of a pin.
+								Returns the base function of a pin. Bit 7 (the invert flag) is masked off
+								before decoding — use <code class="bg-gray-700 px-1 rounded">get_pin_invert</code> to read the flag separately.
 							</p>
 							<div class="bg-gray-900 rounded p-4">
 								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
 								<pre class="text-gray-300"><code>let function = device.get_pin_function(1)?;
 match function {`{`}
-    PinFunction::DigitalOutput => println!(\"Pin 1 is configured as output\"),
-    PinFunction::DigitalInput => println!(\"Pin 1 is configured as input\"),
-    _ => println!(\"Pin 1 has other function\"),
+    PinFunction::DigitalOutput =&gt; println!("Pin 1 is configured as output"),
+    PinFunction::DigitalInput  =&gt; println!("Pin 1 is configured as input"),
+    _ =&gt; println!("Pin 1 has other function"),
 {`}`}</code></pre>
+							</div>
+						</div>
+
+						<!-- get_pin_invert -->
+						<div class="bg-gray-800 rounded-lg p-6 mb-6 border border-blue-500/30">
+							<h3 class="text-xl font-semibold mb-4 text-green-400">
+								get_pin_invert
+								<span class="text-xs text-blue-300 bg-blue-900/40 px-2 py-0.5 rounded ml-2 align-middle">since 0.21.8</span>
+							</h3>
+							<div class="mb-4">
+								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn get_pin_invert(&self, pin: u32) -> Result&lt;bool&gt;</code></pre>
+							</div>
+							<p class="text-gray-300 mb-4">
+								Returns <code class="bg-gray-700 px-1 rounded">true</code> if bit 7 (the hardware invert flag) is set on the
+								pin's cached configuration byte. This is a local cache read — call
+								<code class="bg-gray-700 px-1 rounded">read_all_pin_functions</code> or
+								<code class="bg-gray-700 px-1 rounded">read_all_pin_settings_raw</code> first for the device's current state.
+							</p>
+							<div class="bg-gray-900 rounded p-4">
+								<h4 class="font-semibold text-yellow-400 mb-2">Example</h4>
+								<pre class="text-gray-300"><code>device.set_pin_function_with_invert(5, PinFunction::DigitalInput, true)?;
+assert!(device.get_pin_invert(5)?);</code></pre>
 							</div>
 						</div>
 					</section>
@@ -295,14 +372,18 @@ match function {`{`}
 								<pre class="bg-gray-900 rounded p-4 overflow-x-auto"><code class="text-gray-300">pub fn get_digital_input(&mut self, pin: u32) -> Result&lt;bool&gt;</code></pre>
 							</div>
 							<p class="text-gray-300 mb-4">
-								Reads the current state of a digital input pin. Returns true for HIGH (3.3V/5V), false for LOW (0V).
+								Reads the current state of a digital input pin. Returns <code class="bg-gray-700 px-1 rounded">true</code>
+								for HIGH, <code class="bg-gray-700 px-1 rounded">false</code> for LOW. If the pin was configured with the
+								invert flag (via <code class="bg-gray-700 px-1 rounded">set_pin_function_with_invert</code>), the
+								firmware reports the logical complement of the electrical state — an electrically LOW pin reads as
+								<code class="bg-gray-700 px-1 rounded">true</code>.
 							</p>
 							<div class="grid md:grid-cols-2 gap-4 mb-4">
 								<div>
 									<h4 class="font-semibold text-green-400 mb-2">Returns</h4>
 									<ul class="text-gray-300 text-sm space-y-1">
-										<li>• <code>true</code> - Pin is HIGH</li>
-										<li>• <code>false</code> - Pin is LOW</li>
+										<li>• <code>true</code> - Logical HIGH (or electrically LOW if inverted)</li>
+										<li>• <code>false</code> - Logical LOW (or electrically HIGH if inverted)</li>
 									</ul>
 								</div>
 								<div>

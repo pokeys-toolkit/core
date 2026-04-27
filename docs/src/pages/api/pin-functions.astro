@@ -205,18 +205,30 @@
 					<!-- PinFunction Enum -->
 					<section class="mb-12">
 						<h2 class="text-2xl font-bold mb-6 text-white">PinFunction Enum</h2>
-						<div class="bg-gray-800 rounded-lg p-6">
+						<div class="bg-gray-800 rounded-lg p-6 mb-4">
+							<p class="text-gray-300 mb-4">
+								The wire-level pin-settings byte (byte 4 of protocol command
+								<code class="bg-gray-700 px-1 rounded">0x10</code>) is a bitfield:
+								the low seven bits carry the base function and bit 7
+								(<code class="bg-gray-700 px-1 rounded">0x80</code>, the invert
+								flag) composes with any digital function. This enum represents the
+								base function only. Use
+								<code class="bg-gray-700 px-1 rounded">set_pin_function_with_invert</code>
+								to apply the invert flag.
+							</p>
 							<div class="bg-gray-900 rounded p-4">
 								<pre class="text-gray-300"><code>pub enum PinFunction {`{`}
-    Disabled = 0,
-    DigitalInput = 1,
-    DigitalOutput = 2,
-    AnalogInput = 3,
-    AnalogOutput = 4,
-    DigitalCounter = 5,
-    PWM = 6,
-    Encoder = 7,
-    KeyboardMatrix = 8,
+    PinRestricted  = 0,
+    Reserved       = 1,
+    DigitalInput   = 2,
+    DigitalOutput  = 4,
+    AnalogInput    = 8,
+    AnalogOutput   = 16,
+    TriggeredInput = 32,
+    DigitalCounter = 64,
+
+    #[deprecated]
+    InvertPin      = 128, // protocol bit, not a standalone function
 {`}`}</code></pre>
 							</div>
 						</div>
@@ -227,25 +239,61 @@
 						<h2 class="text-2xl font-bold mb-6 text-white">Function Descriptions</h2>
 						<div class="space-y-4">
 							<div class="bg-gray-800 rounded-lg p-4">
-								<h3 class="text-lg font-semibold mb-2 text-indigo-400">Disabled</h3>
-								<p class="text-gray-300 text-sm">Pin is disabled and not used for any function.</p>
+								<h3 class="text-lg font-semibold mb-2 text-indigo-400">PinRestricted</h3>
+								<p class="text-gray-300 text-sm">Pin is restricted / unassigned. Default state.</p>
+							</div>
+							<div class="bg-gray-800 rounded-lg p-4">
+								<h3 class="text-lg font-semibold mb-2 text-gray-400">Reserved</h3>
+								<p class="text-gray-300 text-sm">Pin reserved by firmware for internal use (e.g. SPI MOSI/CLK when SPI is active). Not available to user code.</p>
 							</div>
 							<div class="bg-gray-800 rounded-lg p-4">
 								<h3 class="text-lg font-semibold mb-2 text-green-400">DigitalInput</h3>
-								<p class="text-gray-300 text-sm">Pin configured for digital input reading (HIGH/LOW states).</p>
+								<p class="text-gray-300 text-sm">Pin configured for digital input reading (HIGH/LOW states). Honors the invert flag.</p>
 							</div>
 							<div class="bg-gray-800 rounded-lg p-4">
 								<h3 class="text-lg font-semibold mb-2 text-blue-400">DigitalOutput</h3>
-								<p class="text-gray-300 text-sm">Pin configured for digital output control (set HIGH/LOW).</p>
+								<p class="text-gray-300 text-sm">Pin configured for digital output control (set HIGH/LOW). Honors the invert flag.</p>
 							</div>
 							<div class="bg-gray-800 rounded-lg p-4">
 								<h3 class="text-lg font-semibold mb-2 text-teal-400">AnalogInput</h3>
-								<p class="text-gray-300 text-sm">Pin configured for analog voltage measurement (0-4095 ADC values).</p>
+								<p class="text-gray-300 text-sm">Pin configured for analog voltage measurement. Invert flag is ignored by firmware.</p>
 							</div>
 							<div class="bg-gray-800 rounded-lg p-4">
-								<h3 class="text-lg font-semibold mb-2 text-purple-400">PWM</h3>
-								<p class="text-gray-300 text-sm">Pin configured for PWM output (pins 17-22 only, 25MHz precision).</p>
+								<h3 class="text-lg font-semibold mb-2 text-teal-400">AnalogOutput</h3>
+								<p class="text-gray-300 text-sm">Pin configured as an analog output (10-bit DAC). Invert flag is ignored.</p>
 							</div>
+							<div class="bg-gray-800 rounded-lg p-4">
+								<h3 class="text-lg font-semibold mb-2 text-yellow-400">TriggeredInput</h3>
+								<p class="text-gray-300 text-sm">Digital input that generates an event on an edge rather than a level. Honors the invert flag.</p>
+							</div>
+							<div class="bg-gray-800 rounded-lg p-4">
+								<h3 class="text-lg font-semibold mb-2 text-orange-400">DigitalCounter</h3>
+								<p class="text-gray-300 text-sm">Digital input counting edges. Invert flag is ignored.</p>
+							</div>
+							<div class="bg-gray-800 rounded-lg p-4 border border-red-500/30">
+								<h3 class="text-lg font-semibold mb-2 text-red-400">InvertPin (deprecated)</h3>
+								<p class="text-gray-300 text-sm">
+									Kept for backward compatibility only. Represents bit 7 of the
+									pin-settings byte — it is not a standalone pin function. To apply
+									the invert flag, pass <code class="bg-gray-700 px-1 rounded">inverted: true</code>
+									to <code class="bg-gray-700 px-1 rounded">set_pin_function_with_invert</code>.
+								</p>
+							</div>
+						</div>
+					</section>
+
+					<!-- Note on PWM / Encoder / Keyboard -->
+					<section class="mb-12">
+						<h2 class="text-2xl font-bold mb-4 text-white">PWM, Encoders, and Keyboard Matrix</h2>
+						<div class="bg-gray-800 rounded-lg p-6">
+							<p class="text-gray-300">
+								PWM output, encoder inputs, and matrix-keyboard pins are
+								configured through dedicated APIs (see <a href="/core/api/pwm" class="text-blue-400 hover:text-blue-300">PWM</a>,
+								<a href="/core/api/encoders" class="text-blue-400 hover:text-blue-300">Encoders</a>, and
+								<a href="/core/api/matrix-keyboard" class="text-blue-400 hover:text-blue-300">Matrix Keyboard</a>),
+								not via <code class="bg-gray-700 px-1 rounded">PinFunction</code>.
+								PWM is restricted to pins 17–22 by hardware.
+							</p>
 						</div>
 					</section>
 
@@ -259,17 +307,19 @@
 fn main() -> Result&lt;()&gt; {`{`}
     let mut device = connect_to_device(0)?;
 
-    // Configure different pin functions
+    // Configure basic pin functions
     device.set_pin_function(1, PinFunction::DigitalOutput)?;
     device.set_pin_function(2, PinFunction::DigitalInput)?;
     device.set_pin_function(3, PinFunction::AnalogInput)?;
-    device.set_pin_function(22, PinFunction::PWM)?;
+
+    // Active-low switch on pin 4: firmware reports `true` when pin is LOW
+    device.set_pin_function_with_invert(4, PinFunction::DigitalInput, true)?;
 
     // Use the configured pins
     device.set_digital_output(1, true)?;
     let input_state = device.get_digital_input(2)?;
     let analog_value = device.get_analog_input(3)?;
-    device.set_pwm_duty_cycle_for_pin(22, 25000)?;
+    let switch_pressed = device.get_digital_input(4)?;
 
     Ok(())
 {`}`}</code></pre>
