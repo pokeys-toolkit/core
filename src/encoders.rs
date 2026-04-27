@@ -130,6 +130,167 @@ impl EncoderOptions {
     }
 }
 
+/// Fast-encoder hardware configuration selector (protocol command `0xCE`
+/// byte 3 = "FastEncodersConfiguration").
+///
+/// Only one configuration may be active at a time. Newer PoKeys56/57 devices
+/// support only [`Config2`](Self::Config2); older PoKeys55 hardware supports
+/// both.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FastEncoderConfiguration {
+    /// Fast encoders disabled.
+    Disabled,
+    /// Config 1 — encoder 1 on pins 1-2, encoder 2 on pins 3-4, encoder 3 on pins 15-16.
+    /// (PoKeys55-era devices only.)
+    Config1,
+    /// Config 2 — encoder 1 on pins 1-2, encoder 2 on pins 5-6, encoder 3 on pins 15-16.
+    /// Supported by all devices with fast encoder hardware.
+    Config2,
+}
+
+impl FastEncoderConfiguration {
+    /// Byte value for the "FastEncodersConfiguration" field of command `0xCE`.
+    /// Matches the PoKeysLib C reference constants:
+    /// `PK_FASTENCODER_CONF_CFG1 = 0x01`, `PK_FASTENCODER_CONF_CFG2 = 0x10`.
+    pub fn to_byte(self) -> u8 {
+        match self {
+            FastEncoderConfiguration::Disabled => 0x00,
+            FastEncoderConfiguration::Config1 => 0x01,
+            FastEncoderConfiguration::Config2 => 0x10,
+        }
+    }
+
+    /// Decode the byte field back to a configuration. Unknown values map to
+    /// [`Disabled`](Self::Disabled).
+    pub fn from_byte(byte: u8) -> Self {
+        match byte {
+            0x01 => FastEncoderConfiguration::Config1,
+            0x10 => FastEncoderConfiguration::Config2,
+            _ => FastEncoderConfiguration::Disabled,
+        }
+    }
+}
+
+/// Per-encoder options for the fast encoders (protocol command `0xCE`
+/// byte 4 = "FastEncodersOptions").
+///
+/// Bit layout matches the PoKeysLib C reference (`ePK_FastEncoderOptions`):
+///
+/// | Bit | Mask | Meaning                           |
+/// |-----|------|-----------------------------------|
+/// | 4   | 0x10 | Disable 4x sampling (default is 4x on). |
+/// | 5   | 0x20 | Invert direction of fast encoder 1. |
+/// | 6   | 0x40 | Invert direction of fast encoder 2. |
+/// | 7   | 0x80 | Invert direction of fast encoder 3. |
+///
+/// Bits 0-3 are reserved (the low nibble carries nothing — the configuration
+/// selector lives in a separate byte, see [`FastEncoderConfiguration`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct FastEncoderOptions {
+    /// Disable 4x sampling for the fast encoders (default is 4x enabled).
+    pub disable_4x_sampling: bool,
+    /// Invert direction of fast encoder 1.
+    pub invert_direction_1: bool,
+    /// Invert direction of fast encoder 2.
+    pub invert_direction_2: bool,
+    /// Invert direction of fast encoder 3.
+    pub invert_direction_3: bool,
+}
+
+/// Bit 4 (`0x10`) of the fast-encoders options byte — disable 4x sampling.
+pub(crate) const FAST_ENCODER_DISABLE_4X_SAMPLING: u8 = 0x10;
+/// Bit 5 (`0x20`) — invert direction of fast encoder 1.
+pub(crate) const FAST_ENCODER_INVERT_E1: u8 = 0x20;
+/// Bit 6 (`0x40`) — invert direction of fast encoder 2.
+pub(crate) const FAST_ENCODER_INVERT_E2: u8 = 0x40;
+/// Bit 7 (`0x80`) — invert direction of fast encoder 3.
+pub(crate) const FAST_ENCODER_INVERT_E3: u8 = 0x80;
+
+impl FastEncoderOptions {
+    /// Pack the options into the protocol byte (byte 4 of command `0xCE`).
+    pub fn to_byte(self) -> u8 {
+        let mut b = 0u8;
+        if self.disable_4x_sampling {
+            b |= FAST_ENCODER_DISABLE_4X_SAMPLING;
+        }
+        if self.invert_direction_1 {
+            b |= FAST_ENCODER_INVERT_E1;
+        }
+        if self.invert_direction_2 {
+            b |= FAST_ENCODER_INVERT_E2;
+        }
+        if self.invert_direction_3 {
+            b |= FAST_ENCODER_INVERT_E3;
+        }
+        b
+    }
+
+    /// Decode an options byte back into the struct (reserved bits ignored).
+    pub fn from_byte(byte: u8) -> Self {
+        Self {
+            disable_4x_sampling: (byte & FAST_ENCODER_DISABLE_4X_SAMPLING) != 0,
+            invert_direction_1: (byte & FAST_ENCODER_INVERT_E1) != 0,
+            invert_direction_2: (byte & FAST_ENCODER_INVERT_E2) != 0,
+            invert_direction_3: (byte & FAST_ENCODER_INVERT_E3) != 0,
+        }
+    }
+}
+
+/// Ultra-fast encoder options (protocol command `0x1C` byte 4 = "additional options").
+///
+/// Bit layout matches PoKeysLib C reference (`ePK_UltraFastEncoderOptions`):
+///
+/// | Bit | Mask | Meaning                        |
+/// |-----|------|--------------------------------|
+/// | 0   | 0x01 | Invert direction.              |
+/// | 1   | 0x02 | Signal mode: `false` = quadrature (A/B), `true` = direction + clock. |
+/// | 2   | 0x04 | Enable 4x sampling.            |
+///
+/// Bits 3-7 are reserved.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct UltraFastEncoderOptions {
+    /// Invert direction (bit 0).
+    pub invert_direction: bool,
+    /// Signal mode. `false` = A/B are quadrature inputs; `true` = A is the
+    /// direction signal and B is the clock signal.
+    pub signal_mode_direction_clock: bool,
+    /// Enable 4x sampling (both edges of A and B counted).
+    pub enable_4x_sampling: bool,
+}
+
+/// Bit 0 — invert direction (ultra-fast).
+pub(crate) const UFENC_INVERT_DIRECTION: u8 = 0x01;
+/// Bit 1 — signal mode (ultra-fast).
+pub(crate) const UFENC_SIGNAL_MODE: u8 = 0x02;
+/// Bit 2 — enable 4x sampling (ultra-fast).
+pub(crate) const UFENC_ENABLE_4X_SAMPLING: u8 = 0x04;
+
+impl UltraFastEncoderOptions {
+    /// Pack into the options byte sent to the device.
+    pub fn to_byte(self) -> u8 {
+        let mut b = 0u8;
+        if self.invert_direction {
+            b |= UFENC_INVERT_DIRECTION;
+        }
+        if self.signal_mode_direction_clock {
+            b |= UFENC_SIGNAL_MODE;
+        }
+        if self.enable_4x_sampling {
+            b |= UFENC_ENABLE_4X_SAMPLING;
+        }
+        b
+    }
+
+    /// Decode from a device-reported options byte.
+    pub fn from_byte(byte: u8) -> Self {
+        Self {
+            invert_direction: (byte & UFENC_INVERT_DIRECTION) != 0,
+            signal_mode_direction_clock: (byte & UFENC_SIGNAL_MODE) != 0,
+            enable_4x_sampling: (byte & UFENC_ENABLE_4X_SAMPLING) != 0,
+        }
+    }
+}
+
 /// Encoder data structure containing all encoder state and configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncoderData {
@@ -831,22 +992,35 @@ impl PoKeysDevice {
         Ok(options)
     }
 
-    /// Configure fast encoders
-    /// Protocol: 0xCE - Enable/disable fast encoders on pins 1-2, 3-4/5-6 and 15-16
-    /// Configuration 1: pins 1-2 as encoder 1, pins 3-4 as encoder 2, pins 15-16 as encoder 3
-    /// Configuration 2: pins 1-2 as encoder 1, pins 5-6 as encoder 2, pins 15-16 as encoder 3
-    pub fn configure_fast_encoders(&mut self, options: u8, enable_index: bool) -> Result<()> {
-        self.fast_encoders_options = options;
+    /// Configure the fast encoders via protocol command `0xCE`.
+    ///
+    /// `0xCE` uses two bytes: the **configuration selector** (which pin
+    /// configuration / enable state to use) and the **options byte**
+    /// (per-encoder direction invert + 4x-sampling control). They are passed
+    /// as typed values so callers don't have to know the bit layout.
+    ///
+    /// Per PoKeysLib C reference (`PoKeysLibEncoders.c:154`):
+    /// `req[2] = FastEncodersConfiguration`, `req[3] = FastEncodersOptions`.
+    pub fn configure_fast_encoders(
+        &mut self,
+        config: FastEncoderConfiguration,
+        options: FastEncoderOptions,
+    ) -> Result<()> {
+        let config_byte = config.to_byte();
+        let options_byte = options.to_byte();
+
+        self.fast_encoders_configuration = config_byte;
+        self.fast_encoders_options = options_byte;
 
         let response = self.send_request(
-            0xCE,                             // Command: Enable/disable fast encoders
-            options,                          // Options byte with encoder configuration
-            if enable_index { 1 } else { 0 }, // Enable index signal
-            0,                                // Reserved
-            0,                                // Reserved
+            0xCE,         // Command: Enable/disable fast encoders
+            config_byte,  // param1: FastEncodersConfiguration
+            options_byte, // param2: FastEncodersOptions
+            0,            // param3: reserved
+            0,            // param4: reserved
         )?;
 
-        // Response spec: byte 3 is status (0-based index 2).
+        // Response byte 3 (0-based index 2) is status.
         if response.len() > 2 {
             let status = response[2];
             if status != 0 {
@@ -872,55 +1046,47 @@ impl PoKeysDevice {
         Ok(fast_values)
     }
 
-    /// Configure ultra-fast encoder (PoKeys56E only)
-    /// Protocol: 0x1C - Enable/disable ultra fast encoder
-    /// Pins: Pin 8 (Phase A), Pin 12 (Phase B), Pin 13 (Index)
+    /// Configure the ultra-fast encoder via protocol command `0x1C`
+    /// (PoKeys56E and later).
+    ///
+    /// The ultra-fast encoder uses fixed pins: Pin 8 (Phase A), Pin 12 (Phase B),
+    /// Pin 13 (Index).
+    ///
+    /// Bit layout of the options byte matches PoKeysLib C reference
+    /// (`ePK_UltraFastEncoderOptions`): bit 0 = invert direction, bit 1 = signal
+    /// mode, bit 2 = enable 4x sampling. See [`UltraFastEncoderOptions`].
     pub fn configure_ultra_fast_encoder(
         &mut self,
         enable: bool,
-        enable_4x_sampling: bool,
-        signal_mode_direction_clock: bool,
-        invert_direction: bool,
+        options: UltraFastEncoderOptions,
         reset_on_index: bool,
         filter_delay: u32,
     ) -> Result<()> {
-        // Build options byte
-        let mut options = 0u8;
-        if enable_4x_sampling {
-            options |= 1 << 1; // Enable 4x sampling
-        }
-        if signal_mode_direction_clock {
-            options |= 1 << 2; // Signal mode: A=direction, B=clock
-        }
-        if invert_direction {
-            options |= 1 << 3; // Invert direction
-        }
+        let options_byte = options.to_byte();
 
         self.ultra_fast_encoder_configuration = if enable { 1 } else { 0 };
-        self.ultra_fast_encoder_options = options;
+        self.ultra_fast_encoder_options = options_byte;
         self.ultra_fast_encoder_filter = filter_delay;
 
-        // Prepare request with filter delay in bytes 9-12
-        let mut request = vec![0u8; 64];
-        request[2] = 0x1C; // Command
-        request[3] = if enable { 1 } else { 0 }; // Enable/disable
-        request[4] = options; // Additional options
-        request[5] = if reset_on_index { 1 } else { 0 }; // Reset on index
-        request[6] = 0; // Reserved
-        request[7] = self.get_next_request_id(); // Request ID
-
-        // Pack filter delay as 32-bit little-endian in bytes 9-12
+        // Packet layout per spec / PoKeysLib:
+        //   byte 2 (param1) = enable flag (1 = enable, 0 = disable, 0xFF = read)
+        //   byte 3 (param2) = options byte
+        //   byte 4 (param3) = reset-on-index flag
+        //   byte 5 (param4) = reserved (0)
+        //   bytes 8..12     = filter delay (u32 LE) — placed via `with_data`
         let filter_bytes = filter_delay.to_le_bytes();
-        request[9] = filter_bytes[0];
-        request[10] = filter_bytes[1];
-        request[11] = filter_bytes[2];
-        request[12] = filter_bytes[3];
+        let response = self.send_request_with_data(
+            0x1C,
+            if enable { 1 } else { 0 },
+            options_byte,
+            if reset_on_index { 1 } else { 0 },
+            0,
+            &filter_bytes,
+        )?;
 
-        let response = self.send_raw_request(&request)?;
-
-        // Check response status
-        if response.len() > 3 {
-            let status = response[3];
+        // Response byte 3 (0-based index 2) is status.
+        if response.len() > 2 {
+            let status = response[2];
             if status != 0 {
                 return Err(PoKeysError::Protocol(format!(
                     "Ultra-fast encoder configuration failed: status {}",
@@ -932,24 +1098,25 @@ impl PoKeysDevice {
         Ok(())
     }
 
-    /// Read ultra-fast encoder configuration
-    /// Protocol: 0x1C with enable = 0xFF to read configuration
-    pub fn read_ultra_fast_encoder_config(&mut self) -> Result<(bool, u8, u32)> {
-        let mut request = vec![0u8; 64];
-        request[2] = 0x1C; // Command
-        request[3] = 0xFF; // Read configuration
-        request[7] = self.get_next_request_id(); // Request ID
+    /// Read the ultra-fast encoder's current configuration.
+    ///
+    /// Protocol: `0x1C` with `param1 = 0xFF` to request a read. Returns the
+    /// enable flag, decoded [`UltraFastEncoderOptions`], and the filter delay
+    /// (u32 LE at response bytes 8..12).
+    pub fn read_ultra_fast_encoder_config(
+        &mut self,
+    ) -> Result<(bool, UltraFastEncoderOptions, u32)> {
+        let response = self.send_request(0x1C, 0xFF, 0, 0, 0)?;
 
-        let response = self.send_raw_request(&request)?;
-
-        if response.len() < 13 {
+        if response.len() < 12 {
             return Err(PoKeysError::Protocol("Invalid response length".to_string()));
         }
 
-        let enabled = response[3] != 0;
-        let options = response[4];
+        // Spec: byte 3 (index 2) = enable flag echo, byte 4 (index 3) = options.
+        let enabled = response[2] != 0;
+        let options = UltraFastEncoderOptions::from_byte(response[3]);
         let filter_delay =
-            u32::from_le_bytes([response[9], response[10], response[11], response[12]]);
+            u32::from_le_bytes([response[8], response[9], response[10], response[11]]);
 
         Ok((enabled, options, filter_delay))
     }
@@ -1179,5 +1346,157 @@ mod tests {
         assert_eq!(MAX_ENCODERS, 25);
         assert_eq!(MAX_FAST_ENCODERS, 3);
         assert_eq!(ULTRA_FAST_ENCODER_INDEX, 25);
+    }
+
+    // ---- Fast encoder (0xCE) bit-layout tests ----------------------------
+    //
+    // These bit positions are authoritative per the PoLabs PoKeysLib C
+    // reference (`ePK_FastEncoderOptions` in LinuxCnc_PokeysLibComp/
+    // pokeys_uspace/PoKeysComp.h, also matching PoLabsEE/PoKeysLib usage).
+
+    #[test]
+    fn test_fast_encoder_configuration_to_byte() {
+        assert_eq!(FastEncoderConfiguration::Disabled.to_byte(), 0x00);
+        assert_eq!(FastEncoderConfiguration::Config1.to_byte(), 0x01);
+        assert_eq!(FastEncoderConfiguration::Config2.to_byte(), 0x10);
+    }
+
+    #[test]
+    fn test_fast_encoder_configuration_round_trip() {
+        for cfg in [
+            FastEncoderConfiguration::Disabled,
+            FastEncoderConfiguration::Config1,
+            FastEncoderConfiguration::Config2,
+        ] {
+            assert_eq!(FastEncoderConfiguration::from_byte(cfg.to_byte()), cfg);
+        }
+    }
+
+    #[test]
+    fn test_fast_encoder_options_bit_masks() {
+        // Each flag alone must land on the exact bit the firmware expects.
+        assert_eq!(
+            FastEncoderOptions {
+                disable_4x_sampling: true,
+                ..Default::default()
+            }
+            .to_byte(),
+            0x10
+        );
+        assert_eq!(
+            FastEncoderOptions {
+                invert_direction_1: true,
+                ..Default::default()
+            }
+            .to_byte(),
+            0x20
+        );
+        assert_eq!(
+            FastEncoderOptions {
+                invert_direction_2: true,
+                ..Default::default()
+            }
+            .to_byte(),
+            0x40
+        );
+        assert_eq!(
+            FastEncoderOptions {
+                invert_direction_3: true,
+                ..Default::default()
+            }
+            .to_byte(),
+            0x80
+        );
+    }
+
+    #[test]
+    fn test_fast_encoder_options_combined() {
+        // All four flags set → 0x10 | 0x20 | 0x40 | 0x80 = 0xF0.
+        let all = FastEncoderOptions {
+            disable_4x_sampling: true,
+            invert_direction_1: true,
+            invert_direction_2: true,
+            invert_direction_3: true,
+        };
+        assert_eq!(all.to_byte(), 0xF0);
+    }
+
+    #[test]
+    fn test_fast_encoder_options_round_trip() {
+        let o = FastEncoderOptions {
+            disable_4x_sampling: false,
+            invert_direction_1: true,
+            invert_direction_2: false,
+            invert_direction_3: true,
+        };
+        assert_eq!(FastEncoderOptions::from_byte(o.to_byte()), o);
+    }
+
+    #[test]
+    fn test_fast_encoder_options_ignores_reserved_low_nibble() {
+        // Low nibble must not leak into any field.
+        let decoded = FastEncoderOptions::from_byte(0x0F);
+        assert_eq!(decoded, FastEncoderOptions::default());
+    }
+
+    // ---- Ultra-fast encoder (0x1C) bit-layout tests ---------------------
+    //
+    // Per `ePK_UltraFastEncoderOptions`: bit 0 = invert direction,
+    // bit 1 = signal mode, bit 2 = enable 4x sampling.
+
+    #[test]
+    fn test_ultra_fast_encoder_options_bit_masks() {
+        assert_eq!(
+            UltraFastEncoderOptions {
+                invert_direction: true,
+                ..Default::default()
+            }
+            .to_byte(),
+            0x01
+        );
+        assert_eq!(
+            UltraFastEncoderOptions {
+                signal_mode_direction_clock: true,
+                ..Default::default()
+            }
+            .to_byte(),
+            0x02
+        );
+        assert_eq!(
+            UltraFastEncoderOptions {
+                enable_4x_sampling: true,
+                ..Default::default()
+            }
+            .to_byte(),
+            0x04
+        );
+    }
+
+    #[test]
+    fn test_ultra_fast_encoder_options_combined() {
+        // invert + signal mode + 4x sampling → 0x07.
+        let all = UltraFastEncoderOptions {
+            invert_direction: true,
+            signal_mode_direction_clock: true,
+            enable_4x_sampling: true,
+        };
+        assert_eq!(all.to_byte(), 0x07);
+    }
+
+    #[test]
+    fn test_ultra_fast_encoder_options_round_trip() {
+        let o = UltraFastEncoderOptions {
+            invert_direction: true,
+            signal_mode_direction_clock: false,
+            enable_4x_sampling: true,
+        };
+        assert_eq!(UltraFastEncoderOptions::from_byte(o.to_byte()), o);
+    }
+
+    #[test]
+    fn test_ultra_fast_encoder_options_ignores_reserved_high_bits() {
+        // Bits 3-7 are reserved; must not leak into any field.
+        let decoded = UltraFastEncoderOptions::from_byte(0xF8);
+        assert_eq!(decoded, UltraFastEncoderOptions::default());
     }
 }

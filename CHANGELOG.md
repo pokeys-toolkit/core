@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.21.9] - 2026-04-27
+
+### Breaking changes (previously-broken APIs corrected)
+
+- `configure_fast_encoders(options: u8, enable_index: bool)` → `configure_fast_encoders(config: FastEncoderConfiguration, options: FastEncoderOptions)`. The old signature sent the wrong bytes: the user's composite options byte went to the `FastEncodersConfiguration` slot and a fictional `enable_index` flag went to the `FastEncodersOptions` slot. Command `0xCE` has no `enable_index` field. Fast-encoder configuration has not been working correctly for any caller of this function.
+- `configure_ultra_fast_encoder(enable, enable_4x_sampling, signal_mode_direction_clock, invert_direction, reset_on_index, filter_delay)` → `configure_ultra_fast_encoder(enable, options: UltraFastEncoderOptions, reset_on_index, filter_delay)`. The old implementation packed options into the wrong bits (bit 1/2/3 instead of 0/1/2) and hand-rolled a request buffer that double-shifted the command byte. Direction invert has never actually worked on the ultra-fast encoder.
+- `read_ultra_fast_encoder_config() -> Result<(bool, u8, u32)>` → `Result<(bool, UltraFastEncoderOptions, u32)>`. Also now uses the library's standard request path instead of a hand-rolled buffer.
+
+### New types
+
+- `FastEncoderConfiguration` — typed selector for the two fast-encoder pin layouts (`Config1` = 0x01, `Config2` = 0x10, `Disabled` = 0x00).
+- `FastEncoderOptions` — typed per-encoder direction-invert + sampling-mode flags for command `0xCE`. Bit masks match PoLabs' PoKeysLib C reference (`ePK_FastEncoderOptions`): disable_4x = 0x10, invert_1 = 0x20, invert_2 = 0x40, invert_3 = 0x80.
+- `UltraFastEncoderOptions` — typed flags for command `0x1C`. Bit masks match PoKeysLib (`ePK_UltraFastEncoderOptions`): invert_direction = 0x01, signal_mode = 0x02, enable_4x = 0x04.
+
 ## [0.21.8] - 2026-04-27
 
 - feat(io): support hardware invert bit on digital pin functions (#23)
