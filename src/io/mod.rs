@@ -7,24 +7,71 @@ use serde::{Deserialize, Serialize};
 
 mod private;
 
-/// Pin function configuration
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum PinFunction {
-    PinRestricted = 0,
-    Reserved = 1,
-    DigitalInput = 2,
-    DigitalOutput = 4,
-    AnalogInput = 8,
-    AnalogOutput = 16,
-    TriggeredInput = 32,
-    DigitalCounter = 64,
-    InvertPin = 128,
+use private::INVERT_PIN_BIT;
+
+// PoKeys pin-function identifier (defined in a tiny private module so the
+// `#[allow(deprecated)]` scope covers the derive-macro expansions, which
+// otherwise flag every variant reference inside the generated Debug /
+// PartialEq / Serialize / Deserialize code).
+#[allow(deprecated)]
+mod pin_function {
+    use serde::{Deserialize, Serialize};
+
+    /// PoKeys pin-function identifier.
+    ///
+    /// The wire-level "pin settings" byte (byte 4 of protocol command
+    /// `0x10`) is a bitfield: the low 7 bits carry the base function and
+    /// bit 7 (`0x80`, [`PinFunction::InvertPin`]) composes with any
+    /// digital function to request firmware-level polarity inversion.
+    /// This enum models the base function only. To apply the invert flag,
+    /// use [`crate::PoKeysDevice::set_pin_function_with_invert`] — passing
+    /// `PinFunction::InvertPin` directly to
+    /// [`crate::PoKeysDevice::set_pin_function`] is not meaningful and is
+    /// kept only for backward compatibility.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+    pub enum PinFunction {
+        PinRestricted = 0,
+        Reserved = 1,
+        DigitalInput = 2,
+        DigitalOutput = 4,
+        AnalogInput = 8,
+        AnalogOutput = 16,
+        TriggeredInput = 32,
+        DigitalCounter = 64,
+        #[deprecated(
+            since = "0.23.0",
+            note = "Use PoKeysDevice::set_pin_function_with_invert to apply the invert flag; the variant is a protocol bit, not a standalone pin function."
+        )]
+        InvertPin = 128,
+    }
+}
+
+pub use pin_function::PinFunction;
+
+/// Decode a cached pin-settings byte into a `PinFunction`, ignoring bit 7
+/// (the invert flag). Unknown bit patterns decode to `PinRestricted`.
+///
+/// Split out from [`PoKeysDevice::get_pin_function`] so the mapping can be
+/// unit-tested and reused by [`PinData::base_function`].
+pub(crate) fn decode_pin_function_from_cache(byte: u8) -> PinFunction {
+    match byte & 0x7F {
+        0 => PinFunction::PinRestricted,
+        1 => PinFunction::Reserved,
+        2 => PinFunction::DigitalInput,
+        4 => PinFunction::DigitalOutput,
+        8 => PinFunction::AnalogInput,
+        16 => PinFunction::AnalogOutput,
+        32 => PinFunction::TriggeredInput,
+        64 => PinFunction::DigitalCounter,
+        _ => PinFunction::PinRestricted,
+    }
 }
 
 impl PinFunction {
     /// Convert u8 value to PinFunction enum
     /// Note: PoKeys uses bit flags for pin functions
     pub fn from_u8(value: u8) -> Result<Self> {
+        #[allow(deprecated)]
         match value {
             0 => Ok(PinFunction::PinRestricted),
             1 => Ok(PinFunction::Reserved),
@@ -140,6 +187,18 @@ impl PinData {
     pub fn is_digital_counter(&self) -> bool {
         (self.pin_function & PinFunction::DigitalCounter as u8) != 0
     }
+
+    /// True if bit 7 (the hardware invert flag) is set on this pin's
+    /// cached function byte.
+    pub fn is_inverted(&self) -> bool {
+        (self.pin_function & INVERT_PIN_BIT) != 0
+    }
+
+    /// Decode the base pin function from the cached byte, ignoring the
+    /// invert bit. Pair with [`Self::is_inverted`] for the full picture.
+    pub fn base_function(&self) -> PinFunction {
+        decode_pin_function_from_cache(self.pin_function)
+    }
 }
 
 impl Default for PinData {
@@ -149,41 +208,67 @@ impl Default for PinData {
 }
 
 impl PoKeysDevice {
-    /// Set pin function
+    /// Set a pin's function (non-inverted polarity).
+    ///
+    /// Thin wrapper over [`Self::set_pin_function_with_invert`] with
+    /// `inverted = false`; byte-identical on the wire to the pre-invert
+    /// behaviour for every existing caller.
     pub fn set_pin_function(
         &mut self,
         pin: u32,
         pin_function: PinFunction,
     ) -> Result<(u32, PinFunction)> {
-        match self.write_pin_function(pin, pin_function) {
-            Ok((pin, pin_function)) => Ok((pin, pin_function)),
-            Err(e) => Err(e),
-        }
+        self.set_pin_function_with_invert(pin, pin_function, false)
     }
 
-    /// Get pin function
+    /// Set a pin's function with an optional hardware invert flag.
+    ///
+    /// When `inverted == true`, bit 7 (`0x80`) of protocol byte 4 is set,
+    /// producing a combined wire byte such as `0x82` for inverted
+    /// `DigitalInput`. The firmware then reports/drives the logical
+    /// complement of the electrical state at no CPU cost to the caller.
+    ///
+    /// Pin functions that honor the invert bit:
+    /// - [`PinFunction::DigitalInput`]
+    /// - [`PinFunction::DigitalOutput`]
+    /// - [`PinFunction::TriggeredInput`]
+    ///
+    /// Pin functions that ignore the invert bit (firmware silently drops it):
+    /// - [`PinFunction::AnalogInput`], [`PinFunction::AnalogOutput`]
+    /// - [`PinFunction::DigitalCounter`]
+    /// - [`PinFunction::PinRestricted`], [`PinFunction::Reserved`]
+    ///
+    /// For functions that ignore the flag, this method logs a warning via the
+    /// `log` crate and still sends the byte as requested. Use
+    /// [`Self::get_pin_invert`] to read the invert state back from the cache.
+    pub fn set_pin_function_with_invert(
+        &mut self,
+        pin: u32,
+        pin_function: PinFunction,
+        inverted: bool,
+    ) -> Result<(u32, PinFunction)> {
+        self.write_pin_function(pin, pin_function, inverted)
+    }
+
+    /// Get pin function (base function only; the invert bit is ignored).
+    ///
+    /// To read the invert flag, use [`Self::get_pin_invert`].
     pub fn get_pin_function(&self, pin: u32) -> Result<PinFunction> {
-        match self.check_pin_range(pin) {
-            Ok(pin_index) => {
-                let function_value = self.pins[pin_index].pin_function;
+        let pin_index = self.check_pin_range(pin)?;
+        Ok(decode_pin_function_from_cache(
+            self.pins[pin_index].pin_function,
+        ))
+    }
 
-                // Convert back to enum (simplified)
-                match function_value {
-                    0 => Ok(PinFunction::PinRestricted),
-                    1 => Ok(PinFunction::Reserved),
-                    2 => Ok(PinFunction::DigitalInput),
-                    4 => Ok(PinFunction::DigitalOutput),
-                    8 => Ok(PinFunction::AnalogInput),
-                    16 => Ok(PinFunction::AnalogOutput),
-                    32 => Ok(PinFunction::TriggeredInput),
-                    64 => Ok(PinFunction::DigitalCounter),
-                    128 => Ok(PinFunction::InvertPin),
-                    _ => Ok(PinFunction::PinRestricted), // Default for combined flags
-                }
-            }
-
-            Err(e) => Err(e),
-        }
+    /// Return whether bit 7 (the hardware invert flag) is set on the pin's
+    /// cached configuration byte.
+    ///
+    /// Reflects the most recently written or read-back wire byte; call
+    /// [`Self::read_all_pin_functions`] first if you want the device's
+    /// current state rather than the local cache.
+    pub fn get_pin_invert(&self, pin: u32) -> Result<bool> {
+        let pin_index = self.check_pin_range(pin)?;
+        Ok((self.pins[pin_index].pin_function & INVERT_PIN_BIT) != 0)
     }
 
     /// Read digital input
@@ -454,9 +539,68 @@ impl PoKeysDevice {
             0, // request ID will be set by send_request
         )?;
 
+        let raw = parse_bulk_pin_settings_response(&response)?;
+
+        // Decode to the public `[PinFunction; 55]` view (invert bit dropped).
+        let mut functions = [PinFunction::PinRestricted; 55];
+        for i in 0..55 {
+            functions[i] = PinFunction::from_u8(raw[i])?;
+        }
+
+        // Update local pin cache with the full wire byte so bit 7 (invert)
+        // is preserved; the returned `[PinFunction; 55]` still carries only
+        // the base function, matching the existing public contract.
+        for i in 0..55 {
+            if i < self.pins.len() {
+                self.pins[i].pin_function = raw[i];
+            }
+        }
+
+        Ok(functions)
+    }
+
+    /// Read all 55 pin-setting bytes verbatim, including the invert bit
+    /// (`0x80`) when set. Unlike [`Self::read_all_pin_functions`], this
+    /// preserves the full protocol byte so callers can reason about
+    /// hardware-level polarity inversion.
+    ///
+    /// Also refreshes the local pin cache with the returned bytes.
+    pub fn read_all_pin_settings_raw(&mut self) -> Result<[u8; 55]> {
+        use crate::io::private::Command;
+
+        let response = self.send_request(Command::InputOutputExtended as u8, 0, 0, 0, 0)?;
+        let raw = parse_bulk_pin_settings_response(&response)?;
+
+        for i in 0..55 {
+            if i < self.pins.len() {
+                self.pins[i].pin_function = raw[i];
+            }
+        }
+
+        Ok(raw)
+    }
+
+    /// Send all 55 pin-setting bytes verbatim using the bulk `0xC0` command.
+    /// Callers compose each byte themselves — e.g.
+    /// `(PinFunction::DigitalInput as u8) | 0x80` for an inverted digital
+    /// input.
+    ///
+    /// The local pin cache is updated to match the bytes sent.
+    pub fn set_all_pin_settings_raw(&mut self, raw: &[u8; 55]) -> Result<()> {
+        use crate::io::private::Command;
+
+        let response = self.send_request_with_data(
+            Command::InputOutputExtended as u8,
+            1, // option1: 1 = set all pin functions
+            0, // option2: 0 = pin functions (not additional settings)
+            0,
+            0,
+            raw,
+        )?;
+
         if response.len() < 64 {
             return Err(PoKeysError::Protocol(
-                "Response too short for bulk pin read".to_string(),
+                "Response too short for bulk pin write".to_string(),
             ));
         }
 
@@ -466,22 +610,13 @@ impl PoKeysDevice {
             ));
         }
 
-        // Parse pin functions from bytes 8-62 (55 bytes)
-        // Note: PoKeys response format has data starting at byte 8
-        let mut functions = [PinFunction::PinRestricted; 55];
         for i in 0..55 {
-            let function_value = response[8 + i];
-            functions[i] = PinFunction::from_u8(function_value)?;
-        }
-
-        // Update local pin cache
-        for (i, &function) in functions.iter().enumerate() {
             if i < self.pins.len() {
-                self.pins[i].pin_function = function as u8;
+                self.pins[i].pin_function = raw[i];
             }
         }
 
-        Ok(functions)
+        Ok(())
     }
 
     /// Set all pin functions at once using extended mode (0xC0)
@@ -551,6 +686,30 @@ fn encode_analog_output_10bit(value: u32) -> (u8, u8) {
     let msb = ((v >> 2) & 0xFF) as u8;
     let lsb = ((v & 0x03) << 6) as u8;
     (msb, lsb)
+}
+
+/// Validate a bulk `0xC0` pin-settings response and extract the 55 setting
+/// bytes starting at offset 8. Shared by [`PoKeysDevice::read_all_pin_functions`]
+/// and [`PoKeysDevice::read_all_pin_settings_raw`] so the parsing can be
+/// unit-tested without a live device.
+pub(crate) fn parse_bulk_pin_settings_response(response: &[u8]) -> Result<[u8; 55]> {
+    use crate::io::private::Command;
+
+    if response.len() < 64 {
+        return Err(PoKeysError::Protocol(
+            "Response too short for bulk pin read".to_string(),
+        ));
+    }
+
+    if response[1] != Command::InputOutputExtended as u8 {
+        return Err(PoKeysError::Protocol(
+            "Invalid response command".to_string(),
+        ));
+    }
+
+    let mut raw = [0u8; 55];
+    raw.copy_from_slice(&response[8..8 + 55]);
+    Ok(raw)
 }
 
 /// Apply a `0xCC` ("Get device status") response to the caller-owned pin and
@@ -684,5 +843,130 @@ mod tests {
         assert_eq!(encoders[0].encoder_value, -1);
         assert_eq!(encoders[1].encoder_value, 5);
         assert_eq!(encoders[2].encoder_value, 0);
+    }
+
+    #[test]
+    fn test_compose_pin_function_byte() {
+        use crate::io::private::compose_pin_function_byte;
+
+        // Non-inverted: exactly the enum discriminant.
+        assert_eq!(
+            compose_pin_function_byte(PinFunction::DigitalInput, false),
+            0x02
+        );
+        assert_eq!(
+            compose_pin_function_byte(PinFunction::DigitalOutput, false),
+            0x04
+        );
+        assert_eq!(
+            compose_pin_function_byte(PinFunction::TriggeredInput, false),
+            0x20
+        );
+
+        // Inverted: bit 7 set, base function preserved.
+        assert_eq!(
+            compose_pin_function_byte(PinFunction::DigitalInput, true),
+            0x82
+        );
+        assert_eq!(
+            compose_pin_function_byte(PinFunction::DigitalOutput, true),
+            0x84
+        );
+        assert_eq!(
+            compose_pin_function_byte(PinFunction::TriggeredInput, true),
+            0xA0
+        );
+    }
+
+    #[test]
+    fn test_decode_pin_function_from_cache() {
+        // Combined bytes decode to their base function; the invert bit is
+        // ignored by the decoder (caller uses `is_inverted` / `get_pin_invert`
+        // to recover it).
+        assert_eq!(
+            decode_pin_function_from_cache(0x82),
+            PinFunction::DigitalInput
+        );
+        assert_eq!(
+            decode_pin_function_from_cache(0x84),
+            PinFunction::DigitalOutput
+        );
+        assert_eq!(
+            decode_pin_function_from_cache(0xA0),
+            PinFunction::TriggeredInput
+        );
+
+        // Base-only values round-trip.
+        assert_eq!(
+            decode_pin_function_from_cache(0x02),
+            PinFunction::DigitalInput
+        );
+        assert_eq!(
+            decode_pin_function_from_cache(0x00),
+            PinFunction::PinRestricted
+        );
+
+        // `0x80` alone (invert flag with no base function) is not a valid
+        // pin configuration — decode as PinRestricted.
+        assert_eq!(
+            decode_pin_function_from_cache(0x80),
+            PinFunction::PinRestricted
+        );
+    }
+
+    #[test]
+    fn test_pin_data_invert_accessors() {
+        let mut pin_data = PinData::new();
+
+        pin_data.pin_function = 0x82; // DigitalInput | Invert
+        assert!(pin_data.is_inverted());
+        assert_eq!(pin_data.base_function(), PinFunction::DigitalInput);
+        // Existing masked helpers still work on the OR'd byte.
+        assert!(pin_data.is_digital_input());
+        assert!(!pin_data.is_digital_output());
+
+        pin_data.pin_function = 0x02; // DigitalInput, no invert
+        assert!(!pin_data.is_inverted());
+        assert_eq!(pin_data.base_function(), PinFunction::DigitalInput);
+    }
+
+    #[test]
+    fn test_parse_bulk_pin_settings_response_preserves_invert_bit() {
+        use crate::io::private::Command;
+
+        let mut response = [0u8; 64];
+        response[1] = Command::InputOutputExtended as u8;
+        response[8] = 0x82; // pin 1 = DigitalInput | Invert
+        response[9] = 0x04; // pin 2 = DigitalOutput (no invert)
+        response[10] = 0xA0; // pin 3 = TriggeredInput | Invert
+
+        let raw = parse_bulk_pin_settings_response(&response).unwrap();
+        assert_eq!(raw[0], 0x82);
+        assert_eq!(raw[1], 0x04);
+        assert_eq!(raw[2], 0xA0);
+
+        // The typed-view decode in `read_all_pin_functions` drops the invert
+        // bit; verify `from_u8` returns the base function for a combined byte.
+        assert_eq!(
+            PinFunction::from_u8(raw[0]).unwrap(),
+            PinFunction::DigitalInput
+        );
+        assert_eq!(
+            PinFunction::from_u8(raw[2]).unwrap(),
+            PinFunction::TriggeredInput
+        );
+    }
+
+    #[test]
+    fn test_parse_bulk_pin_settings_response_rejects_short() {
+        let short = [0u8; 32];
+        assert!(parse_bulk_pin_settings_response(&short).is_err());
+    }
+
+    #[test]
+    fn test_parse_bulk_pin_settings_response_rejects_wrong_command() {
+        let mut response = [0u8; 64];
+        response[1] = 0x12; // not InputOutputExtended
+        assert!(parse_bulk_pin_settings_response(&response).is_err());
     }
 }
