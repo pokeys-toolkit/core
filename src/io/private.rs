@@ -11,6 +11,18 @@ pub(crate) enum Command {
     InputOutputExtended = 192, // 0xC0 - Bulk pin operations
 }
 
+/// Bit 7 of the "pin settings" byte (`0x10` command, byte 4) is the
+/// firmware-level invert flag. When set, the device reports the logical
+/// complement of the electrical state for inputs and drives the complement
+/// of the configured level for outputs.
+pub(crate) const INVERT_PIN_BIT: u8 = 0x80;
+
+/// Compose the pin-settings wire byte by ORing the base pin function with
+/// the invert flag when requested.
+pub(crate) fn compose_pin_function_byte(f: PinFunction, inverted: bool) -> u8 {
+    (f as u8) | if inverted { INVERT_PIN_BIT } else { 0 }
+}
+
 impl PoKeysDevice {
     pub(crate) fn get_pin_index(&self, pin: u32) -> usize {
         let pin_index: usize = (pin - 1) as usize;
@@ -26,16 +38,25 @@ impl PoKeysDevice {
         }
     }
 
-    /// Send pin configuration to device
+    /// Send pin configuration to device.
+    ///
+    /// When `inverted` is true, bit 7 of the pin-settings byte is set so the
+    /// firmware reports/drives the logical complement of the electrical state.
+    /// Only `DigitalInput`, `DigitalOutput`, and `TriggeredInput` honor the
+    /// flag on real hardware; analog and counter functions ignore it.
     pub(crate) fn write_pin_function(
         &mut self,
         pin: u32,
         pin_function: crate::io::PinFunction,
+        inverted: bool,
     ) -> Result<(u32, PinFunction)> {
         match self.check_pin_range(pin) {
             Ok(pin_index) => {
-                // Check if the pin is the correct function already
-                if self.pins[pin_index].pin_function == pin_function as u8 {
+                let wire_byte = compose_pin_function_byte(pin_function, inverted);
+
+                // Check if the pin is already configured with this exact
+                // byte (including any invert bit) — skip the wire round-trip.
+                if self.pins[pin_index].pin_function == wire_byte {
                     return Ok((pin, pin_function));
                 }
 
@@ -66,6 +87,19 @@ impl PoKeysDevice {
                     ));
                 }
 
+                if inverted {
+                    match pin_function {
+                        PinFunction::DigitalInput
+                        | PinFunction::DigitalOutput
+                        | PinFunction::TriggeredInput => {}
+                        other => log::warn!(
+                            "Pin {}: invert flag has no effect on {:?}; firmware will ignore bit 7",
+                            pin,
+                            other
+                        ),
+                    }
+                }
+
                 // 0x10 is unambiguous even for pin_index=0 because byte 4
                 // (pin_settings) is always non-zero for a real function write.
                 // The bulk-read form has all bytes zero; the firmware dispatches
@@ -73,7 +107,7 @@ impl PoKeysDevice {
                 let res = self.send_request(
                     Command::SetInputOutput as u8,
                     pin_index as u8,
-                    pin_function as u8,
+                    wire_byte,
                     self.pins[pin_index].counter_options,
                     0,
                 )?;
@@ -83,7 +117,7 @@ impl PoKeysDevice {
                         "Invalid pin or configuration locked".to_string(),
                     ))
                 } else {
-                    self.pins[pin_index].pin_function = pin_function as u8;
+                    self.pins[pin_index].pin_function = wire_byte;
                     Ok((pin, pin_function))
                 }
             }

@@ -66,7 +66,10 @@ mod unit_tests {
 
     #[test]
     fn test_pin_functions() {
-        // Test all pin function variants exist
+        // Test all pin function variants exist. `InvertPin` is deprecated in
+        // favor of `set_pin_function_with_invert`, but we still want to
+        // verify every declared variant constructs.
+        #[allow(deprecated)]
         let _functions = [
             PinFunction::PinRestricted,
             PinFunction::Reserved,
@@ -82,6 +85,38 @@ mod unit_tests {
         // Ensure they can be compared
         assert_ne!(PinFunction::DigitalInput, PinFunction::DigitalOutput);
         assert_eq!(PinFunction::DigitalInput, PinFunction::DigitalInput);
+    }
+
+    #[test]
+    fn test_from_u8_combined_invert_byte() {
+        // Combined bytes (base function | invert flag) decode to the base
+        // function. The invert bit cannot be expressed through `PinFunction`;
+        // callers recover it via `get_pin_invert` / `PinData::is_inverted`.
+        assert_eq!(
+            PinFunction::from_u8(0x82).unwrap(),
+            PinFunction::DigitalInput
+        );
+        assert_eq!(
+            PinFunction::from_u8(0x84).unwrap(),
+            PinFunction::DigitalOutput
+        );
+        assert_eq!(
+            PinFunction::from_u8(0xA0).unwrap(),
+            PinFunction::TriggeredInput
+        );
+    }
+
+    #[test]
+    fn test_pin_data_invert_accessors_public() {
+        let mut pin_data = PinData::new();
+        pin_data.pin_function = 0x82; // DigitalInput | Invert
+        assert!(pin_data.is_inverted());
+        assert_eq!(pin_data.base_function(), PinFunction::DigitalInput);
+        assert!(pin_data.is_digital_input());
+
+        pin_data.pin_function = 0x02;
+        assert!(!pin_data.is_inverted());
+        assert_eq!(pin_data.base_function(), PinFunction::DigitalInput);
     }
 
     #[test]
