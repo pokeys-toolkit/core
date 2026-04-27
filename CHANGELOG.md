@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.21.8] - 2026-04-27
+
+- feat(io): support hardware invert bit on digital pin functions (#23)
+- fix(io): return actual pin state from get_digital_input (#22)
+- fix(protocol): align I/O command bytes and response parsing with spec v14.3.2025 (#21)
+- fix(io): use 0x10 uniformly for all pins; revert erroneous 0xC0 workaround (#20)
+
+Note: supersedes the v0.22.x / v0.23.0 tags created by the automated release
+workflow, which were never published to crates.io or as GitHub Releases.
+
 ## [0.23.0] - 2026-04-27
 
 - feat(io): support hardware invert bit on digital pin functions (#23)
