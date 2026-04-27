@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2026-04-27
+
+### Documentation and dependency maintenance (no library changes)
+
+- chore(docs): upgrade Astro 5.13.2 → 6.1.6 and migrate from Tailwind 3 (`@astrojs/tailwind`) to Tailwind 4 (`@tailwindcss/vite`). Regenerates `docs/package-lock.json`, closing 43 open Dependabot alerts (14 high / 20 medium / 9 low).
+- chore(ci): bump docs workflow (`.github/workflows/docs.yml`) to Node 22 (required by Astro 6).
+- chore(deps): add `.github/dependabot.yml` for grouped weekly cargo / npm / github-actions PRs.
+
+No Rust source changes. Crate functionality and public API are identical to 1.0.0.
+
 ## [1.0.0] - 2026-04-27
 
 - feat!(encoders): fix wire format + add typed options for fast and ultra-fast encoders (#24)

@@ -1,0 +1,54 @@
+version: 2
+updates:
+  # Rust crate (currently zero alerts, but keep it monitored).
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      rust-dependencies:
+        patterns:
+          - "*"
+
+  # Docs site npm deps.
+  - package-ecosystem: npm
+    directory: /docs
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      astro:
+        patterns:
+          - "astro"
+          - "@astrojs/*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react*"
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+      build-tooling:
+        patterns:
+          - "vite"
+          - "rollup"
+          - "postcss"
+          - "picomatch"
+          - "minimatch"
+          - "glob"
+      other:
+        patterns:
+          - "*"
+
+  # GitHub Actions (currently pinned to v4; worth monitoring).
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
