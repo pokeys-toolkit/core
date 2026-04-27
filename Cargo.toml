@@ -1,6 +1,6 @@
 [package]
 name = "pokeys-lib"
-version = "0.21.9"
+version = "1.0.0"
 edition = "2024"
 authors = ["marc@teichtahl.com"]
 description = "Pure Rust core library for PoKeys device control - USB/Network connectivity, I/O, PWM, encoders, SPI/I2C protocols"

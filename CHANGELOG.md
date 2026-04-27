@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] - 2026-04-27
+
+- feat!(encoders): fix wire format + add typed options for fast and ultra-fast encoders (#24)
+
 ## [0.21.9] - 2026-04-27
 
 ### Breaking changes (previously-broken APIs corrected)
