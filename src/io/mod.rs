@@ -197,7 +197,7 @@ impl PoKeysDevice {
 
         let pin_index = (pin - 1) as usize;
         self.pins[pin_index].digital_value_get = res;
-        Ok(true)
+        Ok(res != 0)
     }
 
     /// Set digital output
