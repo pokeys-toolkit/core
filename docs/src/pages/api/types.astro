@@ -318,17 +318,35 @@ pub enum ServoType {`{`}
 						</div>
 
 						<div class="bg-gray-800 rounded-lg p-6">
-							<h3 class="text-xl font-semibold mb-4 text-slate-400">EncoderOptions</h3>
+							<h3 class="text-xl font-semibold mb-4 text-slate-400">EncoderOptions / FastEncoderOptions / UltraFastEncoderOptions</h3>
 							<div class="bg-gray-900 rounded p-4">
-								<pre class="text-gray-300"><code>pub struct EncoderOptions {`{`}
-    pub sampling_mode: SamplingMode,
-    pub enable_index: bool,
-    pub invert_direction: bool,
+								<pre class="text-gray-300"><code>// Normal (per-encoder) options — protocol 0x11.
+pub struct EncoderOptions {`{`}
+    pub enabled: bool,
+    pub sampling_4x: bool,
+    pub sampling_2x: bool,
+    pub direct_key_mapping_a: bool,
+    pub macro_mapping_a: bool,
+    pub direct_key_mapping_b: bool,
+    pub macro_mapping_b: bool,
 {`}`}
 
-pub enum SamplingMode {`{`}
-    FourX,
-    TwoX,
+// Fast encoders (1-3) — protocol 0xCE.
+pub enum FastEncoderConfiguration {`{`}
+    Disabled, Config1, Config2,
+{`}`}
+pub struct FastEncoderOptions {`{`}
+    pub disable_4x_sampling: bool,
+    pub invert_direction_1:  bool,
+    pub invert_direction_2:  bool,
+    pub invert_direction_3:  bool,
+{`}`}
+
+// Ultra-fast encoder — protocol 0x1C.
+pub struct UltraFastEncoderOptions {`{`}
+    pub invert_direction:            bool,
+    pub signal_mode_direction_clock: bool,
+    pub enable_4x_sampling:          bool,
 {`}`}</code></pre>
 							</div>
 						</div>
@@ -359,12 +377,14 @@ let retry_config = RetryConfig {`{`}
 // Configure servo
 let servo = ServoConfig::one_eighty(22, 25000, 50000);
 
-// Configure encoder
-let encoder_opts = EncoderOptions {`{`}
-    sampling_mode: SamplingMode::FourX,
-    enable_index: false,
-    invert_direction: false,
-{`}`};</code></pre>
+// Configure a normal encoder with 4x sampling.
+let encoder_opts = EncoderOptions::with_4x_sampling();
+
+// Configure fast encoders (pins 1-2, 5-6, 15-16) with encoder 1 inverted.
+device.configure_fast_encoders(
+    FastEncoderConfiguration::Config2,
+    FastEncoderOptions {`{`} invert_direction_1: true, ..Default::default() {`}`},
+)?;</code></pre>
 							</div>
 						</div>
 					</section>
