@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.23.0] - 2026-04-27
+
+- feat(io): support hardware invert bit on digital pin functions (#23)
+
 ## [0.22.3] - 2026-04-27
 
 - fix(io): return actual pin state from get_digital_input (#22)
