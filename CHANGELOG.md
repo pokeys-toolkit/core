@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.22.3] - 2026-04-27
+
+- fix(io): return actual pin state from get_digital_input (#22)
+
 ## [0.22.2] - 2026-04-26
 
 - fix(protocol): align I/O command bytes and response parsing with spec v14.3.2025 (#21)
