@@ -405,7 +405,7 @@ impl PoKeysDevice {
         encoder.channel_b_pin = protocol_pin_b; // Store 0-based internally
         encoder.set_options(options);
 
-        log::info!(
+        log::debug!(
             "Configuring encoder {} with pins A={}, B={} (1-based: A={}, B={}), options={:08b} using protocol 0x11",
             encoder_id,
             protocol_pin_a,
@@ -425,14 +425,14 @@ impl PoKeysDevice {
             protocol_pin_b,    // Channel B input pin (0-based)
         )?;
 
-        log::info!("Encoder configuration response: {:?}", &response[0..8]);
+        log::debug!("Encoder configuration response: {:?}", &response[0..8]);
 
         // Check response status per spec: byte 3 (index 2) = 0 = OK, 1 = encoder ID out of range or configuration locked
         if response.len() > 2 {
             match response[2] {
                 // Status is at index 2 (spec byte 3)
                 0 => {
-                    log::info!("Encoder {} configuration successful", encoder_id);
+                    log::debug!("Encoder {} configuration successful", encoder_id);
                 }
                 1 => {
                     return Err(PoKeysError::Protocol(format!(
@@ -461,7 +461,7 @@ impl PoKeysDevice {
             )));
         }
 
-        log::info!(
+        log::debug!(
             "Reading encoder {} settings using protocol 0x16",
             encoder_id
         );
@@ -476,7 +476,7 @@ impl PoKeysDevice {
             0,          // Reserved
         )?;
 
-        log::info!("Read encoder settings response: {:?}", &response[0..8]);
+        log::debug!("Read encoder settings response: {:?}", &response[0..8]);
 
         // Parse response per spec, accounting for header byte:
         // Index 0: header (0xAA), Index 1: command (0x16), Index 2: encoder, Index 3: options, Index 4: channel A, Index 5: channel B
@@ -505,7 +505,7 @@ impl PoKeysDevice {
                 ..Default::default()
             };
 
-            log::info!(
+            log::debug!(
                 "Encoder {} settings: A={}, B={} (protocol: A={}, B={}), options={:08b}",
                 encoder_id,
                 display_pin_a,
@@ -862,13 +862,15 @@ impl PoKeysDevice {
             }
         }
 
-        log::info!("Bulk read group {} returned {} values", group, values.len());
+        log::debug!("Bulk read group {} returned {} values", group, values.len());
         Ok(values)
     }
 
-    /// Set encoder long RAW values (bulk operation)
-    /// Protocol: 0xCD - Set encoder long RAW values
-    /// option: 10 = encoders 1-13, 11 = encoders 14-26
+    /// Set encoder long RAW values (bulk operation).
+    ///
+    /// Protocol `0xCD` with `option = 10` for encoders 1-13 or `11` for
+    /// encoders 14-26. Payload at protocol bytes 9-60 (0-based 8-59) carries
+    /// the 32-bit LE RAW values.
     pub fn set_encoder_long_values(&mut self, group: u8, values: &[i32]) -> Result<()> {
         if group > 1 {
             return Err(PoKeysError::Parameter(
@@ -884,25 +886,24 @@ impl PoKeysDevice {
             )));
         }
 
-        // Prepare request with values
-        let mut request = vec![0u8; 64];
-        request[2] = 0xCD; // Command
-        request[3] = group + 10; // Option: 10 or 11 for set operation
-        request[7] = self.get_next_request_id(); // Request ID
-
-        // Pack 32-bit values starting from byte 9
-        for (i, &value) in values.iter().enumerate() {
-            let byte_offset = 9 + (i * 4);
-            if byte_offset + 3 < request.len() {
-                let bytes = value.to_le_bytes();
-                request[byte_offset] = bytes[0];
-                request[byte_offset + 1] = bytes[1];
-                request[byte_offset + 2] = bytes[2];
-                request[byte_offset + 3] = bytes[3];
-            }
+        // Pack the 32-bit LE values into the data payload. `send_request_with_data`
+        // copies this to request[8..], which the firmware reads as protocol
+        // bytes 9..
+        let count = values.len().min(13);
+        let mut payload = [0u8; 52];
+        for (i, &value) in values.iter().take(count).enumerate() {
+            let offset = i * 4;
+            payload[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
         }
 
-        let _response = self.send_raw_request(&request)?;
+        let _response = self.send_request_with_data(
+            0xCD,
+            group + 10, // option: 10 = set group 0, 11 = set group 1
+            0,
+            0,
+            0,
+            &payload[..count * 4],
+        )?;
 
         // Update local cache
         let start_encoder = if group == 0 { 1 } else { 14 };
@@ -931,8 +932,10 @@ impl PoKeysDevice {
         Ok(all_values)
     }
 
-    /// Configure encoder options (bulk operation)
-    /// Protocol: 0xC4 - Encoder option
+    /// Configure encoder options (bulk operation).
+    ///
+    /// Protocol `0xC4` with `option = 1` (set). The 25 option bytes are
+    /// placed at protocol bytes 9-33 (0-based 8-32).
     pub fn configure_encoder_options_bulk(&mut self, options: &[u8]) -> Result<Vec<u8>> {
         if options.len() != 25 {
             return Err(PoKeysError::Parameter(
@@ -940,26 +943,15 @@ impl PoKeysDevice {
             ));
         }
 
-        let mut request = vec![0u8; 64];
-        request[2] = 0xC4; // Command
-        request[3] = 1; // Option: 1 = set
-        request[7] = self.get_next_request_id(); // Request ID
+        let response = self.send_request_with_data(0xC4, 1, 0, 0, 0, options)?;
 
-        // Copy encoder options to bytes 9-33
-        for (i, &option) in options.iter().enumerate() {
-            request[9 + i] = option;
-        }
-
-        let response = self.send_raw_request(&request)?;
-
-        // Parse returned options from bytes 9-33
-        let mut returned_options = Vec::new();
-        if response.len() >= 34 {
+        // Parse returned options from response bytes 9-33 (0-based 8-32).
+        let mut returned_options = Vec::with_capacity(25);
+        if response.len() >= 33 {
             for i in 0..25 {
-                returned_options.push(response[9 + i]);
-                // Update local cache
+                returned_options.push(response[8 + i]);
                 if i < self.encoders.len() {
-                    self.encoders[i].encoder_options = response[9 + i];
+                    self.encoders[i].encoder_options = response[8 + i];
                 }
             }
         }
@@ -967,24 +959,19 @@ impl PoKeysDevice {
         Ok(returned_options)
     }
 
-    /// Read encoder options (bulk operation)
-    /// Protocol: 0xC4 - Encoder option
+    /// Read encoder options (bulk operation).
+    ///
+    /// Protocol `0xC4` with `option = 0` (get). Response carries 25 option
+    /// bytes at protocol bytes 9-33 (0-based 8-32).
     pub fn read_encoder_options_bulk(&mut self) -> Result<Vec<u8>> {
-        let response = self.send_request(
-            0xC4, // Command: Encoder option
-            0,    // Option: 0 = get
-            0,    // Reserved
-            0,    // Reserved
-            0,    // Reserved
-        )?;
+        let response = self.send_request(0xC4, 0, 0, 0, 0)?;
 
-        let mut options = Vec::new();
-        if response.len() >= 34 {
+        let mut options = Vec::with_capacity(25);
+        if response.len() >= 33 {
             for i in 0..25 {
-                options.push(response[9 + i]);
-                // Update local cache
+                options.push(response[8 + i]);
                 if i < self.encoders.len() {
-                    self.encoders[i].encoder_options = response[9 + i];
+                    self.encoders[i].encoder_options = response[8 + i];
                 }
             }
         }
@@ -1234,30 +1221,6 @@ impl PoKeysDevice {
                 }
             })
             .collect()
-    }
-
-    /// Helper method to get next request ID (implement in device)
-    fn get_next_request_id(&mut self) -> u8 {
-        // This should be implemented in the device structure
-        // For now, return a simple incrementing counter
-        static mut REQUEST_ID: u8 = 0;
-        unsafe {
-            REQUEST_ID = REQUEST_ID.wrapping_add(1);
-            REQUEST_ID
-        }
-    }
-
-    /// Helper method to send raw request (implement in device)
-    fn send_raw_request(&mut self, request: &[u8]) -> Result<Vec<u8>> {
-        // This should use the actual communication interface
-        // For now, delegate to the existing send_request method and convert array to Vec
-        if request.len() >= 8 {
-            let response_array =
-                self.send_request(request[2], request[3], request[4], request[5], request[6])?;
-            Ok(response_array.to_vec())
-        } else {
-            Err(PoKeysError::Protocol("Invalid request format".to_string()))
-        }
     }
 }
 

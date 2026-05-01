@@ -282,9 +282,13 @@ impl PoKeysDevice {
             return self.i2c_write(address, data);
         }
 
-        // Fragment into multiple packets with sequence numbers
+        // Reuse a single buffer across all fragments instead of allocating
+        // per-fragment inside the loop. Capacity covers header byte + chunk.
+        let mut packet = Vec::with_capacity(MAX_PACKET_SIZE);
+
         for (seq, chunk) in data.chunks(MAX_PACKET_SIZE - 2).enumerate() {
-            let mut packet = vec![0xF0 | (seq as u8 & 0x0F)]; // Fragment header
+            packet.clear();
+            packet.push(0xF0 | (seq as u8 & 0x0F)); // Fragment header
             packet.extend_from_slice(chunk);
 
             let status = self.i2c_write(address, &packet)?;
