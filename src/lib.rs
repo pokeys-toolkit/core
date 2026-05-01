@@ -137,12 +137,15 @@ pub use protocols::{SegmentMapping, SegmentMappingType, USPIBridgeCommand, USPIB
 // Re-export servo control functionality
 pub use pwm::{ServoConfig, ServoType};
 
-/// Library version information
-pub const VERSION_MAJOR: u8 = 0;
-pub const VERSION_MINOR: u8 = 3;
-pub const VERSION_PATCH: u8 = 0;
+/// Library version string, sourced from `Cargo.toml` at compile time.
+///
+/// Prefer this constant over the [`version()`] helper when a `&'static str`
+/// is acceptable — it avoids the allocation.
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Get library version as string
+/// Get the library version as an owned `String`.
+///
+/// Kept for backward compatibility; returns the same value as [`VERSION`].
 pub fn version() -> String {
-    format!("{VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_PATCH}")
+    VERSION.to_string()
 }
