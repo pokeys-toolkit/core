@@ -363,18 +363,92 @@ impl PoKeysDevice {
         self.send_request(request_type, param1, param2, param3, param4)
     }
 
-    /// Set ethernet retry count and timeout
+    /// Set ethernet retry count and timeout.
+    #[deprecated(
+        since = "1.0.5",
+        note = "Use `set_network_timeout` and `set_network_retries` separately. \
+                The `read_retries` parameter has never been honoured by the \
+                retry loops in this crate; passing any value here is a no-op."
+    )]
     pub fn set_ethernet_retry_count_and_timeout(
         &mut self,
         send_retries: u32,
-        read_retries: u32,
+        _read_retries: u32,
         timeout_ms: u32,
     ) {
         self.communication.set_retries_and_timeout(
             send_retries,
-            read_retries,
+            0,
             Duration::from_millis(timeout_ms as u64),
         );
+    }
+
+    /// Set the timeout applied to UDP/TCP receive calls during
+    /// `send_request`.
+    ///
+    /// Each network `send_request` blocks up to this duration waiting for a
+    /// reply before retrying. Default: 1000 ms.
+    ///
+    /// **Tuning guide:**
+    /// - On a healthy LAN, PoKeys replies in 1–5 ms. A timeout of
+    ///   50–200 ms is reasonable for a latency-sensitive UI.
+    /// - Setting this too low (below ~20 ms) can cause spurious retries
+    ///   on a healthy device under OS scheduler jitter.
+    /// - **Network-only.** USB uses a fixed internal 50 × 20 ms polling
+    ///   loop and is not affected by this setter.
+    ///
+    /// Use [`Self::tune_for_realtime_polling`] for a sensible preset.
+    pub fn set_network_timeout(&mut self, timeout: Duration) {
+        let send_retries = self.communication.send_retries();
+        self.communication
+            .set_retries_and_timeout(send_retries, 0, timeout);
+    }
+
+    /// Set how many times `send_request` retries on a network timeout
+    /// before returning [`crate::PoKeysError::Transfer`].
+    ///
+    /// Each retry costs up to one full [`Self::network_timeout`] of
+    /// blocking plus one WARN log line (subject to rate-limiting).
+    /// Default: 3.
+    ///
+    /// For latency-sensitive pollers, consider setting this to 1: a
+    /// dropped UDP reply then costs one timeout period instead of three,
+    /// and the caller can drive higher-level recovery policy itself.
+    pub fn set_network_retries(&mut self, retries: u32) {
+        let timeout = self.communication.socket_timeout();
+        self.communication
+            .set_retries_and_timeout(retries, 0, timeout);
+    }
+
+    /// Current network receive timeout. See [`Self::set_network_timeout`].
+    pub fn network_timeout(&self) -> Duration {
+        self.communication.socket_timeout()
+    }
+
+    /// Current per-`send_request` retry count on network timeouts.
+    /// See [`Self::set_network_retries`].
+    pub fn send_retries(&self) -> u32 {
+        self.communication.send_retries()
+    }
+
+    /// Tune the network retry loop for a latency-sensitive polling use
+    /// case (e.g. a live UI or dashboard reading device state at tens
+    /// of Hz).
+    ///
+    /// Equivalent to:
+    ///
+    /// ```ignore
+    /// device.set_network_timeout(Duration::from_millis(100));
+    /// device.set_network_retries(1);
+    /// ```
+    ///
+    /// A dropped reply then costs one 100 ms blocking call instead of
+    /// three 1-second calls. Your application's tick budget is preserved
+    /// and application-level recovery policy (skip / backoff / reconnect)
+    /// takes precedence over library-internal retries.
+    pub fn tune_for_realtime_polling(&mut self) {
+        self.communication
+            .set_retries_and_timeout(1, 0, Duration::from_millis(100));
     }
 
     /// Get connection type
