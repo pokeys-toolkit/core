@@ -2,14 +2,52 @@
 
 use crate::error::{PoKeysError, Result};
 use crate::types::*;
-use std::time::Duration;
+use std::cell::RefCell;
+use std::time::{Duration, Instant};
 
-/// Communication protocol implementation
+/// How long a warning category stays "suppressed to DEBUG" after the first
+/// WARN. Chosen as 5 s — long enough to collapse a flapping connection's
+/// noise into one line per second at worst, short enough that a recovered
+/// device's next failure is still visible within a human-scale timeframe.
+pub(crate) const WARN_DEDUP_WINDOW: Duration = Duration::from_secs(5);
+
+/// Coarse log categories used by [`Protocol::log_warn_rate_limited`].
+/// Each category gets its own timestamp so, for example, "send failed"
+/// and "receive timed out" don't mask each other.
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum WarnCategory {
+    WriteError = 0,
+    ReadError = 1,
+    ReceiveTimeout = 2,
+    Incomplete = 3,
+    InvalidResponse = 4,
+    SendError = 5,
+}
+
+/// Per-category last-log timestamps for WARN rate-limiting.
+#[derive(Debug, Default)]
+struct WarnLogGate {
+    last: [Option<Instant>; 6],
+}
+
+impl WarnLogGate {
+    fn last(&self, cat: WarnCategory) -> Option<Instant> {
+        self.last[cat as usize]
+    }
+
+    fn set(&mut self, cat: WarnCategory, at: Instant) {
+        self.last[cat as usize] = Some(at);
+    }
+}
+
+/// Communication protocol implementation.
 pub struct Protocol {
     request_id: u8,
     send_retries: u32,
-    read_retries: u32,
     socket_timeout: Duration,
+    /// Per-category last-logged timestamps for WARN rate-limiting. See
+    /// [`Protocol::log_warn_rate_limited`].
+    warn_log_gate: RefCell<WarnLogGate>,
 }
 
 impl Default for Protocol {
@@ -17,8 +55,8 @@ impl Default for Protocol {
         Self {
             request_id: 0,
             send_retries: 3,
-            read_retries: 3,
             socket_timeout: Duration::from_millis(1000),
+            warn_log_gate: RefCell::new(WarnLogGate::default()),
         }
     }
 }
@@ -28,15 +66,59 @@ impl Protocol {
         Self::default()
     }
 
+    /// Configure send-retry count and socket receive timeout.
+    ///
+    /// `read_retries` is accepted but ignored — it has never been read by
+    /// any retry loop in this crate. The parameter is retained only to keep
+    /// the public signature of the pre-1.0 API stable. Prefer the newer
+    /// setters on [`crate::PoKeysDevice`]: `set_network_timeout` and
+    /// `set_network_retries`.
     pub fn set_retries_and_timeout(
         &mut self,
         send_retries: u32,
-        read_retries: u32,
+        _read_retries: u32,
         timeout: Duration,
     ) {
         self.send_retries = send_retries;
-        self.read_retries = read_retries;
         self.socket_timeout = timeout;
+    }
+
+    /// Current socket receive timeout.
+    pub(crate) fn socket_timeout(&self) -> Duration {
+        self.socket_timeout
+    }
+
+    /// Current `send_request` retry count on network timeouts.
+    pub(crate) fn send_retries(&self) -> u32 {
+        self.send_retries
+    }
+
+    /// Log a WARN message, de-duplicating by category over a short window.
+    ///
+    /// During a persistent network failure the send/receive retry loops can
+    /// hit the same error path tens of times per second. Logging every
+    /// occurrence at WARN floods the caller's log sinks; dropping all of
+    /// them hides real problems. Compromise: the first WARN in a given
+    /// category within [`WARN_DEDUP_WINDOW`] stays at WARN; subsequent
+    /// occurrences until the window expires log at DEBUG instead.
+    ///
+    /// Categories are deliberately coarse (send error / receive error /
+    /// incomplete / invalid) so a flapping device produces a single WARN
+    /// per window per failure mode.
+    pub(crate) fn log_warn_rate_limited(&self, category: WarnCategory, args: std::fmt::Arguments) {
+        let now = Instant::now();
+        let mut gate = self.warn_log_gate.borrow_mut();
+        let last = gate.last(category);
+        let recent = last
+            .map(|t| now.duration_since(t) < WARN_DEDUP_WINDOW)
+            .unwrap_or(false);
+
+        if recent {
+            log::debug!("{args}");
+        } else {
+            log::warn!("{args}");
+            gate.set(category, now);
+        }
     }
 
     /// Calculate checksum for protocol data
@@ -169,6 +251,16 @@ impl CommunicationManager {
             .set_retries_and_timeout(send_retries, read_retries, timeout);
     }
 
+    /// Current socket receive timeout (used only on network connections).
+    pub fn socket_timeout(&self) -> Duration {
+        self.protocol.socket_timeout()
+    }
+
+    /// Current per-`send_request` retry count on network timeouts.
+    pub fn send_retries(&self) -> u32 {
+        self.protocol.send_retries()
+    }
+
     /// Get the next request ID for manual packet construction
     pub fn get_next_request_id(&mut self) -> u8 {
         self.protocol.next_request_id()
@@ -241,7 +333,10 @@ impl CommunicationManager {
                                 match self.protocol.validate_response(&response, request_id) {
                                     Ok(_) => return Ok(response),
                                     Err(e) => {
-                                        log::warn!("Invalid response: {e}");
+                                        self.protocol.log_warn_rate_limited(
+                                            WarnCategory::InvalidResponse,
+                                            format_args!("Invalid response: {e}"),
+                                        );
                                         break;
                                     }
                                 }
@@ -251,14 +346,20 @@ impl CommunicationManager {
                                 wait_count += 1;
                             }
                             Err(e) => {
-                                log::warn!("Read error: {e}");
+                                self.protocol.log_warn_rate_limited(
+                                    WarnCategory::ReadError,
+                                    format_args!("Read error: {e}"),
+                                );
                                 break;
                             }
                         }
                     }
                 }
                 Err(e) => {
-                    log::warn!("Write error: {e}");
+                    self.protocol.log_warn_rate_limited(
+                        WarnCategory::WriteError,
+                        format_args!("Write error: {e}"),
+                    );
                 }
             }
 
@@ -301,20 +402,32 @@ impl CommunicationManager {
                             match self.protocol.validate_response(&response, request_id) {
                                 Ok(_) => return Ok(response),
                                 Err(e) => {
-                                    log::warn!("Invalid response: {e}");
+                                    self.protocol.log_warn_rate_limited(
+                                        WarnCategory::InvalidResponse,
+                                        format_args!("Invalid response: {e}"),
+                                    );
                                 }
                             }
                         }
                         Ok(_) => {
-                            log::warn!("Incomplete response received");
+                            self.protocol.log_warn_rate_limited(
+                                WarnCategory::Incomplete,
+                                format_args!("Incomplete response received"),
+                            );
                         }
                         Err(e) => {
-                            log::warn!("Network receive error: {e}");
+                            self.protocol.log_warn_rate_limited(
+                                WarnCategory::ReceiveTimeout,
+                                format_args!("Network receive error: {e}"),
+                            );
                         }
                     }
                 }
                 Err(e) => {
-                    log::warn!("Network send error: {e}");
+                    self.protocol.log_warn_rate_limited(
+                        WarnCategory::SendError,
+                        format_args!("Network send error: {e}"),
+                    );
                 }
             }
 
@@ -411,7 +524,10 @@ impl CommunicationManager {
                                 match self.protocol.validate_response(&response, request_id) {
                                     Ok(_) => return Ok(response),
                                     Err(e) => {
-                                        log::warn!("Invalid response: {e}");
+                                        self.protocol.log_warn_rate_limited(
+                                            WarnCategory::InvalidResponse,
+                                            format_args!("Invalid response: {e}"),
+                                        );
                                         break;
                                     }
                                 }
@@ -421,14 +537,20 @@ impl CommunicationManager {
                                 wait_count += 1;
                             }
                             Err(e) => {
-                                log::warn!("Read error: {e}");
+                                self.protocol.log_warn_rate_limited(
+                                    WarnCategory::ReadError,
+                                    format_args!("Read error: {e}"),
+                                );
                                 break;
                             }
                         }
                     }
                 }
                 Err(e) => {
-                    log::warn!("Write error: {e}");
+                    self.protocol.log_warn_rate_limited(
+                        WarnCategory::WriteError,
+                        format_args!("Write error: {e}"),
+                    );
                 }
             }
 
@@ -457,16 +579,25 @@ impl CommunicationManager {
                         Ok(_) => match self.protocol.validate_response(&response, request_id) {
                             Ok(_) => return Ok(response),
                             Err(e) => {
-                                log::warn!("Invalid response: {e}");
+                                self.protocol.log_warn_rate_limited(
+                                    WarnCategory::InvalidResponse,
+                                    format_args!("Invalid response: {e}"),
+                                );
                             }
                         },
                         Err(e) => {
-                            log::warn!("Network receive error: {e}");
+                            self.protocol.log_warn_rate_limited(
+                                WarnCategory::ReceiveTimeout,
+                                format_args!("Network receive error: {e}"),
+                            );
                         }
                     }
                 }
                 Err(e) => {
-                    log::warn!("Network send error: {e}");
+                    self.protocol.log_warn_rate_limited(
+                        WarnCategory::SendError,
+                        format_args!("Network send error: {e}"),
+                    );
                 }
             }
 
@@ -547,5 +678,32 @@ mod tests {
         for i in 8..REQUEST_BUFFER_SIZE {
             assert_eq!(request[i], 0);
         }
+    }
+
+    #[test]
+    fn test_protocol_defaults() {
+        let protocol = Protocol::new();
+        assert_eq!(protocol.send_retries(), 3);
+        assert_eq!(protocol.socket_timeout(), Duration::from_millis(1000));
+    }
+
+    #[test]
+    fn test_protocol_tunables_round_trip() {
+        let mut protocol = Protocol::new();
+        // read_retries param is intentionally ignored; pass anything.
+        protocol.set_retries_and_timeout(1, 99, Duration::from_millis(50));
+        assert_eq!(protocol.send_retries(), 1);
+        assert_eq!(protocol.socket_timeout(), Duration::from_millis(50));
+    }
+
+    #[test]
+    fn test_communication_manager_tunables_round_trip() {
+        let mut mgr = CommunicationManager::new(DeviceConnectionType::NetworkDevice);
+        assert_eq!(mgr.send_retries(), 3);
+        assert_eq!(mgr.socket_timeout(), Duration::from_millis(1000));
+
+        mgr.set_retries_and_timeout(2, 0, Duration::from_millis(250));
+        assert_eq!(mgr.send_retries(), 2);
+        assert_eq!(mgr.socket_timeout(), Duration::from_millis(250));
     }
 }
