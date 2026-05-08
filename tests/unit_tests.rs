@@ -26,12 +26,10 @@ mod unit_tests {
         assert!(!version.is_empty());
         assert!(version.contains('.'));
 
-        // Check version components
-        assert_eq!(VERSION_MAJOR, 0);
-        assert_eq!(VERSION_MINOR, 3);
-        assert_eq!(VERSION_PATCH, 0);
-
-        assert_eq!(version, "0.3.0");
+        // `VERSION` is sourced from CARGO_PKG_VERSION at compile time, so
+        // it must match what the helper returns and must match Cargo.toml.
+        assert_eq!(version, VERSION);
+        assert_eq!(VERSION, env!("CARGO_PKG_VERSION"));
     }
 
     #[test]

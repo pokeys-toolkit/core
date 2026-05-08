@@ -58,14 +58,6 @@ pub struct PoKeysDevice {
     pub i2c_config: I2cConfig,
     pub i2c_metrics: I2cMetrics,
     pub validation_level: ValidationLevel,
-
-    // Internal state
-    #[allow(dead_code)]
-    request_buffer: [u8; REQUEST_BUFFER_SIZE],
-    #[allow(dead_code)]
-    response_buffer: [u8; RESPONSE_BUFFER_SIZE],
-    #[allow(dead_code)]
-    multipart_buffer: Vec<u8>,
 }
 
 impl PoKeysDevice {
@@ -99,9 +91,6 @@ impl PoKeysDevice {
             i2c_config: I2cConfig::default(),
             i2c_metrics: I2cMetrics::default(),
             validation_level: ValidationLevel::None,
-            request_buffer: [0; REQUEST_BUFFER_SIZE],
-            response_buffer: [0; RESPONSE_BUFFER_SIZE],
-            multipart_buffer: Vec::new(),
         }
     }
 
