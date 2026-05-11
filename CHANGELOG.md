@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.6] - 2026-05-11
+
+- fix(communication): use socket timeout on raw network receive (#37)
+- perf: safe mechanical optimisations across crate — no API changes (#34)
+
+## [1.0.5] - 2026-05-05
+
+- feat(communication): expose network timeout + retries; rate-limit WARN logs (#35)
+
 ## [1.0.4] - 2026-04-27
 
 
