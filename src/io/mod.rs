@@ -423,13 +423,7 @@ impl PoKeysDevice {
         )?;
 
         if self.pins.len() > 32 {
-            self.send_request(
-                0x43,
-                output_data[4],
-                output_data[5],
-                output_data[6],
-                0,
-            )?;
+            self.send_request(0x43, output_data[4], output_data[5], output_data[6], 0)?;
         }
 
         Ok(())
