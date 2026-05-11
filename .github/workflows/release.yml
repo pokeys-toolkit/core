@@ -53,8 +53,12 @@ jobs:
             BUMP="major"
           fi
 
-          # Get current version from Cargo.toml
-          CURRENT_VERSION=$(grep '^version = ' Cargo.toml | sed 's/version = "\(.*\)"/\1/')
+          # Derive current version from the last tag, not Cargo.toml.
+          # If a previous run failed after pushing the tag but before bumping
+          # Cargo.toml on main, reading Cargo.toml would recompute the same
+          # NEW_VERSION on every subsequent merge and collide with the
+          # already-pushed tag. The tag is the source of truth.
+          CURRENT_VERSION="${LAST_TAG#v}"
 
           # Calculate new version
           IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
@@ -143,13 +147,27 @@ jobs:
       - name: Commit version bump
         if: steps.version.outputs.version != steps.version.outputs.current
         run: |
+          NEW_TAG="v${{ steps.version.outputs.version }}"
+
+          # Belt-and-braces: if the tag already exists (locally or on the
+          # remote) abort before mutating anything. Without this, the next
+          # `git tag -a` aborts mid-step and leaves a dangling local
+          # chore(release) commit that never gets pushed.
+          if git rev-parse -q --verify "refs/tags/${NEW_TAG}" >/dev/null \
+             || git ls-remote --exit-code --tags origin "${NEW_TAG}" >/dev/null 2>&1; then
+            echo "::error::Tag ${NEW_TAG} already exists. Aborting to avoid divergent release state."
+            echo "::error::This usually means a previous run created the tag but failed before pushing the version bump."
+            echo "::error::Manually reconcile: bump Cargo.toml past ${NEW_TAG}, or delete the orphan tag."
+            exit 1
+          fi
+
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add Cargo.toml Cargo.lock CHANGELOG.md
           git commit -m "chore(release): bump version to ${{ steps.version.outputs.version }}"
-          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
+          git tag -a "${NEW_TAG}" -m "Release ${NEW_TAG}"
           git push origin main
-          git push origin "v${{ steps.version.outputs.version }}"
+          git push origin "${NEW_TAG}"
 
       - name: Publish to crates.io
         if: steps.version.outputs.version != steps.version.outputs.current
