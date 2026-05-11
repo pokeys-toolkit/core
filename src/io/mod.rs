@@ -394,9 +394,16 @@ impl PoKeysDevice {
         Ok(())
     }
 
-    /// Write all digital outputs
+    /// Write all digital outputs.
+    ///
+    /// Uses the spec-correct block-output commands:
+    /// - `0x42` "Block set output I" — pins 1–32 packed into request bytes 3–6
+    /// - `0x43` "Block set output II" — pins 33–55 packed into request bytes 3–5
+    ///
+    /// Earlier revisions of this function sent `0x11`/`0x12`, which are the
+    /// "Set encoder settings" / "Set encoder key mapping A" commands. That
+    /// collision could corrupt encoder configuration on every bulk write.
     pub fn write_digital_outputs(&mut self) -> Result<()> {
-        // Prepare output data
         let mut output_data = [0u8; 8];
 
         for i in 0..self.pins.len().min(55) {
@@ -407,24 +414,16 @@ impl PoKeysDevice {
             }
         }
 
-        // Send digital outputs to device
         self.send_request(
-            0x11,
+            0x42,
             output_data[0],
             output_data[1],
             output_data[2],
             output_data[3],
         )?;
 
-        // Send remaining bytes if needed
         if self.pins.len() > 32 {
-            self.send_request(
-                0x12,
-                output_data[4],
-                output_data[5],
-                output_data[6],
-                output_data[7],
-            )?;
+            self.send_request(0x43, output_data[4], output_data[5], output_data[6], 0)?;
         }
 
         Ok(())
