@@ -575,16 +575,24 @@ impl CommunicationManager {
             match interface.send(&request[..64]) {
                 Ok(_) => {
                     let mut response = [0u8; RESPONSE_BUFFER_SIZE];
-                    match interface.receive(&mut response) {
-                        Ok(_) => match self.protocol.validate_response(&response, request_id) {
-                            Ok(_) => return Ok(response),
-                            Err(e) => {
-                                self.protocol.log_warn_rate_limited(
-                                    WarnCategory::InvalidResponse,
-                                    format_args!("Invalid response: {e}"),
-                                );
+                    match interface.receive_timeout(&mut response, self.protocol.socket_timeout) {
+                        Ok(bytes_read) if bytes_read >= 8 => {
+                            match self.protocol.validate_response(&response, request_id) {
+                                Ok(_) => return Ok(response),
+                                Err(e) => {
+                                    self.protocol.log_warn_rate_limited(
+                                        WarnCategory::InvalidResponse,
+                                        format_args!("Invalid response: {e}"),
+                                    );
+                                }
                             }
-                        },
+                        }
+                        Ok(_) => {
+                            self.protocol.log_warn_rate_limited(
+                                WarnCategory::Incomplete,
+                                format_args!("Incomplete response received"),
+                            );
+                        }
                         Err(e) => {
                             self.protocol.log_warn_rate_limited(
                                 WarnCategory::ReceiveTimeout,
