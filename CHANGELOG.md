@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.8] - 2026-05-12
+
+- fix(communication): drain stale-ID responses without re-sending (#43)
+
 ## [1.0.7] - 2026-05-11
 
 - fix(io): use spec-correct 0x42/0x43 for bulk digital output writes (#39)
