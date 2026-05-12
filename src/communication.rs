@@ -24,6 +24,23 @@ pub(crate) enum WarnCategory {
     SendError = 5,
 }
 
+/// Outcome of validating a single received response frame. Distinguishes a
+/// stale-ID frame (drop and re-receive within the same send budget) from a
+/// structurally invalid frame (real failure, propagate).
+#[derive(Debug)]
+pub(crate) enum ResponseClass {
+    Ok,
+    StaleId,
+    Invalid(PoKeysError),
+}
+
+/// Maximum number of stale-ID frames we'll drain in one receive window
+/// before giving up and counting the attempt as a failure. Bounded so a
+/// device that floods unrelated frames can't pin a single call open
+/// forever; sized generously since the typical case is 1–2 stale frames
+/// from prior timed-out requests.
+pub(crate) const MAX_STALE_DRAIN: usize = 8;
+
 /// Per-category last-log timestamps for WARN rate-limiting.
 #[derive(Debug, Default)]
 struct WarnLogGate {
@@ -158,24 +175,48 @@ impl Protocol {
 
     /// Validate response packet
     pub fn validate_response(&self, response: &[u8], expected_request_id: u8) -> Result<()> {
+        match self.classify_response(response, expected_request_id) {
+            ResponseClass::Ok => Ok(()),
+            ResponseClass::StaleId => Err(PoKeysError::Protocol("Request ID mismatch".to_string())),
+            ResponseClass::Invalid(e) => Err(e),
+        }
+    }
+
+    /// Classify a received response so the receive loop can distinguish a
+    /// stale-ID frame (drop and read again, no re-send) from a structurally
+    /// invalid frame (real failure, propagate to the outer retry loop).
+    ///
+    /// On UDP the device's late reply to a previously-timed-out request can
+    /// still arrive in our recv queue and be picked up by a later
+    /// `receive_timeout`. Treating that as a generic "invalid response" and
+    /// retrying the *send* compounds the problem by generating yet more
+    /// in-flight responses; the correct action is to drop the stale frame
+    /// and re-receive within the same send budget.
+    pub(crate) fn classify_response(
+        &self,
+        response: &[u8],
+        expected_request_id: u8,
+    ) -> ResponseClass {
         if response.len() < 8 {
-            return Err(PoKeysError::Protocol("Response too short".to_string()));
+            return ResponseClass::Invalid(PoKeysError::Protocol("Response too short".to_string()));
         }
 
         if response[0] != RESPONSE_HEADER {
-            return Err(PoKeysError::Protocol("Invalid response header".to_string()));
+            return ResponseClass::Invalid(PoKeysError::Protocol(
+                "Invalid response header".to_string(),
+            ));
         }
 
         if response[6] != expected_request_id {
-            return Err(PoKeysError::Protocol("Request ID mismatch".to_string()));
+            return ResponseClass::StaleId;
         }
 
         let expected_checksum = Self::calculate_checksum(response);
         if response[7] != expected_checksum {
-            return Err(PoKeysError::InvalidChecksum);
+            return ResponseClass::Invalid(PoKeysError::InvalidChecksum);
         }
 
-        Ok(())
+        ResponseClass::Ok
     }
 
     fn next_request_id(&mut self) -> u8 {
@@ -384,43 +425,92 @@ impl CommunicationManager {
         let request =
             self.protocol
                 .prepare_request(request_type, param1, param2, param3, param4, None);
-        let request_id = request[6];
+        self.send_network_request_inner(interface, &request)
+    }
 
-        // println!("request: {request:02X?}");
+    /// Receive a response matching `expected_request_id`, draining stale-ID
+    /// frames in place. Returns:
+    /// - `Ok(Some(_))` — matching frame received.
+    /// - `Ok(None)` — receive timed out / framing failed; caller should retry the send.
+    ///
+    /// A stale-ID frame is the device's late reply to a previously
+    /// timed-out request, still buffered in the UDP recv queue. Dropping
+    /// and re-receiving within the same send budget avoids the retry
+    /// storm where each fresh send produces yet another in-flight
+    /// response that the next iteration then drops as "invalid".
+    fn receive_with_id_drain<T: NetworkInterface + ?Sized>(
+        &self,
+        interface: &mut T,
+        expected_request_id: u8,
+    ) -> Option<[u8; RESPONSE_BUFFER_SIZE]> {
+        let mut drained = 0usize;
+        loop {
+            let mut response = [0u8; RESPONSE_BUFFER_SIZE];
+            match interface.receive_timeout(&mut response, self.protocol.socket_timeout) {
+                Ok(bytes_read) if bytes_read >= 8 => {
+                    match self
+                        .protocol
+                        .classify_response(&response, expected_request_id)
+                    {
+                        ResponseClass::Ok => return Some(response),
+                        ResponseClass::StaleId => {
+                            drained += 1;
+                            if drained >= MAX_STALE_DRAIN {
+                                self.protocol.log_warn_rate_limited(
+                                    WarnCategory::InvalidResponse,
+                                    format_args!(
+                                        "Drained {drained} stale-ID responses without a match; giving up on this attempt"
+                                    ),
+                                );
+                                return None;
+                            }
+                            log::debug!(
+                                "Dropping stale response (id={} expected={})",
+                                response[6],
+                                expected_request_id
+                            );
+                            continue;
+                        }
+                        ResponseClass::Invalid(e) => {
+                            self.protocol.log_warn_rate_limited(
+                                WarnCategory::InvalidResponse,
+                                format_args!("Invalid response: {e}"),
+                            );
+                            return None;
+                        }
+                    }
+                }
+                Ok(_) => {
+                    self.protocol.log_warn_rate_limited(
+                        WarnCategory::Incomplete,
+                        format_args!("Incomplete response received"),
+                    );
+                    return None;
+                }
+                Err(e) => {
+                    self.protocol.log_warn_rate_limited(
+                        WarnCategory::ReceiveTimeout,
+                        format_args!("Network receive error: {e}"),
+                    );
+                    return None;
+                }
+            }
+        }
+    }
+
+    fn send_network_request_inner<T: NetworkInterface + ?Sized>(
+        &mut self,
+        interface: &mut T,
+        request: &[u8; REQUEST_BUFFER_SIZE],
+    ) -> Result<[u8; RESPONSE_BUFFER_SIZE]> {
+        let request_id = request[6];
 
         let mut retries = 0;
         while retries < self.protocol.send_retries {
-            // Send request
             match interface.send(&request[..64]) {
                 Ok(_) => {
-                    // Try to receive response
-                    let mut response = [0u8; RESPONSE_BUFFER_SIZE];
-
-                    match interface.receive_timeout(&mut response, self.protocol.socket_timeout) {
-                        Ok(bytes_read) if bytes_read >= 8 => {
-                            // Validate response
-                            match self.protocol.validate_response(&response, request_id) {
-                                Ok(_) => return Ok(response),
-                                Err(e) => {
-                                    self.protocol.log_warn_rate_limited(
-                                        WarnCategory::InvalidResponse,
-                                        format_args!("Invalid response: {e}"),
-                                    );
-                                }
-                            }
-                        }
-                        Ok(_) => {
-                            self.protocol.log_warn_rate_limited(
-                                WarnCategory::Incomplete,
-                                format_args!("Incomplete response received"),
-                            );
-                        }
-                        Err(e) => {
-                            self.protocol.log_warn_rate_limited(
-                                WarnCategory::ReceiveTimeout,
-                                format_args!("Network receive error: {e}"),
-                            );
-                        }
+                    if let Some(response) = self.receive_with_id_drain(interface, request_id) {
+                        return Ok(response);
                     }
                 }
                 Err(e) => {
@@ -568,53 +658,7 @@ impl CommunicationManager {
         interface: &mut T,
         request: &[u8; REQUEST_BUFFER_SIZE],
     ) -> Result<[u8; RESPONSE_BUFFER_SIZE]> {
-        let request_id = request[6];
-
-        let mut retries = 0;
-        while retries < self.protocol.send_retries {
-            match interface.send(&request[..64]) {
-                Ok(_) => {
-                    let mut response = [0u8; RESPONSE_BUFFER_SIZE];
-                    match interface.receive_timeout(&mut response, self.protocol.socket_timeout) {
-                        Ok(bytes_read) if bytes_read >= 8 => {
-                            match self.protocol.validate_response(&response, request_id) {
-                                Ok(_) => return Ok(response),
-                                Err(e) => {
-                                    self.protocol.log_warn_rate_limited(
-                                        WarnCategory::InvalidResponse,
-                                        format_args!("Invalid response: {e}"),
-                                    );
-                                }
-                            }
-                        }
-                        Ok(_) => {
-                            self.protocol.log_warn_rate_limited(
-                                WarnCategory::Incomplete,
-                                format_args!("Incomplete response received"),
-                            );
-                        }
-                        Err(e) => {
-                            self.protocol.log_warn_rate_limited(
-                                WarnCategory::ReceiveTimeout,
-                                format_args!("Network receive error: {e}"),
-                            );
-                        }
-                    }
-                }
-                Err(e) => {
-                    self.protocol.log_warn_rate_limited(
-                        WarnCategory::SendError,
-                        format_args!("Network send error: {e}"),
-                    );
-                }
-            }
-
-            retries += 1;
-        }
-
-        Err(PoKeysError::Transfer(
-            "Failed to send network request".to_string(),
-        ))
+        self.send_network_request_inner(interface, request)
     }
 }
 
@@ -713,5 +757,115 @@ mod tests {
         mgr.set_retries_and_timeout(2, 0, Duration::from_millis(250));
         assert_eq!(mgr.send_retries(), 2);
         assert_eq!(mgr.socket_timeout(), Duration::from_millis(250));
+    }
+
+    /// Mock that replays a scripted sequence of receive outcomes to exercise
+    /// the stale-ID drain path without real sockets.
+    struct ScriptedNet {
+        sends: usize,
+        recvs: Vec<RecvOutcome>,
+        cursor: usize,
+    }
+
+    enum RecvOutcome {
+        Frame([u8; RESPONSE_BUFFER_SIZE]),
+        Timeout,
+    }
+
+    impl ScriptedNet {
+        fn new(recvs: Vec<RecvOutcome>) -> Self {
+            Self {
+                sends: 0,
+                recvs,
+                cursor: 0,
+            }
+        }
+    }
+
+    impl NetworkInterface for ScriptedNet {
+        fn send(&mut self, _data: &[u8]) -> Result<usize> {
+            self.sends += 1;
+            Ok(64)
+        }
+
+        fn receive(&mut self, _buffer: &mut [u8]) -> Result<usize> {
+            unimplemented!("scripted mock uses receive_timeout")
+        }
+
+        fn receive_timeout(&mut self, buffer: &mut [u8], _timeout: Duration) -> Result<usize> {
+            let outcome = self
+                .recvs
+                .get(self.cursor)
+                .unwrap_or_else(|| panic!("scripted mock ran out of receive outcomes"));
+            self.cursor += 1;
+            match outcome {
+                RecvOutcome::Frame(f) => {
+                    buffer[..f.len()].copy_from_slice(f);
+                    Ok(f.len())
+                }
+                RecvOutcome::Timeout => Err(PoKeysError::Timeout),
+            }
+        }
+    }
+
+    fn make_response(request_id: u8) -> [u8; RESPONSE_BUFFER_SIZE] {
+        let mut r = [0u8; RESPONSE_BUFFER_SIZE];
+        r[0] = RESPONSE_HEADER;
+        r[1] = 0x10;
+        r[6] = request_id;
+        r[7] = Protocol::calculate_checksum(&r);
+        r
+    }
+
+    #[test]
+    fn drains_stale_id_frames_without_resending() {
+        // First request will be ID=1. Simulate two stale frames (from
+        // prior timed-out requests) sitting in the recv queue, followed
+        // by the real reply with the correct ID.
+        let stale_a = make_response(99);
+        let stale_b = make_response(42);
+        let real = make_response(1);
+
+        let mut net = ScriptedNet::new(vec![
+            RecvOutcome::Frame(stale_a),
+            RecvOutcome::Frame(stale_b),
+            RecvOutcome::Frame(real),
+        ]);
+
+        let mut mgr = CommunicationManager::new(DeviceConnectionType::NetworkDevice);
+        let response = mgr
+            .send_network_request(&mut net, 0x10, 0, 0, 0, 0)
+            .expect("should drain stale frames and return the matching one");
+
+        assert_eq!(response[6], 1, "must return the frame with the matching ID");
+        assert_eq!(
+            net.sends, 1,
+            "stale-ID frames must NOT trigger a re-send (regression: prior loop did)"
+        );
+    }
+
+    #[test]
+    fn stale_id_drain_capped_to_avoid_pinning_call_open() {
+        // A misbehaving device that floods unrelated frames must not hold
+        // a single call open for the full timeout × retry budget.
+        let mut recvs: Vec<RecvOutcome> = (0..MAX_STALE_DRAIN)
+            .map(|i| RecvOutcome::Frame(make_response(200u8.wrapping_add(i as u8))))
+            .collect();
+        // After the cap is hit the outer loop re-sends and we let the
+        // following receive time out so the call returns an error.
+        recvs.push(RecvOutcome::Timeout);
+        recvs.push(RecvOutcome::Timeout);
+        recvs.push(RecvOutcome::Timeout);
+
+        let mut net = ScriptedNet::new(recvs);
+        let mut mgr = CommunicationManager::new(DeviceConnectionType::NetworkDevice);
+        // Tighten budget so the test runs quickly.
+        mgr.set_retries_and_timeout(2, 0, Duration::from_millis(1));
+
+        let result = mgr.send_network_request(&mut net, 0x10, 0, 0, 0, 0);
+        assert!(
+            result.is_err(),
+            "flood of stale frames must surface as an error"
+        );
     }
 }
