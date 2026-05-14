@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.9] - 2026-05-14
+
+- fix(io): read digital-input responses from byte 8 (pins 28-55 were stuck) (#44)
+
 ## [1.0.8] - 2026-05-12
 
 - fix(communication): drain stale-ID responses without re-sending (#43)
