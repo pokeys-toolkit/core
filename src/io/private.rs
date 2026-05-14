@@ -23,6 +23,25 @@ pub(crate) fn compose_pin_function_byte(f: PinFunction, inverted: bool) -> u8 {
     (f as u8) | if inverted { INVERT_PIN_BIT } else { 0 }
 }
 
+/// Decode the response payload of a `0x30` ("Get pin data") request. The pin
+/// state lives at 0-based byte 8 — the standard data-payload start, matching
+/// the `0xCC`/`0x31`/`0x32` layout. Earlier revisions read `res[3]`, which
+/// sits in the `param2` echo zone and is always zero, so single-pin reads
+/// never reported a transition.
+pub(crate) fn decode_read_digital_input_response(res: &[u8]) -> Result<u8> {
+    if res.len() < 9 {
+        return Err(PoKeysError::Protocol(
+            "Response too short for read_digital_input".to_string(),
+        ));
+    }
+    if res[2] != 0 {
+        return Err(PoKeysError::InternalError(
+            "Invalid pin or configuration locked".to_string(),
+        ));
+    }
+    Ok(res[8])
+}
+
 impl PoKeysDevice {
     pub(crate) fn get_pin_index(&self, pin: u32) -> usize {
         let pin_index: usize = (pin - 1) as usize;
@@ -131,14 +150,7 @@ impl PoKeysDevice {
             Ok(pin_index) => {
                 let res =
                     self.send_request(Command::ReadDigitalInput as u8, pin_index as u8, 0, 0, 0)?;
-
-                if res[2] != 0 {
-                    Err(PoKeysError::InternalError(
-                        "Invalid pin or configuration locked".to_string(),
-                    ))
-                } else {
-                    Ok(res[3])
-                }
+                decode_read_digital_input_response(&res)
             }
             Err(e) => Err(e),
         }
