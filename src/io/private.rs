@@ -23,13 +23,13 @@ pub(crate) fn compose_pin_function_byte(f: PinFunction, inverted: bool) -> u8 {
     (f as u8) | if inverted { INVERT_PIN_BIT } else { 0 }
 }
 
-/// Decode the response payload of a `0x30` ("Get pin data") request. The pin
-/// state lives at 0-based byte 8 — the standard data-payload start, matching
-/// the `0xCC`/`0x31`/`0x32` layout. Earlier revisions read `res[3]`, which
-/// sits in the `param2` echo zone and is always zero, so single-pin reads
-/// never reported a transition.
+/// Decode the response payload of a `0x30` ("Reading of inputs") request.
+///
+/// Per the PoKeys protocol specification (v14.3.2025, "Reading of inputs"):
+/// - byte 3 (0-based 2) = status: 0 = OK, 1+ = error ID
+/// - byte 4 (0-based 3) = input value
 pub(crate) fn decode_read_digital_input_response(res: &[u8]) -> Result<u8> {
-    if res.len() < 9 {
+    if res.len() < 4 {
         return Err(PoKeysError::Protocol(
             "Response too short for read_digital_input".to_string(),
         ));
@@ -39,7 +39,7 @@ pub(crate) fn decode_read_digital_input_response(res: &[u8]) -> Result<u8> {
             "Invalid pin or configuration locked".to_string(),
         ));
     }
-    Ok(res[8])
+    Ok(res[3])
 }
 
 impl PoKeysDevice {

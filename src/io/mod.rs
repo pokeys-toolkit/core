@@ -362,9 +362,10 @@ impl PoKeysDevice {
 
     /// Read all digital inputs.
     ///
-    /// Uses two protocol commands:
-    /// - `0x31` "Block inputs reading" — pins 1–32 packed into response bytes 9–12 (0-based 8–11)
-    /// - `0x32` "Block inputs reading – part 2" — pins 33–55 packed into response bytes 9–11 (0-based 8–10)
+    /// Uses two protocol commands (offsets per the PoKeys protocol
+    /// specification v14.3.2025, "Block inputs reading"):
+    /// - `0x31` "Block inputs reading" — pins 1–32 packed into response bytes 3–6 (0-based 2–5)
+    /// - `0x32` "Block inputs reading – part 2" — pins 33–55 packed into response bytes 3–5 (0-based 2–4)
     pub fn get_digital_inputs(&mut self) -> Result<()> {
         let pin_count = self.pins.len();
 
@@ -700,9 +701,21 @@ pub(crate) fn parse_bulk_pin_settings_response(response: &[u8]) -> Result<[u8; 5
 /// pin array. Split out from [`PoKeysDevice::get_digital_inputs`] so the
 /// parsing can be unit-tested without a live device.
 ///
-/// The data payload starts at 0-based byte 8, matching the layout used by
-/// `0xCC`. `bit_offset` is 0 for the `0x31` bank (pins 1–32) and 32 for the
-/// `0x32` bank (pins 33–55).
+/// Per the PoKeys protocol specification (v14.3.2025, "Block inputs reading"):
+/// - `0x31` returned packet: byte 3 = pins 1–8, byte 4 = 9–16, byte 5 = 17–24,
+///   byte 6 = 25–32 (1-based; 0-based bytes 2–5).
+/// - `0x32` returned packet: byte 3 = pins 33–40, byte 4 = 41–48, byte 5 =
+///   49–55 (1-based; 0-based bytes 2–4).
+///
+/// `bit_offset` is 0 for the `0x31` bank (pins 1–32) and 32 for the `0x32`
+/// bank (pins 33–55).
+///
+/// Note: this layout differs from the `0xCC` ("Get device status") response,
+/// which packs pin state into 0-based bytes 8–14. An earlier revision of this
+/// function read at byte 8 to mirror `0xCC`; that produced all-low reads on
+/// firmware 4.8.x (and presumably every spec-compliant firmware), because
+/// bytes 8+ on `0x31`/`0x32` either don't exist or carry unrelated trailer
+/// data. See pokeys-toolkit/core PR #44 / its revert for the trail.
 pub(crate) fn apply_block_inputs_response(
     response: &[u8],
     pins: &mut [PinData],
@@ -711,7 +724,7 @@ pub(crate) fn apply_block_inputs_response(
 ) {
     for i in pin_range {
         let rel = i - bit_offset;
-        let byte_index = 8 + (rel / 8);
+        let byte_index = 2 + (rel / 8);
         let bit_index = rel % 8;
         if byte_index < response.len() {
             pins[i].digital_value_get = if (response[byte_index] & (1 << bit_index)) != 0 {
@@ -856,11 +869,39 @@ mod tests {
         assert_eq!(encoders[2].encoder_value, 0);
     }
 
+    // Block-input layout per the PoKeys protocol specification
+    // (v14.3.2025, "Block inputs reading"):
+    //   0x31 returned packet
+    //     byte 3 (0-based 2) = pins  1– 8
+    //     byte 4 (0-based 3) = pins  9–16
+    //     byte 5 (0-based 4) = pins 17–24
+    //     byte 6 (0-based 5) = pins 25–32
+    //   0x32 returned packet
+    //     byte 3 (0-based 2) = pins 33–40
+    //     byte 4 (0-based 3) = pins 41–48
+    //     byte 5 (0-based 4) = pins 49–55
+
+    #[test]
+    fn test_apply_block_inputs_pin_4() {
+        // 0x31: pin 4 high → 0-based byte 2, bit 3.
+        // Captured live: response[2] flipped C8 → CD when pin 4's switch was
+        // toggled on PoKeys57E firmware 4.8.2.
+        let mut response = [0u8; 64];
+        response[2] = 0b0000_1000;
+
+        let mut pins = vec![PinData::new(); 55];
+        apply_block_inputs_response(&response, &mut pins, 0..32, 0);
+
+        assert_eq!(pins[2].digital_value_get, 0, "pin 3 should stay low");
+        assert_eq!(pins[3].digital_value_get, 1, "pin 4 should read high");
+        assert_eq!(pins[4].digital_value_get, 0, "pin 5 should stay low");
+    }
+
     #[test]
     fn test_apply_block_inputs_pin_28() {
-        // 0x31 response: pin 28 high (pin_index 27 → byte 8+3=11, bit 3).
+        // 0x31: pin 28 high → 0-based byte 2 + 27/8 = 5, bit 27 % 8 = 3.
         let mut response = [0u8; 64];
-        response[11] = 0b0000_1000;
+        response[5] = 0b0000_1000;
 
         let mut pins = vec![PinData::new(); 55];
         apply_block_inputs_response(&response, &mut pins, 0..32, 0);
@@ -872,9 +913,9 @@ mod tests {
 
     #[test]
     fn test_apply_block_inputs_pin_33() {
-        // 0x32 response (pins 33-55): pin 33 high (rel=0 → byte 8, bit 0).
+        // 0x32: pin 33 high → rel 0 → 0-based byte 2, bit 0.
         let mut response = [0u8; 64];
-        response[8] = 0b0000_0001;
+        response[2] = 0b0000_0001;
 
         let mut pins = vec![PinData::new(); 55];
         apply_block_inputs_response(&response, &mut pins, 32..55, 32);
@@ -886,9 +927,10 @@ mod tests {
 
     #[test]
     fn test_apply_block_inputs_pin_50() {
-        // 0x32 response: pin 50 high (rel = 50-33 = 17 → byte 8 + 17/8 = 10, bit 1).
+        // 0x32: pin 50 high → rel = 50-33 = 17 → 0-based byte 2 + 17/8 = 4,
+        // bit 17 % 8 = 1.
         let mut response = [0u8; 64];
-        response[10] = 0b0000_0010;
+        response[4] = 0b0000_0010;
 
         let mut pins = vec![PinData::new(); 55];
         apply_block_inputs_response(&response, &mut pins, 32..55, 32);
@@ -900,9 +942,10 @@ mod tests {
 
     #[test]
     fn test_apply_block_inputs_pin_55() {
-        // 0x32 response: pin 55 high (rel = 55-33 = 22 → byte 8 + 22/8 = 10, bit 6).
+        // 0x32: pin 55 high → rel = 55-33 = 22 → 0-based byte 2 + 22/8 = 4,
+        // bit 22 % 8 = 6.
         let mut response = [0u8; 64];
-        response[10] = 0b0100_0000;
+        response[4] = 0b0100_0000;
 
         let mut pins = vec![PinData::new(); 55];
         apply_block_inputs_response(&response, &mut pins, 32..55, 32);
@@ -912,12 +955,13 @@ mod tests {
     }
 
     #[test]
-    fn test_apply_block_inputs_ignores_param_echo_zone() {
-        // The previous implementation read from byte 2 (param-echo zone). A
-        // response with the entire echo zone set high and the real data zone
-        // (bytes 8+) zeroed must produce all-low pin states.
+    fn test_apply_block_inputs_ignores_trailer_bytes() {
+        // Bytes after the spec-defined data zone (0-based 6+ for 0x31,
+        // 0-based 5+ for 0x32) carry the request ID and unused trailer —
+        // never pin state. A response with the entire trailer set high and
+        // bytes 2-5 zero must produce all-low pin states.
         let mut response = [0u8; 64];
-        for b in &mut response[0..8] {
+        for b in &mut response[6..] {
             *b = 0xFF;
         }
 
@@ -929,30 +973,32 @@ mod tests {
             assert_eq!(
                 p.digital_value_get,
                 0,
-                "pin {} must not read echo zone",
+                "pin {} must not read trailer zone",
                 i + 1
             );
         }
     }
 
     #[test]
-    fn test_decode_read_digital_input_response_uses_byte_8() {
+    fn test_decode_read_digital_input_response_uses_byte_3() {
         use crate::io::private::decode_read_digital_input_response;
 
-        // Echo / status bytes high, payload zero → pin reads low.
-        let mut res = [0u8; 64];
-        res[3] = 0xFF;
+        // Per spec ("Reading of inputs"): byte 3 (0-based 2) = status,
+        // byte 4 (0-based 3) = input value.
+
+        // Status OK, value byte zero → pin reads low.
+        let res = [0u8; 64];
         assert_eq!(decode_read_digital_input_response(&res).unwrap(), 0);
 
-        // Status OK, payload at byte 8 set → pin reads high.
+        // Status OK, value byte set → pin reads high.
         let mut res = [0u8; 64];
-        res[8] = 1;
+        res[3] = 1;
         assert_eq!(decode_read_digital_input_response(&res).unwrap(), 1);
 
         // Non-zero status byte still surfaces as InternalError.
         let mut res = [0u8; 64];
         res[2] = 1;
-        res[8] = 1;
+        res[3] = 1;
         assert!(decode_read_digital_input_response(&res).is_err());
     }
 
