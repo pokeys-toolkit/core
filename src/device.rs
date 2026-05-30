@@ -1312,6 +1312,26 @@ impl PoKeysDevice {
         Ok(())
     }
 
+    /// Command 0xCA, option 16: disable the matrix keyboard.
+    ///
+    /// The protocol has no dedicated disable command; the spec describes
+    /// enablement as bit 0 of byte 9 in the option-16 payload, so disabling
+    /// is just an option-16 write with the enable bit cleared. Pin codes are
+    /// left at zero in the payload — the firmware will not scan a disabled
+    /// keyboard, so they are irrelevant.
+    pub fn disable_matrix_keyboard(&mut self) -> Result<()> {
+        let data = [0u8; 55]; // data[0] = 0 → enable bit cleared
+        let response = self.send_request_with_data(0xCA, 16, MATRIX_KEYBOARD_ID, 0, 0, &data)?;
+        if response[1] != 0xCA {
+            return Err(PoKeysError::Protocol(format!(
+                "Invalid response command for matrix keyboard disable: 0x{:02X}",
+                response[1]
+            )));
+        }
+        self.matrix_keyboard.configuration = 0;
+        Ok(())
+    }
+
     /// Command 0xCA: Read Matrix Keyboard State
     ///
     /// Reads the current state of all keys in the matrix keyboard.
