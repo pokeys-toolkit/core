@@ -14,6 +14,131 @@ use crate::types::*;
 use std::sync::{LazyLock, Mutex};
 use std::time::Duration;
 
+/// Matrix keyboard ID — current PoKeys devices expose only keyboard 0;
+/// the field exists in the spec for forward compatibility.
+const MATRIX_KEYBOARD_ID: u8 = 0;
+
+/// Encode 16 keys (codes + modifiers, optionally a triggered-mode bitmap) into the
+/// `data` payload for a `0xCA` key-mapping write (options 2-9 / 22-29).
+///
+/// Layout matches spec § Matrix keyboard:
+/// - data[0..16]  → bytes 9-24:  16 key codes
+/// - data[16..32] → bytes 25-40: 16 key modifiers
+/// - data[32..34] → bytes 41-42: triggered-mode bitmap (16 bits, LSB-first; only for down-event options 2-9)
+fn encode_matrix_kb_mapping_chunk(
+    codes: &[u8],
+    modifiers: &[u8],
+    triggered: Option<&[u8]>,
+    chunk_base: usize,
+) -> [u8; 34] {
+    let mut data = [0u8; 34];
+    for i in 0..16 {
+        let idx = chunk_base + i;
+        if idx < codes.len() {
+            data[i] = codes[idx];
+        }
+        if idx < modifiers.len() {
+            data[16 + i] = modifiers[idx];
+        }
+    }
+    if let Some(triggered) = triggered {
+        let mut bitmap: u16 = 0;
+        for i in 0..16 {
+            let idx = chunk_base + i;
+            if idx < triggered.len() && triggered[idx] != 0 {
+                bitmap |= 1 << i;
+            }
+        }
+        data[32] = (bitmap & 0xFF) as u8;
+        data[33] = (bitmap >> 8) as u8;
+    }
+    data
+}
+
+/// Decode a 16-key key-mapping read response into the supplied buffers.
+/// Inverse of [`encode_matrix_kb_mapping_chunk`].
+fn decode_matrix_kb_mapping_chunk(
+    response: &[u8],
+    codes: &mut [u8],
+    modifiers: &mut [u8],
+    triggered: Option<&mut [u8]>,
+    chunk_base: usize,
+) {
+    // response[8..24] = codes, response[24..40] = modifiers, response[40..42] = triggered bitmap
+    for i in 0..16 {
+        let idx = chunk_base + i;
+        if idx < codes.len() {
+            codes[idx] = response[8 + i];
+        }
+        if idx < modifiers.len() {
+            modifiers[idx] = response[24 + i];
+        }
+    }
+    if let Some(triggered) = triggered {
+        let bitmap = u16::from_le_bytes([response[40], response[41]]);
+        for i in 0..16 {
+            let idx = chunk_base + i;
+            if idx < triggered.len() {
+                triggered[idx] = if (bitmap & (1 << i)) != 0 { 1 } else { 0 };
+            }
+        }
+    }
+}
+
+/// Build the option-16 configuration payload for `0xCA`.
+///
+/// Caller is expected to validate `width` (1-8) and `height` (1-16) and that the
+/// pin slices contain at least `width` / `height` entries.
+///
+/// Layout matches spec § Matrix keyboard:
+/// - data[0]      = byte 9:  enable bit
+/// - data[1]      = byte 10: (width-1) << 4 | (height-1)
+/// - data[2..10]  = bytes 11-18: row pins 0-7
+/// - data[10..18] = bytes 19-26: column pins 0-7
+/// - data[18..34] = bytes 27-42: direct/macro bitmap (zero-filled = all direct)
+/// - data[34..42] = bytes 43-50: row pins 8-15 (only when height > 8)
+/// - data[42]     = byte 51:  alternate-function pin (0 = disabled)
+fn encode_matrix_kb_config_payload(
+    width: u8,
+    height: u8,
+    column_pins: &[u8],
+    row_pins: &[u8],
+) -> [u8; 55] {
+    let mut data = [0u8; 55];
+    data[0] = 1;
+    data[1] = ((width - 1) << 4) | (height - 1);
+
+    for (i, &pin) in row_pins.iter().enumerate().take(8) {
+        data[2 + i] = pin.saturating_sub(1);
+    }
+    for (i, &pin) in column_pins.iter().enumerate().take(8) {
+        data[10 + i] = pin.saturating_sub(1);
+    }
+    if height > 8 {
+        for (offset, &pin) in row_pins.iter().enumerate().skip(8).take(8) {
+            data[34 + (offset - 8)] = pin.saturating_sub(1);
+        }
+    }
+
+    data
+}
+
+fn validate_matrix_kb_mapping_response(response: &[u8], option: u8) -> Result<()> {
+    if response[1] != 0xCA {
+        return Err(PoKeysError::Protocol(format!(
+            "Invalid response command for key mapping read (option {option}): 0x{:02X}",
+            response[1]
+        )));
+    }
+    if response.len() < 42 {
+        return Err(PoKeysError::Protocol(format!(
+            "Key mapping response too short for option {option}: {} bytes (need 42)",
+            response.len()
+        )));
+    }
+    Ok(())
+}
+
 /// Main PoKeys device structure
 pub struct PoKeysDevice {
     // Connection information
@@ -1118,13 +1243,17 @@ impl PoKeysDevice {
     /// # Arguments
     /// * `width` - Number of columns (1-8)
     /// * `height` - Number of rows (1-16)
-    /// * `column_pins` - Pin numbers for columns (1-based)
-    /// * `row_pins` - Pin numbers for rows (1-based)
+    /// * `column_pins` - Pin numbers for columns (1-based); must be at least `width` long
+    /// * `row_pins` - Pin numbers for rows (1-based); must be at least `height` long
     ///
-    /// # Protocol Details
-    /// - Pins are converted to 0-based indexing for the device
-    /// - Matrix uses 8-column internal layout regardless of configured width
-    /// - Supports extended row pins for matrices with height > 8
+    /// # Protocol Details (spec § Matrix keyboard, option 16)
+    /// - data[0]   = byte 9: enable bit
+    /// - data[1]   = byte 10: (width-1) << 4 | (height-1)
+    /// - data[2..10]  = bytes 11-18: row pins 0-7 (0-based pin codes)
+    /// - data[10..18] = bytes 19-26: column pins 0-7
+    /// - data[18..34] = bytes 27-42: direct/macro bitmap (zero = direct mapping)
+    /// - data[34..42] = bytes 43-50: row pins 8-15 (only sent when height > 8)
+    /// - data[42]     = byte 51: alternate-function pin (0 = disabled)
     pub fn configure_matrix_keyboard(
         &mut self,
         width: u8,
@@ -1132,41 +1261,47 @@ impl PoKeysDevice {
         column_pins: &[u8],
         row_pins: &[u8],
     ) -> Result<()> {
-        if width > 8 || height > 16 {
-            return Err(PoKeysError::Parameter("Matrix size too large".to_string()));
+        if width == 0 || width > 8 {
+            return Err(PoKeysError::Parameter(format!(
+                "Matrix width must be 1-8 (got {width})"
+            )));
+        }
+        if height == 0 || height > 16 {
+            return Err(PoKeysError::Parameter(format!(
+                "Matrix height must be 1-16 (got {height})"
+            )));
+        }
+        if column_pins.len() < width as usize {
+            return Err(PoKeysError::Parameter(format!(
+                "column_pins has {} entries, need at least {width}",
+                column_pins.len()
+            )));
+        }
+        if row_pins.len() < height as usize {
+            return Err(PoKeysError::Parameter(format!(
+                "row_pins has {} entries, need at least {height}",
+                row_pins.len()
+            )));
         }
 
-        // Prepare configuration data
-        let mut data = [0u8; 55];
-        data[0] = 1; // Enable matrix keyboard (bit 0)
-        data[1] = ((width - 1) << 4) | (height - 1); // Size: width-1 in upper 4 bits, height-1 in lower 4 bits
+        let data = encode_matrix_kb_config_payload(width, height, column_pins, row_pins);
 
-        // Row pins (bytes 2-9, 0-based indexing)
-        for (i, &pin) in row_pins.iter().enumerate().take(8) {
-            data[2 + i] = if pin > 0 { pin - 1 } else { 0 };
+        let response = self.send_request_with_data(0xCA, 16, MATRIX_KEYBOARD_ID, 0, 0, &data)?;
+        if response[1] != 0xCA {
+            return Err(PoKeysError::Protocol(format!(
+                "Invalid response command for matrix keyboard configure: 0x{:02X}",
+                response[1]
+            )));
         }
-
-        // Column pins (bytes 10-17, 0-based indexing)
-        for (i, &pin) in column_pins.iter().enumerate().take(8) {
-            data[10 + i] = if pin > 0 { pin - 1 } else { 0 };
-        }
-
-        // Extended row pins for height > 8 (bytes 34-41)
-        if height > 8 {
-            for (i, &pin) in row_pins.iter().enumerate().skip(8).take(8) {
-                data[34 + i] = if pin > 0 { pin - 1 } else { 0 };
-            }
-        }
-
-        // Send configuration
-        self.send_request_with_data(0xCA, 16, 0, 0, 0, &data)?;
 
         // Update local state
         self.matrix_keyboard.configuration = 1;
         self.matrix_keyboard.width = width;
         self.matrix_keyboard.height = height;
 
-        // Copy pin assignments
+        // Copy pin assignments verbatim (1-based, as the user supplied them)
+        self.matrix_keyboard.column_pins.fill(0);
+        self.matrix_keyboard.row_pins.fill(0);
         for (i, &pin) in column_pins.iter().enumerate().take(8) {
             self.matrix_keyboard.column_pins[i] = pin;
         }
@@ -1177,39 +1312,186 @@ impl PoKeysDevice {
         Ok(())
     }
 
+    /// Command 0xCA, option 16: disable the matrix keyboard.
+    ///
+    /// The protocol has no dedicated disable command; the spec describes
+    /// enablement as bit 0 of byte 9 in the option-16 payload, so disabling
+    /// is just an option-16 write with the enable bit cleared. Pin codes are
+    /// left at zero in the payload — the firmware will not scan a disabled
+    /// keyboard, so they are irrelevant.
+    pub fn disable_matrix_keyboard(&mut self) -> Result<()> {
+        let data = [0u8; 55]; // data[0] = 0 → enable bit cleared
+        let response = self.send_request_with_data(0xCA, 16, MATRIX_KEYBOARD_ID, 0, 0, &data)?;
+        if response[1] != 0xCA {
+            return Err(PoKeysError::Protocol(format!(
+                "Invalid response command for matrix keyboard disable: 0x{:02X}",
+                response[1]
+            )));
+        }
+        self.matrix_keyboard.configuration = 0;
+        Ok(())
+    }
+
     /// Command 0xCA: Read Matrix Keyboard State
     ///
     /// Reads the current state of all keys in the matrix keyboard.
     /// Uses command 0xCA with option 20 to read the 16x8 matrix status.
     ///
-    /// # Protocol Details
-    /// - Returns 16 bytes representing the full 16x8 matrix
-    /// - Each byte represents 8 keys in a row (bit 0 = column 0, bit 7 = column 7)
-    /// - Key indexing: row * 8 + column (e.g., key at row 1, col 2 = index 10)
-    /// - Updates the internal key_values array with current state
+    /// # Protocol Details (spec § Matrix keyboard, option 20)
+    /// - Response bytes 9-24 (response[8..24]): 16-byte bitmap, one byte per row
+    /// - Bit `c` of row `r` = 1 if the key at (row=r, col=c) is pressed
+    /// - Key indexing: `row * 8 + col` (8-column internal layout regardless of configured width)
     pub fn read_matrix_keyboard(&mut self) -> Result<()> {
-        let response = self.send_request(0xCA, 20, 0, 0, 0)?;
+        let response = self.send_request(0xCA, 20, MATRIX_KEYBOARD_ID, 0, 0)?;
 
-        // Parse keyboard state from response (bytes 8-23 contain 16x8 matrix)
-        let data_start = 8;
+        if response[1] != 0xCA {
+            return Err(PoKeysError::Protocol(format!(
+                "Invalid response command for matrix keyboard read: 0x{:02X}",
+                response[1]
+            )));
+        }
+        if response.len() < 24 {
+            return Err(PoKeysError::Protocol(format!(
+                "Matrix keyboard status response too short: {} bytes (need 24)",
+                response.len()
+            )));
+        }
 
-        if response.len() >= data_start + 16 {
-            // Clear existing state
-            self.matrix_keyboard.key_values.fill(0);
-
-            // Copy matrix state (16 bytes for 16x8 matrix)
-            // Each byte represents 8 keys in a row
-            for (row, &byte_val) in response[data_start..data_start + 16].iter().enumerate() {
-                for col in 0..8 {
-                    let key_index = row * 8 + col;
-                    if key_index < 128 {
-                        self.matrix_keyboard.key_values[key_index] =
-                            if (byte_val & (1 << col)) != 0 { 1 } else { 0 };
-                    }
+        self.matrix_keyboard.key_values.fill(0);
+        for (row, &byte_val) in response[8..24].iter().enumerate() {
+            for col in 0..8 {
+                let key_index = row * 8 + col;
+                if key_index < self.matrix_keyboard.key_values.len() && (byte_val & (1 << col)) != 0
+                {
+                    self.matrix_keyboard.key_values[key_index] = 1;
                 }
             }
         }
 
+        Ok(())
+    }
+
+    /// Command 0xCA, option 50: set the matrix-keyboard scanning decimation (0-50).
+    ///
+    /// Higher values reduce the device's scan rate, useful for noisy keypads.
+    pub fn set_matrix_keyboard_scanning_decimation(&mut self, decimation: u8) -> Result<()> {
+        if decimation > 50 {
+            return Err(PoKeysError::Parameter(format!(
+                "scanning decimation must be 0-50 (got {decimation})"
+            )));
+        }
+
+        let mut data = [0u8; 1];
+        data[0] = decimation;
+        let response = self.send_request_with_data(0xCA, 50, MATRIX_KEYBOARD_ID, 0, 0, &data)?;
+        if response[1] != 0xCA {
+            return Err(PoKeysError::Protocol(format!(
+                "Invalid response command for scanning decimation: 0x{:02X}",
+                response[1]
+            )));
+        }
+
+        self.matrix_keyboard.scanning_decimation = decimation;
+        Ok(())
+    }
+
+    /// Command 0xCA, options 2-9: write the down-event key mapping for all 128 keys.
+    ///
+    /// Sends the key codes, modifiers, and triggered-mode flags currently held in
+    /// `self.matrix_keyboard.key_mapping_key_code`,
+    /// `self.matrix_keyboard.key_mapping_key_modifier`, and
+    /// `self.matrix_keyboard.key_mapping_triggered_key` (one byte per key, non-zero = triggered).
+    ///
+    /// # Protocol Details
+    /// Each option writes 16 keys: option 2 → keys 0-15, option 3 → 16-31, ..., option 9 → 112-127.
+    /// Per the spec footnote, even if `width < 8`, the unused columns of each row still consume
+    /// indices 0-7 in the mapping (rows are always 8 keys wide internally).
+    pub fn set_matrix_keyboard_key_mapping(&mut self) -> Result<()> {
+        for option in 2u8..=9u8 {
+            let chunk_base = (option as usize - 2) * 16;
+            let data = encode_matrix_kb_mapping_chunk(
+                &self.matrix_keyboard.key_mapping_key_code,
+                &self.matrix_keyboard.key_mapping_key_modifier,
+                Some(&self.matrix_keyboard.key_mapping_triggered_key),
+                chunk_base,
+            );
+            let response =
+                self.send_request_with_data(0xCA, option, MATRIX_KEYBOARD_ID, 0, 0, &data)?;
+            if response[1] != 0xCA {
+                return Err(PoKeysError::Protocol(format!(
+                    "Invalid response command for key mapping write (option {option}): 0x{:02X}",
+                    response[1]
+                )));
+            }
+        }
+        Ok(())
+    }
+
+    /// Command 0xCA, options 22-29: write the up-event key mapping for all 128 keys.
+    ///
+    /// Sends `self.matrix_keyboard.key_mapping_key_code_up` and
+    /// `self.matrix_keyboard.key_mapping_key_modifier_up`. Up-event mapping only takes effect
+    /// for keys whose triggered flag is set in the down mapping (see
+    /// [`Self::set_matrix_keyboard_key_mapping`]).
+    pub fn set_matrix_keyboard_key_mapping_up(&mut self) -> Result<()> {
+        for option in 22u8..=29u8 {
+            let chunk_base = (option as usize - 22) * 16;
+            let data = encode_matrix_kb_mapping_chunk(
+                &self.matrix_keyboard.key_mapping_key_code_up,
+                &self.matrix_keyboard.key_mapping_key_modifier_up,
+                None,
+                chunk_base,
+            );
+            let response =
+                self.send_request_with_data(0xCA, option, MATRIX_KEYBOARD_ID, 0, 0, &data)?;
+            if response[1] != 0xCA {
+                return Err(PoKeysError::Protocol(format!(
+                    "Invalid response command for up-key mapping write (option {option}): 0x{:02X}",
+                    response[1]
+                )));
+            }
+        }
+        Ok(())
+    }
+
+    /// Command 0xCA, options 12-19: read the down-event key mapping for all 128 keys.
+    ///
+    /// Populates `self.matrix_keyboard.key_mapping_key_code`,
+    /// `self.matrix_keyboard.key_mapping_key_modifier`, and
+    /// `self.matrix_keyboard.key_mapping_triggered_key` from the device.
+    pub fn get_matrix_keyboard_key_mapping(&mut self) -> Result<()> {
+        for option in 12u8..=19u8 {
+            let chunk_base = (option as usize - 12) * 16;
+            let response = self.send_request(0xCA, option, MATRIX_KEYBOARD_ID, 0, 0)?;
+            validate_matrix_kb_mapping_response(&response, option)?;
+            decode_matrix_kb_mapping_chunk(
+                &response,
+                &mut self.matrix_keyboard.key_mapping_key_code,
+                &mut self.matrix_keyboard.key_mapping_key_modifier,
+                Some(&mut self.matrix_keyboard.key_mapping_triggered_key),
+                chunk_base,
+            );
+        }
+        Ok(())
+    }
+
+    /// Command 0xCA, options 32-39: read the up-event key mapping for all 128 keys.
+    ///
+    /// Populates `self.matrix_keyboard.key_mapping_key_code_up` and
+    /// `self.matrix_keyboard.key_mapping_key_modifier_up` from the device.
+    pub fn get_matrix_keyboard_key_mapping_up(&mut self) -> Result<()> {
+        for option in 32u8..=39u8 {
+            let chunk_base = (option as usize - 32) * 16;
+            let response = self.send_request(0xCA, option, MATRIX_KEYBOARD_ID, 0, 0)?;
+            validate_matrix_kb_mapping_response(&response, option)?;
+            decode_matrix_kb_mapping_chunk(
+                &response,
+                &mut self.matrix_keyboard.key_mapping_key_code_up,
+                &mut self.matrix_keyboard.key_mapping_key_modifier_up,
+                None,
+                chunk_base,
+            );
+        }
         Ok(())
     }
 
@@ -1772,6 +2054,155 @@ mod tests {
 
         response[2] = 100;
         assert_eq!(parse_system_load_response(&response), 100);
+    }
+
+    #[test]
+    fn test_encode_matrix_kb_config_payload_layout() {
+        // 16-row keyboard: rows 1..=16, columns 21..=24.
+        let row_pins: Vec<u8> = (1..=16).collect();
+        let col_pins = vec![21u8, 22, 23, 24];
+        let data = encode_matrix_kb_config_payload(4, 16, &col_pins, &row_pins);
+
+        // byte 9 (data[0]): enable bit
+        assert_eq!(data[0], 1);
+        // byte 10 (data[1]): (width-1) << 4 | (height-1) = (3 << 4) | 15 = 0x3F
+        assert_eq!(data[1], 0x3F);
+
+        // bytes 11-18 (data[2..10]): rows 1..8 → pin codes 0..7
+        for i in 0..8 {
+            assert_eq!(data[2 + i], i as u8, "row {} (low half)", i);
+        }
+        // bytes 19-26 (data[10..18]): columns 21..24 → pin codes 20..23
+        for i in 0..4 {
+            assert_eq!(data[10 + i], 20 + i as u8, "column {}", i);
+        }
+
+        // bytes 27-42 (data[18..34]): direct/macro bitmap, all zero (direct)
+        assert!(
+            data[18..34].iter().all(|&b| b == 0),
+            "direct/macro bitmap must be zero by default"
+        );
+
+        // bytes 43-50 (data[34..42]): rows 9..16 → pin codes 8..15
+        // This is the regression site: previously this loop wrote to data[42..50],
+        // shifting the extended rows entirely outside the spec window.
+        for i in 0..8 {
+            assert_eq!(
+                data[34 + i],
+                (8 + i) as u8,
+                "row {} (extended; high half)",
+                8 + i
+            );
+        }
+
+        // byte 51 (data[42]): alt-function pin must be zero (disabled)
+        assert_eq!(data[42], 0);
+    }
+
+    #[test]
+    fn test_encode_matrix_kb_config_payload_no_extended_rows_when_height_le_8() {
+        let row_pins = vec![1u8, 2, 3, 4];
+        let col_pins = vec![21u8, 22, 23, 24];
+        let data = encode_matrix_kb_config_payload(4, 4, &col_pins, &row_pins);
+
+        // bytes 43-50 / data[34..42] must remain zero — the spec says the extended
+        // row pins block is only used when height > 8.
+        assert!(
+            data[34..42].iter().all(|&b| b == 0),
+            "extended row pins must not be written when height <= 8"
+        );
+    }
+
+    #[test]
+    fn test_encode_matrix_kb_mapping_chunk_writes_codes_modifiers_and_triggered_bitmap() {
+        let codes: Vec<u8> = (0..128).map(|i| i as u8).collect();
+        let modifiers: Vec<u8> = (0..128).map(|i| (i as u8).wrapping_mul(2)).collect();
+        let mut triggered = vec![0u8; 128];
+        // Mark keys 33 and 47 as triggered (chunk_base = 32 → bits 1 and 15 of bitmap).
+        triggered[33] = 1;
+        triggered[47] = 99;
+
+        let chunk = encode_matrix_kb_mapping_chunk(&codes, &modifiers, Some(&triggered), 32);
+
+        // codes 32..48 → data[0..16]
+        for i in 0..16 {
+            assert_eq!(chunk[i], (32 + i) as u8, "code {i}");
+            assert_eq!(chunk[16 + i], (32 + i) as u8 * 2, "modifier {i}");
+        }
+        // bitmap: bit 1 (key 33) and bit 15 (key 47)
+        let bitmap = u16::from_le_bytes([chunk[32], chunk[33]]);
+        assert_eq!(bitmap, (1 << 1) | (1 << 15));
+    }
+
+    #[test]
+    fn test_encode_matrix_kb_mapping_chunk_omits_bitmap_when_no_triggered() {
+        let codes = vec![0u8; 128];
+        let modifiers = vec![0u8; 128];
+        let chunk = encode_matrix_kb_mapping_chunk(&codes, &modifiers, None, 0);
+        assert_eq!(chunk[32], 0);
+        assert_eq!(chunk[33], 0);
+    }
+
+    #[test]
+    fn test_decode_matrix_kb_mapping_chunk_roundtrip() {
+        let codes_in: Vec<u8> = (0..128).map(|i| (i as u8).wrapping_add(7)).collect();
+        let modifiers_in: Vec<u8> = (0..128).map(|i| (i as u8).wrapping_mul(3)).collect();
+        let mut triggered_in = vec![0u8; 128];
+        triggered_in[5] = 1;
+        triggered_in[20] = 1;
+
+        // Build response payload from the encoded chunk for chunk_base=16
+        let chunk =
+            encode_matrix_kb_mapping_chunk(&codes_in, &modifiers_in, Some(&triggered_in), 16);
+        let mut response = [0u8; RESPONSE_BUFFER_SIZE];
+        response[1] = 0xCA;
+        response[8..8 + 16].copy_from_slice(&chunk[0..16]); // codes
+        response[24..24 + 16].copy_from_slice(&chunk[16..32]); // modifiers
+        response[40] = chunk[32];
+        response[41] = chunk[33];
+
+        let mut codes_out = vec![0u8; 128];
+        let mut modifiers_out = vec![0u8; 128];
+        let mut triggered_out = vec![0u8; 128];
+        decode_matrix_kb_mapping_chunk(
+            &response,
+            &mut codes_out,
+            &mut modifiers_out,
+            Some(&mut triggered_out),
+            16,
+        );
+
+        // Only keys 16..32 should be populated
+        for i in 16..32 {
+            assert_eq!(codes_out[i], codes_in[i], "code {i}");
+            assert_eq!(modifiers_out[i], modifiers_in[i], "modifier {i}");
+        }
+        assert_eq!(triggered_out[20], 1);
+        assert_eq!(triggered_out[16], 0);
+        // Untouched buckets remain zero
+        assert_eq!(codes_out[0], 0);
+        assert_eq!(codes_out[40], 0);
+    }
+
+    #[test]
+    fn test_validate_matrix_kb_mapping_response_rejects_wrong_command() {
+        let mut response = [0u8; RESPONSE_BUFFER_SIZE];
+        response[1] = 0xC9; // not 0xCA
+        assert!(validate_matrix_kb_mapping_response(&response, 12).is_err());
+    }
+
+    #[test]
+    fn test_validate_matrix_kb_mapping_response_rejects_short_response() {
+        let mut response = [0u8; 30]; // < 42 required
+        response[1] = 0xCA;
+        assert!(validate_matrix_kb_mapping_response(&response, 12).is_err());
+    }
+
+    #[test]
+    fn test_validate_matrix_kb_mapping_response_accepts_valid() {
+        let mut response = [0u8; RESPONSE_BUFFER_SIZE];
+        response[1] = 0xCA;
+        assert!(validate_matrix_kb_mapping_response(&response, 12).is_ok());
     }
 
     #[test]
