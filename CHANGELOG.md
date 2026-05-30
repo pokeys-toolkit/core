@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.11] - 2026-05-30
+
+- fix(keyboard): correct matrix-keyboard offsets + add key-mapping API (#48)
+
 ## [1.0.10] - 2026-05-26
 
 - fix(io): correct 0x31/0x32/0x30 digital-input response offsets per spec (#47)
