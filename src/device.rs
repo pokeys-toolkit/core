@@ -14,6 +14,48 @@ use crate::types::*;
 use std::sync::{LazyLock, Mutex};
 use std::time::Duration;
 
+/// Matrix keyboard ID — current PoKeys devices expose only keyboard 0;
+/// the field exists in the spec for forward compatibility.
+const MATRIX_KEYBOARD_ID: u8 = 0;
+
+/// Build the option-16 configuration payload for `0xCA`.
+///
+/// Caller is expected to validate `width` (1-8) and `height` (1-16) and that the
+/// pin slices contain at least `width` / `height` entries.
+///
+/// Layout matches spec § Matrix keyboard:
+/// - data[0]      = byte 9:  enable bit
+/// - data[1]      = byte 10: (width-1) << 4 | (height-1)
+/// - data[2..10]  = bytes 11-18: row pins 0-7
+/// - data[10..18] = bytes 19-26: column pins 0-7
+/// - data[18..34] = bytes 27-42: direct/macro bitmap (zero-filled = all direct)
+/// - data[34..42] = bytes 43-50: row pins 8-15 (only when height > 8)
+/// - data[42]     = byte 51:  alternate-function pin (0 = disabled)
+fn encode_matrix_kb_config_payload(
+    width: u8,
+    height: u8,
+    column_pins: &[u8],
+    row_pins: &[u8],
+) -> [u8; 55] {
+    let mut data = [0u8; 55];
+    data[0] = 1;
+    data[1] = ((width - 1) << 4) | (height - 1);
+
+    for (i, &pin) in row_pins.iter().enumerate().take(8) {
+        data[2 + i] = pin.saturating_sub(1);
+    }
+    for (i, &pin) in column_pins.iter().enumerate().take(8) {
+        data[10 + i] = pin.saturating_sub(1);
+    }
+    if height > 8 {
+        for (offset, &pin) in row_pins.iter().enumerate().skip(8).take(8) {
+            data[34 + (offset - 8)] = pin.saturating_sub(1);
+        }
+    }
+
+    data
+}
+
 /// Main PoKeys device structure
 pub struct PoKeysDevice {
     // Connection information
@@ -1118,13 +1160,10 @@ impl PoKeysDevice {
     /// # Arguments
     /// * `width` - Number of columns (1-8)
     /// * `height` - Number of rows (1-16)
-    /// * `column_pins` - Pin numbers for columns (1-based)
-    /// * `row_pins` - Pin numbers for rows (1-based)
+    /// * `column_pins` - Pin numbers for columns (1-based); must be at least `width` long
+    /// * `row_pins` - Pin numbers for rows (1-based); must be at least `height` long
     ///
-    /// # Protocol Details
-    /// - Pins are converted to 0-based indexing for the device
-    /// - Matrix uses 8-column internal layout regardless of configured width
-    /// - Supports extended row pins for matrices with height > 8
+    /// See [`encode_matrix_kb_config_payload`] for the wire-level layout.
     pub fn configure_matrix_keyboard(
         &mut self,
         width: u8,
@@ -1132,41 +1171,47 @@ impl PoKeysDevice {
         column_pins: &[u8],
         row_pins: &[u8],
     ) -> Result<()> {
-        if width > 8 || height > 16 {
-            return Err(PoKeysError::Parameter("Matrix size too large".to_string()));
+        if width == 0 || width > 8 {
+            return Err(PoKeysError::Parameter(format!(
+                "Matrix width must be 1-8 (got {width})"
+            )));
+        }
+        if height == 0 || height > 16 {
+            return Err(PoKeysError::Parameter(format!(
+                "Matrix height must be 1-16 (got {height})"
+            )));
+        }
+        if column_pins.len() < width as usize {
+            return Err(PoKeysError::Parameter(format!(
+                "column_pins has {} entries, need at least {width}",
+                column_pins.len()
+            )));
+        }
+        if row_pins.len() < height as usize {
+            return Err(PoKeysError::Parameter(format!(
+                "row_pins has {} entries, need at least {height}",
+                row_pins.len()
+            )));
         }
 
-        // Prepare configuration data
-        let mut data = [0u8; 55];
-        data[0] = 1; // Enable matrix keyboard (bit 0)
-        data[1] = ((width - 1) << 4) | (height - 1); // Size: width-1 in upper 4 bits, height-1 in lower 4 bits
+        let data = encode_matrix_kb_config_payload(width, height, column_pins, row_pins);
 
-        // Row pins (bytes 2-9, 0-based indexing)
-        for (i, &pin) in row_pins.iter().enumerate().take(8) {
-            data[2 + i] = if pin > 0 { pin - 1 } else { 0 };
+        let response = self.send_request_with_data(0xCA, 16, MATRIX_KEYBOARD_ID, 0, 0, &data)?;
+        if response[1] != 0xCA {
+            return Err(PoKeysError::Protocol(format!(
+                "Invalid response command for matrix keyboard configure: 0x{:02X}",
+                response[1]
+            )));
         }
-
-        // Column pins (bytes 10-17, 0-based indexing)
-        for (i, &pin) in column_pins.iter().enumerate().take(8) {
-            data[10 + i] = if pin > 0 { pin - 1 } else { 0 };
-        }
-
-        // Extended row pins for height > 8 (bytes 34-41)
-        if height > 8 {
-            for (i, &pin) in row_pins.iter().enumerate().skip(8).take(8) {
-                data[34 + i] = if pin > 0 { pin - 1 } else { 0 };
-            }
-        }
-
-        // Send configuration
-        self.send_request_with_data(0xCA, 16, 0, 0, 0, &data)?;
 
         // Update local state
         self.matrix_keyboard.configuration = 1;
         self.matrix_keyboard.width = width;
         self.matrix_keyboard.height = height;
 
-        // Copy pin assignments
+        // Copy pin assignments verbatim (1-based, as the user supplied them)
+        self.matrix_keyboard.column_pins.fill(0);
+        self.matrix_keyboard.row_pins.fill(0);
         for (i, &pin) in column_pins.iter().enumerate().take(8) {
             self.matrix_keyboard.column_pins[i] = pin;
         }
@@ -1182,30 +1227,33 @@ impl PoKeysDevice {
     /// Reads the current state of all keys in the matrix keyboard.
     /// Uses command 0xCA with option 20 to read the 16x8 matrix status.
     ///
-    /// # Protocol Details
-    /// - Returns 16 bytes representing the full 16x8 matrix
-    /// - Each byte represents 8 keys in a row (bit 0 = column 0, bit 7 = column 7)
-    /// - Key indexing: row * 8 + column (e.g., key at row 1, col 2 = index 10)
-    /// - Updates the internal key_values array with current state
+    /// # Protocol Details (spec § Matrix keyboard, option 20)
+    /// - Response bytes 9-24 (response[8..24]): 16-byte bitmap, one byte per row
+    /// - Bit `c` of row `r` = 1 if the key at (row=r, col=c) is pressed
+    /// - Key indexing: `row * 8 + col` (8-column internal layout regardless of configured width)
     pub fn read_matrix_keyboard(&mut self) -> Result<()> {
-        let response = self.send_request(0xCA, 20, 0, 0, 0)?;
+        let response = self.send_request(0xCA, 20, MATRIX_KEYBOARD_ID, 0, 0)?;
 
-        // Parse keyboard state from response (bytes 8-23 contain 16x8 matrix)
-        let data_start = 8;
+        if response[1] != 0xCA {
+            return Err(PoKeysError::Protocol(format!(
+                "Invalid response command for matrix keyboard read: 0x{:02X}",
+                response[1]
+            )));
+        }
+        if response.len() < 24 {
+            return Err(PoKeysError::Protocol(format!(
+                "Matrix keyboard status response too short: {} bytes (need 24)",
+                response.len()
+            )));
+        }
 
-        if response.len() >= data_start + 16 {
-            // Clear existing state
-            self.matrix_keyboard.key_values.fill(0);
-
-            // Copy matrix state (16 bytes for 16x8 matrix)
-            // Each byte represents 8 keys in a row
-            for (row, &byte_val) in response[data_start..data_start + 16].iter().enumerate() {
-                for col in 0..8 {
-                    let key_index = row * 8 + col;
-                    if key_index < 128 {
-                        self.matrix_keyboard.key_values[key_index] =
-                            if (byte_val & (1 << col)) != 0 { 1 } else { 0 };
-                    }
+        self.matrix_keyboard.key_values.fill(0);
+        for (row, &byte_val) in response[8..24].iter().enumerate() {
+            for col in 0..8 {
+                let key_index = row * 8 + col;
+                if key_index < self.matrix_keyboard.key_values.len() && (byte_val & (1 << col)) != 0
+                {
+                    self.matrix_keyboard.key_values[key_index] = 1;
                 }
             }
         }
@@ -1772,6 +1820,63 @@ mod tests {
 
         response[2] = 100;
         assert_eq!(parse_system_load_response(&response), 100);
+    }
+
+    #[test]
+    fn test_encode_matrix_kb_config_payload_layout() {
+        // 16-row keyboard: rows 1..=16, columns 21..=24.
+        let row_pins: Vec<u8> = (1..=16).collect();
+        let col_pins = vec![21u8, 22, 23, 24];
+        let data = encode_matrix_kb_config_payload(4, 16, &col_pins, &row_pins);
+
+        // byte 9 (data[0]): enable bit
+        assert_eq!(data[0], 1);
+        // byte 10 (data[1]): (width-1) << 4 | (height-1) = (3 << 4) | 15 = 0x3F
+        assert_eq!(data[1], 0x3F);
+
+        // bytes 11-18 (data[2..10]): rows 1..8 → pin codes 0..7
+        for i in 0..8 {
+            assert_eq!(data[2 + i], i as u8, "row {} (low half)", i);
+        }
+        // bytes 19-26 (data[10..18]): columns 21..24 → pin codes 20..23
+        for i in 0..4 {
+            assert_eq!(data[10 + i], 20 + i as u8, "column {}", i);
+        }
+
+        // bytes 27-42 (data[18..34]): direct/macro bitmap, all zero (direct)
+        assert!(
+            data[18..34].iter().all(|&b| b == 0),
+            "direct/macro bitmap must be zero by default"
+        );
+
+        // bytes 43-50 (data[34..42]): rows 9..16 → pin codes 8..15
+        // This is the regression site: previously this loop wrote to data[42..50],
+        // shifting the extended rows entirely outside the spec window.
+        for i in 0..8 {
+            assert_eq!(
+                data[34 + i],
+                (8 + i) as u8,
+                "row {} (extended; high half)",
+                8 + i
+            );
+        }
+
+        // byte 51 (data[42]): alt-function pin must be zero (disabled)
+        assert_eq!(data[42], 0);
+    }
+
+    #[test]
+    fn test_encode_matrix_kb_config_payload_no_extended_rows_when_height_le_8() {
+        let row_pins = vec![1u8, 2, 3, 4];
+        let col_pins = vec![21u8, 22, 23, 24];
+        let data = encode_matrix_kb_config_payload(4, 4, &col_pins, &row_pins);
+
+        // bytes 43-50 / data[34..42] must remain zero — the spec says the extended
+        // row pins block is only used when height > 8.
+        assert!(
+            data[34..42].iter().all(|&b| b == 0),
+            "extended row pins must not be written when height <= 8"
+        );
     }
 
     #[test]
