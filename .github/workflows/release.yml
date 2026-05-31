@@ -12,6 +12,14 @@ permissions:
   contents: write
   pull-requests: write
 
+# Serialize Release runs on the same ref so two release workflows can't race
+# against each other. Non-release pushes (docs/**, *.md) bypass this workflow
+# entirely via paths-ignore but can still land on main during a release run —
+# the rebase-and-retry loop in `Commit version bump` handles that case.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -165,8 +173,27 @@ jobs:
           git config --local user.name "GitHub Action"
           git add Cargo.toml Cargo.lock CHANGELOG.md
           git commit -m "chore(release): bump version to ${{ steps.version.outputs.version }}"
+
+          # Push the version-bump commit BEFORE creating the tag. If `main`
+          # advanced while we were running (e.g. a docs PR landed under
+          # paths-ignore, or the concurrency group was disabled), rebase onto
+          # the new tip and retry. Tagging-before-pushing previously left
+          # orphan `v$VERSION` tags on transient push failures.
+          PUSH_ATTEMPTS=5
+          for attempt in $(seq 1 $PUSH_ATTEMPTS); do
+            if git push origin main; then
+              break
+            fi
+            if [ "$attempt" -eq "$PUSH_ATTEMPTS" ]; then
+              echo "::error::Failed to push version bump after $PUSH_ATTEMPTS attempts."
+              exit 1
+            fi
+            echo "Push rejected (attempt $attempt/$PUSH_ATTEMPTS); rebasing onto origin/main and retrying."
+            git fetch origin main
+            git rebase origin/main
+          done
+
           git tag -a "${NEW_TAG}" -m "Release ${NEW_TAG}"
-          git push origin main
           git push origin "${NEW_TAG}"
 
       - name: Publish to crates.io
