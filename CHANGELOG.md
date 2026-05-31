@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.13] - 2026-05-31
+
+- fix(keyboard): vendor-aligned configure protocol (option 1, two-phase activation, option-10 readback) (#53)
+
 ## [1.0.12] - 2026-05-31
 
 - fix(keyboard): set row/col pin functions before option-16 configure (#51)
