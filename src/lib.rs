@@ -109,7 +109,7 @@ pub use types::*;
 // Re-export main functionality
 pub use device::{connect_to_device, connect_to_device_with_serial, enumerate_usb_devices};
 pub use io::{PinCapability, PinFunction};
-pub use keyboard_matrix::MatrixKeyboard;
+pub use keyboard_matrix::{MatrixKeyboard, MatrixKeyboardConfig};
 pub use model_manager::ModelManager;
 pub use models::{DeviceModel, PinModel};
 
