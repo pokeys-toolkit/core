@@ -3,7 +3,7 @@
 use crate::communication::{CommunicationManager, NetworkInterface, UsbHidInterface};
 use crate::encoders::EncoderData;
 use crate::error::{PoKeysError, Result};
-use crate::io::PinData;
+use crate::io::{PinData, PinFunction};
 use crate::keyboard_matrix::MatrixKeyboard;
 use crate::lcd::LcdData;
 use crate::matrix::MatrixLed;
@@ -1240,11 +1240,31 @@ impl PoKeysDevice {
     /// Configures a matrix keyboard using the official PoKeys protocol.
     /// Uses command 0xCA with option 16 for configuration.
     ///
+    /// # Pin function prerequisite (user manual § 8.5)
+    /// The PoKeys user manual states: "Make sure the selected pin is configured
+    /// as digital input [for columns] / digital output [for rows], then check
+    /// the 'Matrix keyboard' option for the pin..." Without this, the firmware
+    /// acknowledges option-16 but does not scan — it cannot drive a row that
+    /// isn't configured as `DigitalOutput`, nor read a column that isn't
+    /// configured as `DigitalInput` with its internal pull-up active.
+    ///
+    /// This method enforces the prerequisite by issuing a single bulk pin-
+    /// function write (`0xC0`) before the option-16 configure: it reads the
+    /// current 55-byte pin-settings array (preserving the invert bit on
+    /// untouched pins), forces row pins to `DigitalOutput` and column pins to
+    /// `DigitalInput`, and writes the array back. Total cost: 2 extra round
+    /// trips on top of the configure, regardless of matrix size.
+    ///
     /// # Arguments
     /// * `width` - Number of columns (1-8)
     /// * `height` - Number of rows (1-16)
-    /// * `column_pins` - Pin numbers for columns (1-based); must be at least `width` long
-    /// * `row_pins` - Pin numbers for rows (1-based); must be at least `height` long
+    /// * `column_pins` - Pin numbers for columns (1-based, 1..=55); must be at least `width` long
+    /// * `row_pins` - Pin numbers for rows (1-based, 1..=55); must be at least `height` long
+    ///
+    /// # Errors
+    /// Returns [`PoKeysError::Parameter`] if `width`/`height` are out of
+    /// range, slices are too short, a pin number is outside 1..=55, or the
+    /// same pin appears in both rows and columns.
     ///
     /// # Protocol Details (spec § Matrix keyboard, option 16)
     /// - data[0]   = byte 9: enable bit
@@ -1283,6 +1303,44 @@ impl PoKeysDevice {
                 row_pins.len()
             )));
         }
+
+        let used_rows = &row_pins[..height as usize];
+        let used_cols = &column_pins[..width as usize];
+        for &pin in used_rows.iter().chain(used_cols.iter()) {
+            if pin == 0 || pin > 55 {
+                return Err(PoKeysError::Parameter(format!(
+                    "Matrix keyboard pin {pin} is out of range (must be 1-55)"
+                )));
+            }
+        }
+        for &row in used_rows {
+            if used_cols.contains(&row) {
+                return Err(PoKeysError::Parameter(format!(
+                    "Pin {row} cannot be used as both a row and a column"
+                )));
+            }
+        }
+
+        // Spec / user manual prerequisite: the firmware drives rows as digital
+        // outputs and reads columns as digital inputs. If a pin's function
+        // isn't already set accordingly, option-16 is acknowledged but the
+        // matrix doesn't scan. Apply the requirement here so callers don't
+        // have to know.
+        //
+        // Use raw read/write (not the PinFunction view) so we preserve the
+        // invert flag (bit 7 / 0x80) on every pin we don't touch.
+        let mut raw = self.read_all_pin_settings_raw()?;
+        for &pin in used_rows {
+            let idx = (pin - 1) as usize;
+            let invert = raw[idx] & 0x80;
+            raw[idx] = (PinFunction::DigitalOutput as u8) | invert;
+        }
+        for &pin in used_cols {
+            let idx = (pin - 1) as usize;
+            let invert = raw[idx] & 0x80;
+            raw[idx] = (PinFunction::DigitalInput as u8) | invert;
+        }
+        self.set_all_pin_settings_raw(&raw)?;
 
         let data = encode_matrix_kb_config_payload(width, height, column_pins, row_pins);
 
@@ -2203,6 +2261,66 @@ mod tests {
         let mut response = [0u8; RESPONSE_BUFFER_SIZE];
         response[1] = 0xCA;
         assert!(validate_matrix_kb_mapping_response(&response, 12).is_ok());
+    }
+
+    #[test]
+    fn test_configure_matrix_keyboard_rejects_pin_in_both_row_and_col() {
+        let mut device = PoKeysDevice::new(DeviceConnectionType::UsbDevice);
+        let cols = [5u8, 6, 7, 8];
+        let rows = [1u8, 2, 3, 5]; // pin 5 is also in cols
+        let err = device
+            .configure_matrix_keyboard(4, 4, &cols, &rows)
+            .expect_err("must reject overlapping pin assignment");
+        match err {
+            PoKeysError::Parameter(msg) => {
+                assert!(
+                    msg.contains("Pin 5"),
+                    "error must name the offending pin, got: {msg}"
+                );
+            }
+            other => panic!("expected Parameter error, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_configure_matrix_keyboard_rejects_pin_zero() {
+        let mut device = PoKeysDevice::new(DeviceConnectionType::UsbDevice);
+        let cols = [5u8, 6, 7, 8];
+        let rows = [0u8, 2, 3, 4]; // pin 0 is invalid
+        let err = device
+            .configure_matrix_keyboard(4, 4, &cols, &rows)
+            .expect_err("must reject pin 0");
+        assert!(matches!(err, PoKeysError::Parameter(_)));
+    }
+
+    #[test]
+    fn test_configure_matrix_keyboard_rejects_pin_above_55() {
+        let mut device = PoKeysDevice::new(DeviceConnectionType::UsbDevice);
+        let cols = [5u8, 6, 7, 8];
+        let rows = [1u8, 2, 3, 56]; // pin 56 is out of range
+        let err = device
+            .configure_matrix_keyboard(4, 4, &cols, &rows)
+            .expect_err("must reject pin 56");
+        assert!(matches!(err, PoKeysError::Parameter(_)));
+    }
+
+    #[test]
+    fn test_configure_matrix_keyboard_only_validates_used_pins() {
+        // Pins beyond `width`/`height` should be ignored entirely so callers
+        // can pass the full row_pins/column_pins arrays without padding.
+        let mut device = PoKeysDevice::new(DeviceConnectionType::UsbDevice);
+        let cols = [5u8, 6, 7, 8, 0, 99, 99, 99]; // unused entries are bogus
+        let rows = [1u8, 2, 3, 4, 0, 99, 99, 99];
+        // Validation must pass; the call will then fail on read_all_pin_settings_raw
+        // because there's no connection — that's not what we're testing here, just
+        // that we got past the parameter checks.
+        let err = device
+            .configure_matrix_keyboard(4, 4, &cols, &rows)
+            .expect_err("expected NotConnected, not Parameter");
+        assert!(
+            !matches!(err, PoKeysError::Parameter(_)),
+            "validation should have accepted these pins; got Parameter error: {err:?}"
+        );
     }
 
     #[test]
