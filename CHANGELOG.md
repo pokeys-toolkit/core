@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.12] - 2026-05-31
+
+- fix(keyboard): set row/col pin functions before option-16 configure (#51)
+
 ## [1.0.11] - 2026-05-30
 
 - fix(keyboard): correct matrix-keyboard offsets + add key-mapping API (#48)
