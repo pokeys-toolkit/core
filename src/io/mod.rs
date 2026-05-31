@@ -677,6 +677,12 @@ fn encode_analog_output_10bit(value: u32) -> (u8, u8) {
 /// bytes starting at offset 8. Shared by [`PoKeysDevice::read_all_pin_functions`]
 /// and [`PoKeysDevice::read_all_pin_settings_raw`] so the parsing can be
 /// unit-tested without a live device.
+///
+/// Emits a `log::warn!` if all 55 returned bytes are `0x00` — this is the
+/// silent-failure signature of a configuration-locked device, where the
+/// firmware echoes the command but refuses to populate bytes 9-63. It can
+/// also legitimately occur on a freshly-cleared device, so it's reported
+/// rather than rejected.
 pub(crate) fn parse_bulk_pin_settings_response(response: &[u8]) -> Result<[u8; 55]> {
     use crate::io::private::Command;
 
@@ -694,6 +700,17 @@ pub(crate) fn parse_bulk_pin_settings_response(response: &[u8]) -> Result<[u8; 5
 
     let mut raw = [0u8; 55];
     raw.copy_from_slice(&response[8..8 + 55]);
+
+    if raw.iter().all(|&b| b == 0) {
+        log::warn!(
+            "Bulk pin-settings read returned all-zero bytes — every pin reports as \
+             PinRestricted. This often indicates the device's configuration is locked \
+             (the firmware echoes 0xC0 but refuses to populate the response). If you \
+             expect non-restricted pins, check is_configuration_locked() and unlock \
+             via clear_configuration() if appropriate."
+        );
+    }
+
     Ok(raw)
 }
 
@@ -1125,5 +1142,18 @@ mod tests {
         let mut response = [0u8; 64];
         response[1] = 0x12; // not InputOutputExtended
         assert!(parse_bulk_pin_settings_response(&response).is_err());
+    }
+
+    #[test]
+    fn test_parse_bulk_pin_settings_response_accepts_all_zero() {
+        // All-zero pin bytes is the silent-failure signature of a locked
+        // device. Parse logs a warning but does NOT fail —
+        // fresh-after-clear is also legitimately all-zero.
+        use crate::io::private::Command;
+        let mut response = [0u8; 64];
+        response[1] = Command::InputOutputExtended as u8;
+        let raw = parse_bulk_pin_settings_response(&response)
+            .expect("all-zero pin settings should still parse");
+        assert!(raw.iter().all(|&b| b == 0));
     }
 }
