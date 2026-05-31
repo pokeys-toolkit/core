@@ -4,7 +4,7 @@ use crate::communication::{CommunicationManager, NetworkInterface, UsbHidInterfa
 use crate::encoders::EncoderData;
 use crate::error::{PoKeysError, Result};
 use crate::io::{PinData, PinFunction};
-use crate::keyboard_matrix::MatrixKeyboard;
+use crate::keyboard_matrix::{MatrixKeyboard, MatrixKeyboardConfig};
 use crate::lcd::LcdData;
 use crate::matrix::MatrixLed;
 use crate::pulse_engine::PulseEngineV2;
@@ -14,8 +14,19 @@ use crate::types::*;
 use std::sync::{LazyLock, Mutex};
 use std::time::Duration;
 
-/// Matrix keyboard ID — current PoKeys devices expose only keyboard 0;
-/// the field exists in the spec for forward compatibility.
+/// Matrix keyboard ID byte (spec § Matrix keyboard, byte 4).
+///
+/// Hard-coded to 0: every current PoKeys firmware variant exposes exactly
+/// one matrix keyboard, addressed as keyboard 0. The field exists in the
+/// spec for forward compatibility (multi-keyboard or PoNET/I²C-mapped
+/// keyboard variants), and may need to be promoted to a parameter on the
+/// public matrix-keyboard methods if such variants ship. Until then, the
+/// constant keeps the API simple and prevents callers from passing a value
+/// that today would just be silently ignored.
+///
+/// If the firmware ever defines additional keyboard IDs, this becomes a
+/// parameter on [`PoKeysDevice::configure_matrix_keyboard`] and friends —
+/// a breaking change that should ride a major version bump.
 const MATRIX_KEYBOARD_ID: u8 = 0;
 
 /// Encode 16 keys (codes + modifiers, optionally a triggered-mode bitmap) into the
@@ -91,13 +102,13 @@ fn decode_matrix_kb_mapping_chunk(
 /// pin slices contain at least `width` / `height` entries.
 ///
 /// Layout matches spec § Matrix keyboard:
-/// - data[0]      = byte 9:  enable bit
-/// - data[1]      = byte 10: (width-1) << 4 | (height-1)
-/// - data[2..10]  = bytes 11-18: row pins 0-7
-/// - data[10..18] = bytes 19-26: column pins 0-7
-/// - data[18..34] = bytes 27-42: direct/macro bitmap (zero-filled = all direct)
-/// - data[34..42] = bytes 43-50: row pins 8-15 (only when height > 8)
-/// - data[42]     = byte 51:  alternate-function pin (0 = disabled)
+/// - `data[0]`      = byte 9:  enable bit
+/// - `data[1]`      = byte 10: (width-1) << 4 | (height-1)
+/// - `data[2..10]`  = bytes 11-18: row pins 0-7
+/// - `data[10..18]` = bytes 19-26: column pins 0-7
+/// - `data[18..34]` = bytes 27-42: direct/macro bitmap (zero-filled = all direct)
+/// - `data[34..42]` = bytes 43-50: row pins 8-15 (only when height > 8)
+/// - `data[42]`     = byte 51:  alternate-function pin (0 = disabled)
 fn encode_matrix_kb_config_payload(
     width: u8,
     height: u8,
@@ -123,98 +134,148 @@ fn encode_matrix_kb_config_payload(
     data
 }
 
-/// Verify a `0xCA` option-1 readback response against the configuration we
-/// believe we just wrote. Used by [`PoKeysDevice::configure_matrix_keyboard`]
-/// and [`PoKeysDevice::disable_matrix_keyboard`] to catch firmware silent
-/// rejections where option-16 echoes `0xCA` but the device's stored
-/// configuration didn't actually change (e.g. configuration locked).
+/// Parse a `0xCA` option-1 (or any option < 12) readback response into a
+/// [`MatrixKeyboardConfig`].
 ///
 /// Spec § Matrix keyboard, option < 12 readback layout:
-/// - response[8]      = byte 9:  config (bit 0 = enable)
-/// - response[9]      = byte 10: size — bit 0-3 = height-1, bit 4-7 = width-1
-/// - response[10..18] = bytes 11-18: row pins 0-7 (0-based pin codes)
-/// - response[18..26] = bytes 19-26: column pins 0-7
-/// - response[42..50] = bytes 43-50: row pins 8-15 (only when height > 8)
-fn verify_matrix_kb_config_readback(
-    response: &[u8],
-    width: u8,
-    height: u8,
-    column_pins: &[u8],
-    row_pins: &[u8],
-    enabled: bool,
-) -> Result<()> {
+/// - `response[8]`      = byte 9:  config (bit 0 = enable)
+/// - `response[9]`      = byte 10: size — bit 0-3 = height-1, bit 4-7 = width-1
+/// - `response[10..18]` = bytes 11-18: row pins 0-7 (0-based pin codes)
+/// - `response[18..26]` = bytes 19-26: column pins 0-7
+/// - `response[26..42]` = bytes 27-42: direct/macro bitmap (16 bytes, 128 bits)
+/// - `response[42..50]` = bytes 43-50: row pins 8-15 (only when height > 8)
+/// - `response[50]`     = byte 51: alternate-function pin (pinID+1, 0 = disabled)
+/// - `response[51]`     = byte 52: scanning decimation (0..=50)
+fn parse_matrix_kb_config_readback(response: &[u8]) -> Result<MatrixKeyboardConfig> {
     if response.len() < 2 || response[1] != 0xCA {
         return Err(PoKeysError::Protocol(format!(
-            "configure_matrix_keyboard: readback echo mismatch: 0x{:02X}",
+            "matrix keyboard config readback: echo mismatch: 0x{:02X}",
             response.get(1).copied().unwrap_or(0)
         )));
     }
-    let min_len = if height > 8 { 51 } else { 27 };
-    if response.len() < min_len {
+    // Need at least bytes 9-52 (response[8..52]) to populate every field.
+    if response.len() < 52 {
         return Err(PoKeysError::Protocol(format!(
-            "configure_matrix_keyboard: readback too short ({} bytes; need {min_len})",
+            "matrix keyboard config readback too short: {} bytes (need 52)",
             response.len()
         )));
     }
 
-    let actual_enabled = (response[8] & 0x01) != 0;
+    let enabled = (response[8] & 0x01) != 0;
     let size_byte = response[9];
-    let actual_width = (size_byte >> 4) + 1;
-    let actual_height = (size_byte & 0x0F) + 1;
+    let width = (size_byte >> 4) + 1;
+    let height = (size_byte & 0x0F) + 1;
 
-    if actual_enabled != enabled {
+    let mut row_pins = [0u8; 16];
+    for (i, slot) in row_pins.iter_mut().enumerate().take(8) {
+        // Wire byte is 0-based pin code; expose as 1-based, with 0 meaning
+        // "no pin assigned" (consistent with the rest of MatrixKeyboardConfig).
+        *slot = response[10 + i].wrapping_add(1);
+    }
+    for (offset, slot) in row_pins.iter_mut().enumerate().skip(8).take(8) {
+        *slot = response[42 + (offset - 8)].wrapping_add(1);
+    }
+
+    let mut column_pins = [0u8; 8];
+    for (i, slot) in column_pins.iter_mut().enumerate() {
+        *slot = response[18 + i].wrapping_add(1);
+    }
+
+    let mut direct_macro_bitmap = [0u8; 16];
+    direct_macro_bitmap.copy_from_slice(&response[26..42]);
+
+    let alternate_function_pin = response[50];
+    let scanning_decimation = response[51];
+
+    Ok(MatrixKeyboardConfig {
+        enabled,
+        width,
+        height,
+        row_pins,
+        column_pins,
+        direct_macro_bitmap,
+        alternate_function_pin,
+        scanning_decimation,
+    })
+}
+
+/// Compare a parsed `MatrixKeyboardConfig` against an expected configuration
+/// and return a `Protocol` error describing the first mismatch (if any).
+///
+/// Used by [`PoKeysDevice::configure_matrix_keyboard`] and
+/// [`PoKeysDevice::disable_matrix_keyboard`] to catch firmware silent
+/// rejections where option-16 echoes `0xCA` but the device's stored
+/// configuration didn't actually change (e.g. configuration locked).
+fn verify_matrix_kb_config_matches(
+    actual: &MatrixKeyboardConfig,
+    expected_width: u8,
+    expected_height: u8,
+    expected_column_pins: &[u8],
+    expected_row_pins: &[u8],
+    expected_enabled: bool,
+) -> Result<()> {
+    if actual.enabled != expected_enabled {
         return Err(PoKeysError::Protocol(format!(
-            "configure_matrix_keyboard: device reports enabled={actual_enabled}, expected {enabled} \
+            "configure_matrix_keyboard: device reports enabled={}, expected {expected_enabled} \
              (configuration may be locked; raw config byte=0x{:02X})",
-            response[8]
+            actual.enabled,
+            if actual.enabled { 0x01 } else { 0x00 }
         )));
     }
-    // Only compare width/height when the configuration is supposed to be
-    // enabled — when we just disabled, the device may report stale or zero
-    // dimensions, neither of which is interesting.
-    if enabled && (actual_width != width || actual_height != height) {
+    // When we just disabled, the device may report stale or zero dimensions
+    // / pins; only width / height / pins are interesting on the enabled side.
+    if !expected_enabled {
+        return Ok(());
+    }
+
+    if actual.width != expected_width || actual.height != expected_height {
         return Err(PoKeysError::Protocol(format!(
-            "configure_matrix_keyboard: device reports width={actual_width} height={actual_height}, \
-             expected width={width} height={height} (raw size byte=0x{size_byte:02X})"
+            "configure_matrix_keyboard: device reports width={} height={}, \
+             expected width={expected_width} height={expected_height} (raw size byte=0x{:02X})",
+            actual.width,
+            actual.height,
+            actual.size_byte()
         )));
     }
-    if enabled {
-        // Row pins 0-7 at response[10..18]; col pins at response[18..26].
-        // Both stored 0-based, matching what we sent.
-        for (i, &pin) in row_pins.iter().enumerate().take(height as usize).take(8) {
-            let expected = pin.saturating_sub(1);
-            let actual = response[10 + i];
-            if actual != expected {
-                return Err(PoKeysError::Protocol(format!(
-                    "configure_matrix_keyboard: row pin {i} mismatch: device has 0x{actual:02X}, expected 0x{expected:02X} (pin {pin})"
-                )));
-            }
+    for (i, &pin) in expected_row_pins
+        .iter()
+        .enumerate()
+        .take(expected_height as usize)
+        .take(8)
+    {
+        if actual.row_pins[i] != pin {
+            return Err(PoKeysError::Protocol(format!(
+                "configure_matrix_keyboard: row pin {i} mismatch: device has pin {}, expected pin {pin}",
+                actual.row_pins[i]
+            )));
         }
-        for (i, &pin) in column_pins.iter().enumerate().take(width as usize).take(8) {
-            let expected = pin.saturating_sub(1);
-            let actual = response[18 + i];
-            if actual != expected {
-                return Err(PoKeysError::Protocol(format!(
-                    "configure_matrix_keyboard: column pin {i} mismatch: device has 0x{actual:02X}, expected 0x{expected:02X} (pin {pin})"
-                )));
-            }
+    }
+    for (i, &pin) in expected_column_pins
+        .iter()
+        .enumerate()
+        .take(expected_width as usize)
+        .take(8)
+    {
+        if actual.column_pins[i] != pin {
+            return Err(PoKeysError::Protocol(format!(
+                "configure_matrix_keyboard: column pin {i} mismatch: device has pin {}, expected pin {pin}",
+                actual.column_pins[i]
+            )));
         }
-        // Row pins 8-15 at response[42..50] (spec bytes 43-50).
-        if height > 8 {
-            for (offset, &pin) in row_pins
-                .iter()
-                .enumerate()
-                .skip(8)
-                .take((height as usize).saturating_sub(8))
-                .take(8)
-            {
-                let expected = pin.saturating_sub(1);
-                let actual = response[42 + (offset - 8)];
-                if actual != expected {
-                    return Err(PoKeysError::Protocol(format!(
-                        "configure_matrix_keyboard: extended row pin {offset} mismatch: device has 0x{actual:02X}, expected 0x{expected:02X} (pin {pin})"
-                    )));
-                }
+    }
+    if expected_height > 8 {
+        for (offset, &pin) in expected_row_pins
+            .iter()
+            .enumerate()
+            .skip(8)
+            .take((expected_height as usize).saturating_sub(8))
+            .take(8)
+        {
+            if actual.row_pins[offset] != pin {
+                return Err(PoKeysError::Protocol(format!(
+                    "configure_matrix_keyboard: extended row pin {offset} mismatch: device has pin {}, expected pin {pin}",
+                    actual.row_pins[offset]
+                )));
             }
         }
     }
@@ -538,9 +599,39 @@ impl PoKeysDevice {
     /// Reset device configuration to defaults (protocol command `0x52`
     /// "Disable lock and reset configuration"). Requires the magic bytes
     /// `0xAA, 0x55` to match the spec and the upstream PoKeysLib behaviour.
+    ///
+    /// On observed network firmware, this command interrupts the connection
+    /// mid-call (similar to [`Self::reboot_device`]). Transfer-level errors
+    /// after the request was sent are therefore treated as success — the
+    /// device received the command and is resetting / re-establishing its
+    /// state, just couldn't reply.
+    ///
+    /// After this call the active connection may be invalid; callers
+    /// observing further command failures should reconnect before issuing
+    /// additional commands.
     pub fn clear_configuration(&mut self) -> Result<()> {
-        self.send_request(0x52, 0xAA, 0x55, 0, 0)?;
-        Ok(())
+        match self.send_request(0x52, 0xAA, 0x55, 0, 0) {
+            Ok(_) => Ok(()),
+            // The device may reset / drop the connection before replying.
+            Err(PoKeysError::Transfer(_)) => Ok(()),
+            Err(e) => Err(e),
+        }
+    }
+
+    /// Returns `true` if the device's configuration is currently locked.
+    ///
+    /// Reads byte 59 of the `0x00` "Read device data" response (spec
+    /// "configuration lock status"). When locked, the firmware echoes
+    /// configuration writes (option 16, pin-function writes, etc.) but
+    /// does not apply them — the silent-failure mode that prompted the
+    /// readback verification on [`Self::configure_matrix_keyboard`].
+    ///
+    /// Use this to preflight a configuration session and either fail fast
+    /// with a clear message, or call [`Self::clear_configuration`] to
+    /// disable the lock first.
+    pub fn is_configuration_locked(&mut self) -> Result<bool> {
+        self.read_device_data()?;
+        Ok(self.device_data.device_lock_status != 0)
     }
 
     /// Reboot the device (command `0xF3`).
@@ -1105,8 +1196,14 @@ impl PoKeysDevice {
             // Product ID offset (byte 58 in doc = byte 57 in 0-based)
             let product_id = response[57];
 
+            // Configuration lock status (byte 59 in doc = byte 58 in 0-based).
+            // Non-zero = configuration is locked; option-16 / pin-function
+            // writes will be silently rejected until cleared via 0x52.
+            let configuration_lock_status = response[58];
+
             // Update device data structure
             self.device_data.serial_number = serial_32bit;
+            self.device_data.device_lock_status = configuration_lock_status;
 
             // Use the decoded firmware version for display
             self.device_data.firmware_version_major = decoded_major;
@@ -1365,13 +1462,13 @@ impl PoKeysDevice {
     /// same pin appears in both rows and columns.
     ///
     /// # Protocol Details (spec § Matrix keyboard, option 16)
-    /// - data[0]   = byte 9: enable bit
-    /// - data[1]   = byte 10: (width-1) << 4 | (height-1)
-    /// - data[2..10]  = bytes 11-18: row pins 0-7 (0-based pin codes)
-    /// - data[10..18] = bytes 19-26: column pins 0-7
-    /// - data[18..34] = bytes 27-42: direct/macro bitmap (zero = direct mapping)
-    /// - data[34..42] = bytes 43-50: row pins 8-15 (only sent when height > 8)
-    /// - data[42]     = byte 51: alternate-function pin (0 = disabled)
+    /// - `data[0]`      = byte 9: enable bit
+    /// - `data[1]`      = byte 10: (width-1) << 4 | (height-1)
+    /// - `data[2..10]`  = bytes 11-18: row pins 0-7 (0-based pin codes)
+    /// - `data[10..18]` = bytes 19-26: column pins 0-7
+    /// - `data[18..34]` = bytes 27-42: direct/macro bitmap (zero = direct mapping)
+    /// - `data[34..42]` = bytes 43-50: row pins 8-15 (only sent when height > 8)
+    /// - `data[42]`     = byte 51: alternate-function pin (0 = disabled)
     pub fn configure_matrix_keyboard(
         &mut self,
         width: u8,
@@ -1480,9 +1577,9 @@ impl PoKeysDevice {
         Ok(())
     }
 
-    /// Read the current matrix-keyboard configuration via `0xCA` option 1 and
-    /// fail if it does not match the expected `(width, height, column_pins,
-    /// row_pins, enabled)` tuple.
+    /// Read the current matrix-keyboard configuration via `0xCA` option 1
+    /// and fail if it does not match the expected `(width, height,
+    /// column_pins, row_pins, enabled)` tuple.
     ///
     /// Catches firmware silent rejections (e.g. configuration locked, an
     /// out-of-range pin code, or a pin the firmware refuses to use as
@@ -1496,8 +1593,24 @@ impl PoKeysDevice {
         row_pins: &[u8],
         enabled: bool,
     ) -> Result<()> {
+        let actual = self.get_matrix_keyboard_configuration()?;
+        verify_matrix_kb_config_matches(&actual, width, height, column_pins, row_pins, enabled)
+    }
+
+    /// Command 0xCA, option 1: read the device's current matrix-keyboard
+    /// configuration.
+    ///
+    /// Returns a [`MatrixKeyboardConfig`] reflecting exactly what the
+    /// firmware has stored. Useful for:
+    /// - Verifying a configure / disable call took effect (used internally
+    ///   by [`Self::configure_matrix_keyboard`]).
+    /// - Diff-against-device flows where the caller wants to know whether
+    ///   the on-device state matches a desired configuration before writing.
+    /// - Surfacing the scanning decimation, alt-function pin, and direct/
+    ///   macro bitmap, which aren't otherwise readable.
+    pub fn get_matrix_keyboard_configuration(&mut self) -> Result<MatrixKeyboardConfig> {
         let response = self.send_request(0xCA, 1, MATRIX_KEYBOARD_ID, 0, 0)?;
-        verify_matrix_kb_config_readback(&response, width, height, column_pins, row_pins, enabled)
+        parse_matrix_kb_config_readback(&response)
     }
 
     /// Command 0xCA, option 16: disable the matrix keyboard.
@@ -2456,10 +2569,9 @@ mod tests {
         );
     }
 
-    /// Build a synthetic `0xCA` option-1 readback response for testing
-    /// [`verify_matrix_kb_config_readback`]. Uses 1-based row/col pin
-    /// arguments, encoding them as 0-based on the wire (matching the
-    /// option-16 write side).
+    /// Build a synthetic `0xCA` option-1 readback response. Uses 1-based
+    /// row/col pin arguments, encoding them as 0-based on the wire (matching
+    /// the option-16 write side).
     fn make_matrix_kb_readback(
         enabled: bool,
         width: u8,
@@ -2483,12 +2595,50 @@ mod tests {
         r
     }
 
+    fn parse_and_verify(
+        r: &[u8],
+        width: u8,
+        height: u8,
+        cols: &[u8],
+        rows: &[u8],
+        enabled: bool,
+    ) -> Result<()> {
+        let cfg = parse_matrix_kb_config_readback(r)?;
+        verify_matrix_kb_config_matches(&cfg, width, height, cols, rows, enabled)
+    }
+
+    #[test]
+    fn test_parse_readback_returns_full_config() {
+        let rows: Vec<u8> = (1..=16).collect();
+        let cols = [17u8, 18, 19, 20, 21, 22, 23, 24];
+        let mut r = make_matrix_kb_readback(true, 8, 16, &rows, &cols);
+        // Fill in fields the helper doesn't populate (alt-fn pin, decimation,
+        // direct/macro bitmap) to exercise the full parser.
+        r[26] = 0b0000_0101; // keys 0 and 2 set to macro
+        r[50] = 7; // alt function pin = 7
+        r[51] = 25; // scanning decimation
+        let cfg = parse_matrix_kb_config_readback(&r).expect("parse");
+        assert!(cfg.enabled);
+        assert_eq!(cfg.width, 8);
+        assert_eq!(cfg.height, 16);
+        for i in 0..16 {
+            assert_eq!(cfg.row_pins[i], (i + 1) as u8);
+        }
+        for i in 0..8 {
+            assert_eq!(cfg.column_pins[i], (17 + i) as u8);
+        }
+        assert_eq!(cfg.direct_macro_bitmap[0], 0b0000_0101);
+        assert_eq!(cfg.alternate_function_pin, 7);
+        assert_eq!(cfg.scanning_decimation, 25);
+        assert_eq!(cfg.size_byte(), (8u8 - 1) << 4 | (16u8 - 1));
+    }
+
     #[test]
     fn test_verify_readback_accepts_matching_4x4() {
         let rows = [1u8, 2, 3, 4];
         let cols = [5u8, 6, 7, 8];
         let r = make_matrix_kb_readback(true, 4, 4, &rows, &cols);
-        verify_matrix_kb_config_readback(&r, 4, 4, &cols, &rows, true).expect("must accept");
+        parse_and_verify(&r, 4, 4, &cols, &rows, true).expect("must accept");
     }
 
     #[test]
@@ -2496,7 +2646,7 @@ mod tests {
         let rows: Vec<u8> = (1..=16).collect();
         let cols = [17u8, 18, 19, 20, 21, 22, 23, 24];
         let r = make_matrix_kb_readback(true, 8, 16, &rows, &cols);
-        verify_matrix_kb_config_readback(&r, 8, 16, &cols, &rows, true).expect("must accept");
+        parse_and_verify(&r, 8, 16, &cols, &rows, true).expect("must accept");
     }
 
     #[test]
@@ -2506,7 +2656,7 @@ mod tests {
         let rows = [1u8, 2, 3, 4];
         let cols = [5u8, 6, 7, 8];
         let r = make_matrix_kb_readback(false, 4, 4, &rows, &cols);
-        let err = verify_matrix_kb_config_readback(&r, 4, 4, &cols, &rows, true)
+        let err = parse_and_verify(&r, 4, 4, &cols, &rows, true)
             .expect_err("must reject silent rejection");
         match err {
             PoKeysError::Protocol(msg) => assert!(
@@ -2523,8 +2673,8 @@ mod tests {
         let rows = [1u8, 2, 3, 4];
         let cols = [5u8, 6, 7, 8];
         let r = make_matrix_kb_readback(true, 4, 4, &rows, &cols);
-        let err = verify_matrix_kb_config_readback(&r, 8, 4, &cols, &rows, true)
-            .expect_err("must reject size mismatch");
+        let err =
+            parse_and_verify(&r, 8, 4, &cols, &rows, true).expect_err("must reject size mismatch");
         match err {
             PoKeysError::Protocol(msg) => assert!(
                 msg.contains("width=4") && msg.contains("expected width=8"),
@@ -2539,9 +2689,9 @@ mod tests {
         let rows = [1u8, 2, 3, 4];
         let cols = [5u8, 6, 7, 8];
         let mut r = make_matrix_kb_readback(true, 4, 4, &rows, &cols);
-        r[12] = 99; // corrupt row pin 2 (0-based)
-        let err = verify_matrix_kb_config_readback(&r, 4, 4, &cols, &rows, true)
-            .expect_err("must reject pin mismatch");
+        r[12] = 99; // corrupt row pin 2 (0-based wire = pin 100 1-based)
+        let err =
+            parse_and_verify(&r, 4, 4, &cols, &rows, true).expect_err("must reject pin mismatch");
         assert!(matches!(err, PoKeysError::Protocol(msg) if msg.contains("row pin 2")));
     }
 
@@ -2552,32 +2702,16 @@ mod tests {
         let cols = [13u8, 14, 15, 16];
         let mut r = make_matrix_kb_readback(true, 4, 12, &rows, &cols);
         r[44] = 99; // corrupt extended row pin (offset 10, response[42+(10-8)] = response[44])
-        let err = verify_matrix_kb_config_readback(&r, 4, 12, &cols, &rows, true)
+        let err = parse_and_verify(&r, 4, 12, &cols, &rows, true)
             .expect_err("must reject extended row pin mismatch");
         assert!(matches!(err, PoKeysError::Protocol(msg) if msg.contains("extended row pin 10")));
     }
 
     #[test]
-    fn test_verify_readback_rejects_short_response() {
-        let mut r = [0u8; 20]; // < 27 minimum
+    fn test_parse_readback_rejects_short_response() {
+        let mut r = [0u8; 30]; // < 52 minimum (parser requires bytes 9-52)
         r[1] = 0xCA;
-        let err =
-            verify_matrix_kb_config_readback(&r, 4, 4, &[1u8, 2, 3, 4], &[5u8, 6, 7, 8], true)
-                .expect_err("must reject short response");
-        assert!(matches!(err, PoKeysError::Protocol(msg) if msg.contains("readback too short")));
-    }
-
-    #[test]
-    fn test_verify_readback_rejects_short_response_for_extended_height() {
-        // For height > 8 we require at least 51 bytes (to read response[42..50]).
-        let rows: Vec<u8> = (1..=12).collect();
-        let cols = [13u8, 14, 15, 16];
-        let mut r = [0u8; 30]; // < 51 minimum for height=12
-        r[1] = 0xCA;
-        r[8] = 1;
-        r[9] = ((4u8 - 1) << 4) | (12u8 - 1);
-        let err = verify_matrix_kb_config_readback(&r, 4, 12, &cols, &rows, true)
-            .expect_err("must reject short response for height>8");
+        let err = parse_matrix_kb_config_readback(&r).expect_err("must reject short response");
         assert!(matches!(err, PoKeysError::Protocol(msg) if msg.contains("readback too short")));
     }
 
@@ -2590,16 +2724,47 @@ mod tests {
         r[8] = 0; // disabled
         r[9] = 0xFF; // garbage size
         // Expect disable: should pass even with no row/col pin info.
-        verify_matrix_kb_config_readback(&r, 0, 0, &[], &[], false).expect("must accept");
+        parse_and_verify(&r, 0, 0, &[], &[], false).expect("must accept");
     }
 
     #[test]
-    fn test_verify_readback_rejects_wrong_command_echo() {
+    fn test_parse_readback_rejects_wrong_command_echo() {
         let mut r = [0u8; RESPONSE_BUFFER_SIZE];
         r[1] = 0xC9; // not 0xCA
-        let err = verify_matrix_kb_config_readback(&r, 4, 4, &[1, 2, 3, 4], &[5, 6, 7, 8], true)
-            .expect_err("must reject wrong echo");
+        let err = parse_matrix_kb_config_readback(&r).expect_err("must reject wrong echo");
         assert!(matches!(err, PoKeysError::Protocol(msg) if msg.contains("echo mismatch")));
+    }
+
+    #[test]
+    fn test_parse_device_data_populates_lock_status() {
+        let mut device = PoKeysDevice::new(DeviceConnectionType::UsbDevice);
+        let mut response = [0u8; RESPONSE_BUFFER_SIZE];
+        // Extended-device signature at bytes 9-12 (0-based 8-11) → take the
+        // extended-device branch.
+        response[8..12].copy_from_slice(b"PK58");
+        response[4] = 0x12; // software version (just non-zero)
+        response[5] = 3; // revision
+        // Spec byte 59 / 0-based 58 = configuration lock status.
+        response[58] = 1;
+        device
+            .parse_device_data_response(&response)
+            .expect("parse must succeed");
+        assert_eq!(device.device_data.device_lock_status, 1);
+        assert!(device.device_data.device_locked());
+    }
+
+    #[test]
+    fn test_parse_device_data_lock_status_zero_means_unlocked() {
+        let mut device = PoKeysDevice::new(DeviceConnectionType::UsbDevice);
+        let mut response = [0u8; RESPONSE_BUFFER_SIZE];
+        response[8..12].copy_from_slice(b"PKEx");
+        response[4] = 0x10;
+        response[5] = 1;
+        response[58] = 0;
+        device
+            .parse_device_data_response(&response)
+            .expect("parse must succeed");
+        assert!(!device.device_data.device_locked());
     }
 
     #[test]
